@@ -101,16 +101,16 @@ public class MainActivity extends Activity implements AbsListView.OnScrollListen
 
         if (!mIsWifi) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setMessage("鍒濇浣跨敤浼氫粠缃戠粶涓嬭浇澶ф5MB鐨勫浘鐗囷紝纭瑕佷笅杞藉悧锛�");
-            builder.setTitle("娉ㄦ剰");
-            builder.setPositiveButton("鏄�", new DialogInterface.OnClickListener() {
+            builder.setMessage("初次使用会从网络中下载大概5MB的图片，确认要下载吗？");
+            builder.setTitle("注意");
+            builder.setPositiveButton("是", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     mCanGetBitmapFromNetWork = true;
                     mImageAdapter.notifyDataSetChanged();
                 }
             });
-            builder.setNegativeButton("鍚�", null);
+            builder.setNegativeButton("否�", null);
             builder.show();
         }
     }
@@ -154,8 +154,10 @@ public class MainActivity extends Activity implements AbsListView.OnScrollListen
             final String tag = (String)imageView.getTag();
             final String uri = getItem(position);
             if (!uri.equals(tag)) {
+                //为了避免View复用导致显示旧的bitmap，所以这里显示占位图
                 imageView.setImageDrawable(mDefaultBitmapDrawable);
             }
+            //优化列表卡顿，为了避免频繁的加载图片，只在列表停下来的时候才加载图片
             if (mIsGridViewIdle && mCanGetBitmapFromNetWork) {
                 imageView.setTag(uri);
                 mImageLoader.bindBitmap(uri, imageView, mImageWidth, mImageWidth);
@@ -163,10 +165,6 @@ public class MainActivity extends Activity implements AbsListView.OnScrollListen
             return convertView;
         }
 
-    }
-
-    private static class ViewHolder {
-        public ImageView imageView;
     }
 
     @Override
@@ -181,8 +179,9 @@ public class MainActivity extends Activity implements AbsListView.OnScrollListen
 
     @Override
     public void onScroll(AbsListView view, int firstVisibleItem,
-                         int visibleItemCount, int totalItemCount) {
-        // ignored
+                         int visibleItemCount, int totalItemCount) {}
 
+    private static class ViewHolder {
+        public ImageView imageView;
     }
 }
