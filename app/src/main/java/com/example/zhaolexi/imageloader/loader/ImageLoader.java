@@ -98,7 +98,7 @@ public class ImageLoader {
         mContext = context.getApplicationContext();
         //缓存空间为当前可用内存的1/8，单位kb
         int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
-        int cacheSize = maxMemory / 8;
+        int cacheSize = maxMemory / 4;
         mMemoryCache = new LruCache<String, Bitmap>(cacheSize) {
             //计算缓存对象大小
             @Override
@@ -106,6 +106,7 @@ public class ImageLoader {
                 return bitmap.getRowBytes() * bitmap.getHeight() / 1024;
             }
         };
+
         File diskCacheDir = getDiskCacheDir(mContext, "bitmap");
         if (!diskCacheDir.exists()) {
             diskCacheDir.mkdirs();
@@ -217,7 +218,7 @@ public class ImageLoader {
         return mMemoryCache.get(key);
     }
 
-    private Bitmap loadBitmapFromMemCache(String url) {
+    public Bitmap loadBitmapFromMemCache(String url) {
         final String key = hashKeyFormUrl(url);
         Bitmap bitmap = getBitmapFromMemCache(key);
         return bitmap;
@@ -277,6 +278,26 @@ public class ImageLoader {
         return bitmap;
     }
 
+    public Bitmap loadBitmapFromDiskCache(String url) throws IOException {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            Log.w(TAG, "load bitmap from UI Thread, it's not recommended!");
+        }
+        if (mDiskLruCache == null) {
+            return null;
+        }
+
+        Bitmap bitmap = null;
+        String key = hashKeyFormUrl(url);
+        DiskLruCache.Snapshot snapShot = mDiskLruCache.get(key);
+        if (snapShot != null) {
+            FileInputStream fileInputStream = (FileInputStream)snapShot.getInputStream(DISK_CACHE_INDEX);
+            FileDescriptor fileDescriptor = fileInputStream.getFD();
+            bitmap = mImageResizer.decodeSampledBitmapFromFileDescriptor(fileDescriptor, 0, 0);
+        }
+
+        return bitmap;
+    }
+
     public boolean downloadUrlToStream(String urlString,
             OutputStream outputStream) {
         HttpURLConnection urlConnection = null;
@@ -307,7 +328,7 @@ public class ImageLoader {
         return false;
     }
 
-    private Bitmap downloadBitmapFromUrl(String urlString) {
+    public Bitmap downloadBitmapFromUrl(String urlString) {
         Bitmap bitmap = null;
         HttpURLConnection urlConnection = null;
         BufferedInputStream in = null;

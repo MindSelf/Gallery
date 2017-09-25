@@ -70,7 +70,6 @@ public class ImageResizer {
             }
         }
 
-        Log.d(TAG, "sampleSize:" + inSampleSize);
         return inSampleSize;
     }
 }
