@@ -25,8 +25,7 @@ import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.SocketTimeoutException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.Executor;
@@ -36,6 +35,12 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
+import static java.lang.System.in;
+
 public class ImageLoader {
 
     private static final String TAG = "ImageLoader";
@@ -43,13 +48,13 @@ public class ImageLoader {
     public static final int MESSAGE_POST_RESULT = 1;
 
     /*
-    线程池参数：核心线程数为CPU核心数+1，最大容量为CPU核心数*2+1，线程限制超时时长10s
+    线程池参数：核心线程数为2*CPU核心数，最大容量为Integer.MAX_VALUE，线程限制超时时长10s
      */
     private static final int CPU_COUNT = Runtime.getRuntime()
             .availableProcessors();
-    private static final int CORE_POOL_SIZE = CPU_COUNT + 1;
-    private static final int MAXIMUM_POOL_SIZE = CPU_COUNT * 2 + 1;
-    private static final long KEEP_ALIVE = 10L;
+    private static final int CORE_POOL_SIZE = 2*CPU_COUNT ;
+    private static final int MAXIMUM_POOL_SIZE = Integer.MAX_VALUE;
+    private static final long KEEP_ALIVE = 5L;
 
     /*
     磁盘缓存参数：缓存容量为50M，节点数为1
@@ -71,8 +76,8 @@ public class ImageLoader {
     public static final Executor THREAD_POOL_EXECUTOR = new ThreadPoolExecutor(
             CORE_POOL_SIZE, MAXIMUM_POOL_SIZE,
             KEEP_ALIVE, TimeUnit.SECONDS,
-            new LinkedBlockingQueue<Runnable>(), sThreadFactory);
-    
+            new LinkedBlockingQueue<Runnable>(10), sThreadFactory);
+
     private Handler mMainHandler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
@@ -157,7 +162,12 @@ public class ImageLoader {
 
             @Override
             public void run() {
-                Bitmap bitmap = loadBitmap(uri, reqWidth, reqHeight);
+                Bitmap bitmap = null;
+                try {
+                    bitmap = loadBitmap(uri, reqWidth, reqHeight);
+                } catch (SocketTimeoutException e) {
+                    bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.image_fail);
+                }
                 if (bitmap != null) {
                     LoaderResult result = new LoaderResult(imageView, uri, bitmap);
                     mMainHandler.obtainMessage(MESSAGE_POST_RESULT, result).sendToTarget();
@@ -180,7 +190,7 @@ public class ImageLoader {
      * @param reqHeight the height ImageView desired
      * @return bitmap, maybe null.
      */
-    public Bitmap loadBitmap(String uri, int reqWidth, int reqHeight) {
+    private Bitmap loadBitmap(String uri, int reqWidth, int reqHeight) throws SocketTimeoutException {
         Bitmap bitmap = loadBitmapFromMemCache(uri);
         if (bitmap != null) {
             Log.d(TAG, "loadBitmapFromMemCache,url:" + uri);
@@ -196,7 +206,10 @@ public class ImageLoader {
             bitmap = loadBitmapFromHttp(uri, reqWidth, reqHeight);
             Log.d(TAG, "loadBitmapFromHttp,url:" + uri);
         } catch (IOException e) {
-            e.printStackTrace();
+            if(e instanceof SocketTimeoutException)
+                throw (SocketTimeoutException)e;
+            else
+                e.printStackTrace();
         }
 
         //因为磁盘缓存失效导致Bitmap没有加载
@@ -233,7 +246,7 @@ public class ImageLoader {
         if (mDiskLruCache == null) {
             return null;
         }
-        
+
         String key = hashKeyFormUrl(url);
         DiskLruCache.Editor editor = mDiskLruCache.edit(key);
 
@@ -278,37 +291,23 @@ public class ImageLoader {
         return bitmap;
     }
 
-    public Bitmap loadBitmapFromDiskCache(String url) throws IOException {
-        if (Looper.myLooper() == Looper.getMainLooper()) {
-            Log.w(TAG, "load bitmap from UI Thread, it's not recommended!");
-        }
-        if (mDiskLruCache == null) {
-            return null;
-        }
-
-        Bitmap bitmap = null;
-        String key = hashKeyFormUrl(url);
-        DiskLruCache.Snapshot snapShot = mDiskLruCache.get(key);
-        if (snapShot != null) {
-            FileInputStream fileInputStream = (FileInputStream)snapShot.getInputStream(DISK_CACHE_INDEX);
-            FileDescriptor fileDescriptor = fileInputStream.getFD();
-            bitmap = mImageResizer.decodeSampledBitmapFromFileDescriptor(fileDescriptor, 0, 0);
-        }
-
-        return bitmap;
-    }
 
     public boolean downloadUrlToStream(String urlString,
-            OutputStream outputStream) {
-        HttpURLConnection urlConnection = null;
+            OutputStream outputStream) throws SocketTimeoutException {
+
+        //连接超时的时间默认是10s，在这期间核心线程会被阻塞，新的任务会被添加到LinkedBrokingQueue中，
+        //LinkedBrokingQueue默认长度是Integer.MAX_VALUE，所以新的任务会一直排队，导致即使想从磁盘中获取缓存
+        //图片也还是会阻塞，所以将连接超时时间缩短为5s，并且对超时进行异常处理
+        OkHttpClient client=new OkHttpClient.Builder()
+                .connectTimeout(5,TimeUnit.SECONDS)   //SocketTimeOutException
+                .build();
+        Request request=new Request.Builder().url(urlString).build();
         BufferedOutputStream out = null;
         BufferedInputStream in = null;
 
         try {
-            final URL url = new URL(urlString);
-            urlConnection = (HttpURLConnection) url.openConnection();
-            in = new BufferedInputStream(urlConnection.getInputStream(),
-                    IO_BUFFER_SIZE);
+            Response response=client.newCall(request).execute();
+            in=new BufferedInputStream(response.body().byteStream(),IO_BUFFER_SIZE);
             out = new BufferedOutputStream(outputStream, IO_BUFFER_SIZE);
 
             int b;
@@ -316,37 +315,38 @@ public class ImageLoader {
                 out.write(b);
             }
             return true;
+
         } catch (IOException e) {
-            Log.e(TAG, "downloadBitmap failed." + e);
+            if(e instanceof SocketTimeoutException)
+                throw (SocketTimeoutException)e;
+            else
+                e.printStackTrace();
         } finally {
-            if (urlConnection != null) {
-                urlConnection.disconnect();
-            }
             MyUtils.close(out);
             MyUtils.close(in);
         }
         return false;
     }
 
-    public Bitmap downloadBitmapFromUrl(String urlString) {
-        Bitmap bitmap = null;
-        HttpURLConnection urlConnection = null;
-        BufferedInputStream in = null;
-
-        try {
-            final URL url = new URL(urlString);
-            urlConnection = (HttpURLConnection) url.openConnection();
-            in = new BufferedInputStream(urlConnection.getInputStream(),
-                    IO_BUFFER_SIZE);
-            bitmap = BitmapFactory.decodeStream(in);
-        } catch (final IOException e) {
-            Log.e(TAG, "Error in downloadBitmap: " + e);
-        } finally {
-            if (urlConnection != null) {
-                urlConnection.disconnect();
-            }
+    public Bitmap downloadBitmapFromUrl(String urlString) throws SocketTimeoutException {
+        OkHttpClient client=new OkHttpClient.Builder()
+                .connectTimeout(5,TimeUnit.SECONDS)
+                .build();
+        Request request=new Request.Builder().url(urlString).build();
+        Bitmap bitmap=null;
+        try{
+            Response response=client.newCall(request).execute();
+            BufferedInputStream in = new BufferedInputStream(response.body().byteStream(), IO_BUFFER_SIZE);
+            bitmap=BitmapFactory.decodeStream(in);
+        } catch (IOException e) {
+            if(e instanceof SocketTimeoutException)
+                throw (SocketTimeoutException)e;
+            else
+                e.printStackTrace();
+        }finally {
             MyUtils.close(in);
         }
+
         return bitmap;
     }
 

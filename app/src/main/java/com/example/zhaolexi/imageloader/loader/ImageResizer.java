@@ -48,7 +48,7 @@ public class ImageResizer {
 
     public int calculateInSampleSize(BitmapFactory.Options options,
             int reqWidth, int reqHeight) {
-        if (reqWidth == 0 || reqHeight == 0) {
+        if (reqWidth == 0 && reqHeight == 0) {
             return 1;
         }
 
@@ -57,6 +57,12 @@ public class ImageResizer {
         final int width = options.outWidth;
         Log.d(TAG, "origin, w= " + width + " h=" + height);
         int inSampleSize = 1;
+
+        //是否需要按比例压缩图片
+        if(reqHeight==0)
+            reqHeight=reqWidth*height/width;
+        else if(reqWidth==0)
+            reqWidth=reqHeight*width/height;
 
         //缩小后的图片不能比imageView小
         if (height > reqHeight || width > reqWidth) {
