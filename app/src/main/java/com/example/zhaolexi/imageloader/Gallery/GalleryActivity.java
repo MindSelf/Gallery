@@ -1,4 +1,4 @@
-package com.example.zhaolexi.imageloader.ImageActivity;
+package com.example.zhaolexi.imageloader.Gallery;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;

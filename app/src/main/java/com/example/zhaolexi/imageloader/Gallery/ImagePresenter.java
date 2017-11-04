@@ -1,4 +1,4 @@
-package com.example.zhaolexi.imageloader.ImageActivity;
+package com.example.zhaolexi.imageloader.Gallery;
 
 import android.os.Handler;
 import android.os.Message;
@@ -12,7 +12,7 @@ import java.util.List;
  * Created by ZHAOLEXI on 2017/10/14.
  */
 
-public class ImagePresenter extends BasePresenter {
+public class ImagePresenter extends BasePresenter<ImageViewInterface> {
 
     private ImageModel mImageModel;
     private ImageViewInterface mImageView;

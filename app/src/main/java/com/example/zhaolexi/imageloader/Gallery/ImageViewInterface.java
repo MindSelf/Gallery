@@ -1,4 +1,4 @@
-package com.example.zhaolexi.imageloader.ImageActivity;
+package com.example.zhaolexi.imageloader.Gallery;
 
 import com.example.zhaolexi.imageloader.bean.Image;
 

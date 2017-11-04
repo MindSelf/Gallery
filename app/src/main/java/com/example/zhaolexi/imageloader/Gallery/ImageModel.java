@@ -1,4 +1,4 @@
-package com.example.zhaolexi.imageloader.ImageActivity;
+package com.example.zhaolexi.imageloader.Gallery;
 
 /**
  * Created by ZHAOLEXI on 2017/10/14.

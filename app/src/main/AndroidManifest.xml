@@ -14,7 +14,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".ImageActivity.GalleryActivity"
+            android:name=".Gallery.GalleryActivity"
             android:hardwareAccelerated="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -23,7 +23,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ImageActivity.ImageDetailActivity"
+            android:name=".Gallery.ImageDetailActivity"
             android:theme="@style/Base.Theme.AppCompat.Dialog">
         </activity>
         <activity android:name=".base.BaseActivity">
