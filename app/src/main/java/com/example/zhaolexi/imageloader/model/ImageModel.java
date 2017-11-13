@@ -1,4 +1,6 @@
-package com.example.zhaolexi.imageloader.Gallery;
+package com.example.zhaolexi.imageloader.model;
+
+import com.example.zhaolexi.imageloader.presenter.ImagePresenter;
 
 /**
  * Created by ZHAOLEXI on 2017/10/14.

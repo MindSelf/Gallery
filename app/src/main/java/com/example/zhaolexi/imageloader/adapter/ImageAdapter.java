@@ -15,7 +15,7 @@ import android.widget.TextView;
 
 import com.example.zhaolexi.imageloader.R;
 import com.example.zhaolexi.imageloader.bean.Image;
-import com.example.zhaolexi.imageloader.loader.ImageLoader;
+import com.example.zhaolexi.imageloader.utils.loader.ImageLoader;
 import com.example.zhaolexi.imageloader.ui.GridItemTouchHelperCallback;
 import com.example.zhaolexi.imageloader.utils.MyUtils;
 
@@ -42,18 +42,17 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
     private int mFooterState;
     private int mImageWidth;
 
+//    private static final int TAG_URI_LOADING=R.id.imageloader_loading;
     public static final int TYPE_NORMAL=1;
     public static final int TYPE_FOOTER=2;
     public  static final int FOOTER_LOADING=1<<1;
     public static final int FOOTER_NEWDATA =1<<2;
     public static final int FOOTER_ERROR=1<<3;
-
-
     public static final int FOOTER_NODATA=1<<4;
 
     public ImageAdapter(Context context) {
         mImageList = new ArrayList<>();
-        mImageLoader = ImageLoader.build(context);
+        mImageLoader = ImageLoader.getInstance(context);
         mDefaultBitmapDrawable = context.getResources().getDrawable(R.drawable.image_default);
         int screenWidth = MyUtils.getScreenMetrics(context).widthPixels;
         mImageWidth = screenWidth / 2;
@@ -144,7 +143,6 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
             }
             //优化列表卡顿，为了避免频繁的加载图片，只在列表停下来的时候才加载图片
             if (mIsIdle) {
-                imageView.setTag(uri);
                 mImageLoader.bindBitmap(uri, imageView, mImageWidth, 0);
             }
 
@@ -198,7 +196,10 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
 
         @Override
         public void onClick(View v) {
-            onItemClickListener.onItemClick(v,getLayoutPosition());
+//            boolean isLoading=(boolean)v.getTag(TAG_URI_LOADING);
+//            if(!isLoading) {
+//            }
+            onItemClickListener.onItemClick(v, getLayoutPosition());
         }
     }
 

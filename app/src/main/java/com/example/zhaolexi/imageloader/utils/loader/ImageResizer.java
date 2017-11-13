@@ -1,4 +1,4 @@
-package com.example.zhaolexi.imageloader.loader;
+package com.example.zhaolexi.imageloader.utils.loader;
 
 import android.content.res.Resources;
 import android.graphics.Bitmap;

@@ -1,4 +1,4 @@
-package com.example.zhaolexi.imageloader.loader;
+package com.example.zhaolexi.imageloader.utils.loader;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -43,22 +43,25 @@ import static java.lang.System.in;
 
 public class ImageLoader {
 
+    private static volatile ImageLoader instance;
+
     private static final String TAG = "ImageLoader";
 
     public static final int MESSAGE_POST_RESULT = 1;
 
     /*
-    线程池参数：核心线程数为2*CPU核心数，最大容量为Integer.MAX_VALUE，线程限制超时时长10s
+    线程池参数：核心线程数为2*CPU核心数，线程限制超时时长10s
      */
     private static final int CPU_COUNT = Runtime.getRuntime()
             .availableProcessors();
     private static final int CORE_POOL_SIZE = 2*CPU_COUNT ;
-    private static final int MAXIMUM_POOL_SIZE = Integer.MAX_VALUE;
+    private static final int MAXIMUM_POOL_SIZE = 2*CPU_COUNT;
     private static final long KEEP_ALIVE = 5L;
 
     /*
     磁盘缓存参数：缓存容量为50M，节点数为1
      */
+//    private static final int TAG_KEY_LOADING=R.id.imageloader_loading;
     private static final int TAG_KEY_URI = R.id.imageloader_uri;
     private static final long DISK_CACHE_SIZE = 1024 * 1024 * 50;
     private static final int IO_BUFFER_SIZE = 8 * 1024;
@@ -76,7 +79,7 @@ public class ImageLoader {
     public static final Executor THREAD_POOL_EXECUTOR = new ThreadPoolExecutor(
             CORE_POOL_SIZE, MAXIMUM_POOL_SIZE,
             KEEP_ALIVE, TimeUnit.SECONDS,
-            new LinkedBlockingQueue<Runnable>(10), sThreadFactory);
+            new LinkedBlockingQueue<Runnable>(), sThreadFactory);
 
     private Handler mMainHandler = new Handler(Looper.getMainLooper()) {
         @Override
@@ -129,12 +132,19 @@ public class ImageLoader {
     }
 
     /**
-     * build a new instance of ImageLoader
+     * getInstance a new instance of ImageLoader
      * @param context
      * @return a new instance of ImageLoader
      */
-    public static ImageLoader build(Context context) {
-        return new ImageLoader(context);
+    public static ImageLoader getInstance(Context context) {
+        if(instance==null){
+            synchronized (ImageLoader.class) {
+                if(instance==null){
+                    instance = new ImageLoader(context);
+                }
+            }
+        }
+        return instance;
     }
 
 
@@ -180,6 +190,26 @@ public class ImageLoader {
         如果采用普通线程加载图片，随着列表的滑动可能会产生大量线程，影响整体效率
         不使用AsyncTask是因为3.0以上无法实现并发效果
          */
+    }
+
+    public Bitmap loadRawBitmap(String url) throws IOException {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            Log.w(TAG, "load bitmap from UI Thread, it's not recommended!");
+        }
+        if (mDiskLruCache == null) {
+            return null;
+        }
+
+        Bitmap bitmap = null;
+        String key = hashKeyFormUrl(url);
+        DiskLruCache.Snapshot snapShot = mDiskLruCache.get(key);
+        if (snapShot != null) {
+            FileInputStream fileInputStream = (FileInputStream)snapShot.getInputStream(DISK_CACHE_INDEX);
+            FileDescriptor fileDescriptor = fileInputStream.getFD();
+            bitmap = mImageResizer.decodeSampledBitmapFromFileDescriptor(fileDescriptor, 0, 0);
+        }
+
+        return bitmap;
     }
 
 
@@ -258,8 +288,6 @@ public class ImageLoader {
             } else {
                 editor.abort();
             }
-            mDiskLruCache.flush();
-            //用于将内存中的操作记录同步到journal文件中
         }
 
         return loadBitmapFromDiskCache(url, reqWidth, reqHeight);

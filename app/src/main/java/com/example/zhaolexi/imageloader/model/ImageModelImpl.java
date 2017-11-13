@@ -1,6 +1,7 @@
-package com.example.zhaolexi.imageloader.Gallery;
+package com.example.zhaolexi.imageloader.model;
 
 import com.example.zhaolexi.imageloader.bean.Image;
+import com.example.zhaolexi.imageloader.presenter.ImagePresenter;
 import com.example.zhaolexi.imageloader.utils.Uri;
 import com.google.gson.Gson;
 

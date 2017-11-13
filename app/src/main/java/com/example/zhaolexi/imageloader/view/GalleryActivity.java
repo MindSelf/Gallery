@@ -1,9 +1,7 @@
-package com.example.zhaolexi.imageloader.Gallery;
+package com.example.zhaolexi.imageloader.view;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -15,6 +13,7 @@ import com.example.zhaolexi.imageloader.R;
 import com.example.zhaolexi.imageloader.adapter.ImageAdapter;
 import com.example.zhaolexi.imageloader.base.BaseActivity;
 import com.example.zhaolexi.imageloader.bean.Image;
+import com.example.zhaolexi.imageloader.presenter.ImagePresenter;
 import com.example.zhaolexi.imageloader.ui.GridItemTouchHelperCallback;
 import com.example.zhaolexi.imageloader.ui.SpacesItemDecoration;
 import com.example.zhaolexi.imageloader.utils.MyUtils;
@@ -24,20 +23,17 @@ import java.util.List;
 public class GalleryActivity extends BaseActivity<ImageViewInterface,ImagePresenter> implements ImageViewInterface, ImageAdapter.OnItemClickListener {
 
     private RecyclerView mImageList;
-    private ImageAdapter mAdapter;
-
-    private boolean mIsLoading=false;
     private AlertDialog.Builder builder;
+    private ImageAdapter mAdapter;
+    private boolean mIsLoading=false;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
+    protected void onStart() {
+        super.onStart();
         if(!MyUtils.isWifi(this))
             builder.show();
         else
             mPresenter.loadMore();
-
     }
 
     @Override
@@ -49,7 +45,7 @@ public class GalleryActivity extends BaseActivity<ImageViewInterface,ImagePresen
 
     @Override
     protected ImagePresenter createPresenter() {
-        return new ImagePresenter(this);
+        return new ImagePresenter();
     }
 
     @Override
@@ -157,9 +153,8 @@ public class GalleryActivity extends BaseActivity<ImageViewInterface,ImagePresen
 
     @Override
     public void onItemClick(View view, int position) {
-        Intent intent = new Intent(this, ImageDetailActivity.class);
-        intent.putExtra("url", mAdapter.getImageList().get(position).getUrl());
-        startActivity(intent);
+        String url=mAdapter.getImageList().get(position).getUrl();
+        mPresenter.startActivity(url);
     }
 
 }
