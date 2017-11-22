@@ -9,4 +9,6 @@ import com.example.zhaolexi.imageloader.presenter.ImagePresenter;
 public interface ImageModel {
 
     void loadUri(int page, ImagePresenter.OnLoadFinishListener listener);
+
+    void setUri(String newUrl);
 }

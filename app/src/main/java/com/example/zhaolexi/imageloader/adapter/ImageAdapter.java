@@ -1,5 +1,6 @@
 package com.example.zhaolexi.imageloader.adapter;
 
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
@@ -15,9 +16,9 @@ import android.widget.TextView;
 
 import com.example.zhaolexi.imageloader.R;
 import com.example.zhaolexi.imageloader.bean.Image;
-import com.example.zhaolexi.imageloader.utils.loader.ImageLoader;
 import com.example.zhaolexi.imageloader.ui.GridItemTouchHelperCallback;
 import com.example.zhaolexi.imageloader.utils.MyUtils;
+import com.example.zhaolexi.imageloader.utils.loader.ImageLoader;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,7 +43,6 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
     private int mFooterState;
     private int mImageWidth;
 
-//    private static final int TAG_URI_LOADING=R.id.imageloader_loading;
     public static final int TYPE_NORMAL=1;
     public static final int TYPE_FOOTER=2;
     public  static final int FOOTER_LOADING=1<<1;
@@ -58,10 +58,6 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
         mImageWidth = screenWidth / 2;
     }
 
-    public List<Image> getImageList() {
-        return mImageList;
-    }
-
     public void setFooterState(int footerState) {
         mFooterState=footerState;
     }
@@ -72,6 +68,11 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
 
     public void setOnItemClickListener(OnItemClickListener listener){
         this.onItemClickListener=listener;
+    }
+
+    public void clearImages() {
+        mImageList.clear();
+        notifyDataSetChanged();
     }
 
     public void addImages(List<Image> newDatas) {
@@ -127,10 +128,10 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
             ItemViewHolder viewholder=(ItemViewHolder) holder;
             ImageView imageView=viewholder.imageView;
             TextView textView=viewholder.description;
-            textView.setText(mImageList.get(position).getDesc());
+            textView.setText(mImageList.get(position).getDescription());
 
             final String tag = (String) imageView.getTag();
-            final String uri = mImageList.get(position).getUrl();
+            final String uri = mImageList.get(position).getThumbUrl();
 
             if (!uri.equals(tag)) {
                 //为了避免View复用导致显示旧的bitmap，这里会先显示内存中缓存的图片，没有再显示占位图
@@ -140,9 +141,11 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
                 } else {
                     imageView.setImageDrawable(mDefaultBitmapDrawable);
                 }
+                bitmap=null;
             }
             //优化列表卡顿，为了避免频繁的加载图片，只在列表停下来的时候才加载图片
             if (mIsIdle) {
+                imageView.setTag(uri);
                 mImageLoader.bindBitmap(uri, imageView, mImageWidth, 0);
             }
 
@@ -181,6 +184,10 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
         notifyItemMoved(fromPosition,toPosition);
     }
 
+    public Image getItem(int position) {
+        return mImageList.get(position);
+    }
+
 
     public class ItemViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
@@ -196,9 +203,6 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
 
         @Override
         public void onClick(View v) {
-//            boolean isLoading=(boolean)v.getTag(TAG_URI_LOADING);
-//            if(!isLoading) {
-//            }
             onItemClickListener.onItemClick(v, getLayoutPosition());
         }
     }
@@ -213,11 +217,6 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
             textView = (TextView) itemView.findViewById(R.id.footer_tv);
             progressBar = (ProgressBar) itemView.findViewById(R.id.footer_pb);
         }
-    }
-
-
-    public interface OnItemClickListener{
-        void onItemClick(View view,int position);
     }
 
 }

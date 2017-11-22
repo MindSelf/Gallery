@@ -14,7 +14,6 @@
         android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-
         <activity
             android:name=".view.GalleryActivity"
             android:hardwareAccelerated="true">
@@ -24,10 +23,11 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-
         <activity
             android:name=".view.ImageDetailActivity"
-            android:theme="@style/Base.Theme.AppCompat.Dialog"/>
+            android:theme="@style/DialogTheme"/>
+        <activity android:name=".view.SelectPhotoActivity">
+        </activity>
     </application>
 
 </manifest>

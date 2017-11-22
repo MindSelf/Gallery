@@ -1,5 +1,7 @@
 package com.example.zhaolexi.imageloader.model;
 
+import android.widget.ImageView;
+
 import com.example.zhaolexi.imageloader.presenter.ImageDetailPresenter;
 
 /**
@@ -7,5 +9,9 @@ import com.example.zhaolexi.imageloader.presenter.ImageDetailPresenter;
  */
 
 public interface ImageDetailModel {
-    void loadBitmapFromDisk(String url, ImageDetailPresenter.onLoadFinishListener listener);
+
+    void loadBitmapFromDiskCache(String url, int reqWidth, int reqHeight,
+                                 ImageDetailPresenter.onLoadFinishListener listener);
+
+    void loadFullImg(String url, ImageView imageView, int reqWidth, int reqHeight);
 }

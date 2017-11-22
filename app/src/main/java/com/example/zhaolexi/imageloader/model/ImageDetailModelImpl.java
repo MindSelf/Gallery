@@ -2,6 +2,7 @@ package com.example.zhaolexi.imageloader.model;
 
 import android.graphics.Bitmap;
 import android.os.SystemClock;
+import android.widget.ImageView;
 
 import com.example.zhaolexi.imageloader.base.MyApplication;
 import com.example.zhaolexi.imageloader.presenter.ImageDetailPresenter;
@@ -24,7 +25,8 @@ public class ImageDetailModelImpl implements ImageDetailModel {
     }
 
     @Override
-    public void loadBitmapFromDisk(final String url, final ImageDetailPresenter.onLoadFinishListener listener) {
+    public void loadBitmapFromDiskCache(final String url, final int reqWidth,
+                                        final int reqHeight, final ImageDetailPresenter.onLoadFinishListener listener) {
         new Thread(new Runnable() {
             Bitmap bitmap = null;
             long current=SystemClock.currentThreadTimeMillis();
@@ -32,7 +34,7 @@ public class ImageDetailModelImpl implements ImageDetailModel {
             public void run() {
                 while(bitmap==null&&SystemClock.currentThreadTimeMillis()-current<10000){
                     try {
-                        bitmap=mImageLoader.loadRawBitmap(url);
+                        bitmap=mImageLoader.loadRawBitmap(url,reqWidth,reqHeight);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -44,5 +46,10 @@ public class ImageDetailModelImpl implements ImageDetailModel {
                 }
             }
         }).start();
+    }
+
+    @Override
+    public void loadFullImg(String url, ImageView imageView, int reqWidth, int reqHeight) {
+        mImageLoader.bindBitmap(url, imageView, reqWidth, reqHeight);
     }
 }

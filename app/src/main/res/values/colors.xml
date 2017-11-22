@@ -5,4 +5,9 @@
     <color name="colorAccent">#FF4081</color>
     <color name="reveal_color">#1b000000</color>
     <color name="light_green">#0ac39e</color>
+    <color name="clear">#00000000</color>
+    <!--遮罩层，前两位表示透明度-->
+    <color name="block">#60000000</color>
+    <color name="line">#9e9999</color>
+    <color name="grey">#e6e6e6</color>
 </resources>

@@ -16,6 +16,21 @@ public class ImageResizer {
     public ImageResizer() {
     }
 
+    public Bitmap decodeSampledBitmapFromFile(String uri, int reqWidth, int reqHeight) {
+        // inJustDecodeBounds=true,用来解析图片原始宽高
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(uri, options);
+
+        // 计算采样率
+        options.inSampleSize = calculateInSampleSize(options, reqWidth,
+                reqHeight);
+
+        // inJustDecodeBounds=false,重新加载图片
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeFile(uri, options);
+    }
+
     public Bitmap decodeSampledBitmapFromResource(Resources res,
             int resId, int reqWidth, int reqHeight) {
         // inJustDecodeBounds=true,用来解析图片原始宽高

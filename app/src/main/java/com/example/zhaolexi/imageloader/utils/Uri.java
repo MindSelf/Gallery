@@ -7,5 +7,19 @@ package com.example.zhaolexi.imageloader.utils;
 public class Uri {
 
     //福利
-    public static final String girls="http://gank.io/api/data/福利/10/";
+    public static final String Girls ="http://gank.io/api/data/福利/10/";
+
+    //服务器地址
+    public static final String Server = "http://119.29.39.173/gallery/";
+
+    //api
+
+    //上传图片
+    public static final String Upload_Img = Server + "Photo!batchUpload.action";
+    //获取图片
+    public static final String Load_Img = Server + "Photo!data.action?pageSize=10";
+    //创建相册
+    public static final String Add_Album = Server + "Album!add.action";
+    //打开相册
+    public static final String Open_Album = Server + "Album!open.action";
 }

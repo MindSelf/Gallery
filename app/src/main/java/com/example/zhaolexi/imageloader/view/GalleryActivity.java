@@ -1,45 +1,71 @@
 package com.example.zhaolexi.imageloader.view;
 
-import android.app.AlertDialog;
+
 import android.content.DialogInterface;
+import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.text.TextUtils;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 
 import com.example.zhaolexi.imageloader.R;
 import com.example.zhaolexi.imageloader.adapter.ImageAdapter;
+import com.example.zhaolexi.imageloader.adapter.OnItemClickListener;
 import com.example.zhaolexi.imageloader.base.BaseActivity;
 import com.example.zhaolexi.imageloader.bean.Image;
+import com.example.zhaolexi.imageloader.bean.MessageEvent;
 import com.example.zhaolexi.imageloader.presenter.ImagePresenter;
 import com.example.zhaolexi.imageloader.ui.GridItemTouchHelperCallback;
+import com.example.zhaolexi.imageloader.ui.PasswordDialog;
 import com.example.zhaolexi.imageloader.ui.SpacesItemDecoration;
 import com.example.zhaolexi.imageloader.utils.MyUtils;
+import com.example.zhaolexi.imageloader.utils.SharePreferencesUtils;
+import com.example.zhaolexi.imageloader.utils.Uri;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 
 import java.util.List;
 
-public class GalleryActivity extends BaseActivity<ImageViewInterface,ImagePresenter> implements ImageViewInterface, ImageAdapter.OnItemClickListener {
+public class GalleryActivity extends BaseActivity<GalleryViewInterface, ImagePresenter> implements GalleryViewInterface, OnItemClickListener, PasswordDialog.Builder.OnResponseListener {
 
     private RecyclerView mImageList;
-    private AlertDialog.Builder builder;
+    private Toolbar mToolbar;
+    private AlertDialog.Builder mAlertBuilder;
+    private PasswordDialog.Builder mPasswordBuilder;
     private ImageAdapter mAdapter;
-    private boolean mIsLoading=false;
+    private boolean mIsLoading = false;
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        if(!MyUtils.isWifi(this))
-            builder.show();
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (!MyUtils.isWifi(this))
+            mAlertBuilder.show();
         else
             mPresenter.loadMore();
     }
 
     @Override
+    protected void initData() {
+        EventBus.getDefault().register(this);
+    }
+
+    @Subscribe
+    public void onMessageEventMain(MessageEvent event) {
+        mPresenter.resetState();
+        mPresenter.loadMore();
+    }
+
+    @Override
     protected void onDestroy() {
-        System.gc();
-        //小米在退出activity时不能立即gc，这时候要是反复启动activity，会导致OOM
+        EventBus.getDefault().unregister(this);
         super.onDestroy();
     }
 
@@ -52,18 +78,21 @@ public class GalleryActivity extends BaseActivity<ImageViewInterface,ImagePresen
     protected void initView() {
         setContentView(R.layout.activity_image);
 
+        mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(mToolbar);
+
         mImageList = (RecyclerView) findViewById(R.id.recyclerview);
         mImageList.setLayoutManager(new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));
-        mImageList.addItemDecoration(new SpacesItemDecoration(MyUtils.dp2px(this,4)));
+        mImageList.addItemDecoration(new SpacesItemDecoration(MyUtils.dp2px(this, 4)));
         mImageList.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
-                if(newState==RecyclerView.SCROLL_STATE_IDLE) {
+                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
                     mAdapter.setIsIdle(true);
                     //滑动时onBindViewHolder先于回调方法，所以静止时要提醒Adapter更新数据
                     mAdapter.notifyDataSetChanged();
-                }else{
+                } else {
                     mAdapter.setIsIdle(false);
                 }
             }
@@ -71,7 +100,7 @@ public class GalleryActivity extends BaseActivity<ImageViewInterface,ImagePresen
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 int lastVisiblePosition = getLastVisiblePosition();
-                if(!mIsLoading&&lastVisiblePosition+1==mAdapter.getItemCount()&&dy>0){
+                if (!mIsLoading && lastVisiblePosition + 1 == mAdapter.getItemCount() && dy > 0) {
                     mPresenter.loadMore();
                 }
                 super.onScrolled(recyclerView, dx, dy);
@@ -86,75 +115,126 @@ public class GalleryActivity extends BaseActivity<ImageViewInterface,ImagePresen
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(callback);
         itemTouchHelper.attachToRecyclerView(mImageList);
 
-        builder = new AlertDialog.Builder(this);
-        builder.setMessage("您当前为非Wifi环境，是否继续加载图片");
-        builder.setTitle("注意");
-        builder.setPositiveButton("是", new DialogInterface.OnClickListener() {
+        mAlertBuilder = new AlertDialog.Builder(this);
+        mAlertBuilder.setMessage("您当前为非Wifi环境，是否继续加载图片");
+        mAlertBuilder.setTitle("注意");
+        mAlertBuilder.setPositiveButton("是", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 mPresenter.loadMore();
             }
         });
-        builder.setNegativeButton("否", null);
+        mAlertBuilder.setNegativeButton("否", null);
 
+        mPasswordBuilder = new PasswordDialog.Builder(this);
     }
 
     private int getLastVisiblePosition() {
-            int position = 0;
-            if (mImageList.getLayoutManager() instanceof LinearLayoutManager) {
-                position = ((LinearLayoutManager) mImageList.getLayoutManager()).findLastVisibleItemPosition();
-            } else if (mImageList.getLayoutManager() instanceof GridLayoutManager) {
-                position = ((GridLayoutManager) mImageList.getLayoutManager()).findLastVisibleItemPosition();
-            } else if (mImageList.getLayoutManager() instanceof StaggeredGridLayoutManager) {
-                //因为StaggeredGridLayoutManager的特殊性可能导致最后显示的item存在多个，所以这里取到的是一个数组
-                //得到这个数组后再取到数组中position值最大的那个就是最后显示的position值了
-                StaggeredGridLayoutManager layoutManager = (StaggeredGridLayoutManager) mImageList.getLayoutManager();
-                int[] lastPositions = layoutManager.findLastVisibleItemPositions(new int[layoutManager.getSpanCount()]);
-                int max=lastPositions[0];
-                for (int i : lastPositions) {
-                    if(i>max)
-                        max=i;
-                }
-                position=max;
+        int position = 0;
+        if (mImageList.getLayoutManager() instanceof LinearLayoutManager) {
+            position = ((LinearLayoutManager) mImageList.getLayoutManager()).findLastVisibleItemPosition();
+        } else if (mImageList.getLayoutManager() instanceof GridLayoutManager) {
+            position = ((GridLayoutManager) mImageList.getLayoutManager()).findLastVisibleItemPosition();
+        } else if (mImageList.getLayoutManager() instanceof StaggeredGridLayoutManager) {
+            //因为StaggeredGridLayoutManager的特殊性可能导致最后显示的item存在多个，所以这里取到的是一个数组
+            //得到这个数组后再取到数组中position值最大的那个就是最后显示的position值了
+            StaggeredGridLayoutManager layoutManager = (StaggeredGridLayoutManager) mImageList.getLayoutManager();
+            int[] lastPositions = layoutManager.findLastVisibleItemPositions(new int[layoutManager.getSpanCount()]);
+            int max = lastPositions[0];
+            for (int i : lastPositions) {
+                if (i > max)
+                    max = i;
             }
-            return position;
+            position = max;
+        }
+        return position;
 
     }
 
     @Override
-    public void showNewDatas(List<Image> newDatas) {
+    public void showNewDatas(boolean hasMore, List<Image> newDatas) {
         mIsLoading = false;
-        int startPosition=mAdapter.getItemCount()-1;
         mAdapter.addImages(newDatas);
-        mAdapter.setFooterState(ImageAdapter.FOOTER_NEWDATA);
-        mAdapter.notifyItemRangeInserted(startPosition,newDatas.size());
+        if (hasMore) {
+            mAdapter.setFooterState(ImageAdapter.FOOTER_NEWDATA);
+        } else {
+            mAdapter.setFooterState(ImageAdapter.FOOTER_NODATA);
+        }
+        mAdapter.notifyDataSetChanged();
     }
 
     @Override
     public void showError() {
-        mIsLoading=false;
+        mIsLoading = false;
         mAdapter.setFooterState(ImageAdapter.FOOTER_ERROR);
-        mAdapter.notifyItemChanged(mAdapter.getItemCount()-1);
-    }
-
-    @Override
-    public void showNoData() {
-        mIsLoading=false;
-        mAdapter.setFooterState(ImageAdapter.FOOTER_NODATA);
-        mAdapter.notifyItemChanged(mAdapter.getItemCount()-1);
+        mAdapter.notifyDataSetChanged();
     }
 
     @Override
     public void showLoading() {
-        mIsLoading=true;
+        mIsLoading = true;
         mAdapter.setFooterState(ImageAdapter.FOOTER_LOADING);
-        mAdapter.notifyItemChanged(mAdapter.getItemCount()-1);
+        mAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.toolbar_gallery, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.select_photo:
+                if (TextUtils.isEmpty(SharePreferencesUtils.getString("aid", "")))
+                    return false;
+                mPresenter.selectPhoto();
+                break;
+            case R.id.add_album:
+                mPasswordBuilder.setTitle("创建相册")
+                        .setUrl(Uri.Add_Album)
+                        .setOnResponseListener(this)
+                        .build().show();
+                break;
+            case R.id.open_album:
+                mPasswordBuilder.setTitle("进入相册")
+                        .setUrl(Uri.Open_Album)
+                        .setOnResponseListener(this)
+                        .build().show();
+                break;
+            case R.id.random:
+                mAdapter.clearImages();
+                mPresenter.setUrl(Uri.Girls);
+                mPresenter.resetState();
+                mPresenter.loadMore();
+                SharePreferencesUtils.putString(SharePreferencesUtils.Url, Uri.Girls);
+                SharePreferencesUtils.putString(SharePreferencesUtils.Album, "");
+                break;
+        }
+        return true;
     }
 
     @Override
     public void onItemClick(View view, int position) {
-        String url=mAdapter.getImageList().get(position).getUrl();
-        mPresenter.startActivity(url);
+        Image image = mAdapter.getItem(position);
+        if (image.getFullUrl() != null) {
+            mPresenter.openDetail(true, image.getFullUrl());
+        } else {
+            mPresenter.openDetail(false, image.getThumbUrl());
+        }
     }
 
+    @Override
+    public void onSuccess(String aid) {
+        mAdapter.clearImages();
+        if (!TextUtils.isEmpty(aid)) {
+            String newURL = Uri.Load_Img + "&album.aid=" + aid + "&currPage=";
+            mPresenter.setUrl(newURL);
+            mPresenter.resetState();
+            mPresenter.loadMore();
+            SharePreferencesUtils.putString(SharePreferencesUtils.Url, newURL);
+            SharePreferencesUtils.putString(SharePreferencesUtils.Album, aid);
+        }
+    }
 }

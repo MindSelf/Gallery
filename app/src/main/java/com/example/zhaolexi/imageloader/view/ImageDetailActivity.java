@@ -1,6 +1,7 @@
 package com.example.zhaolexi.imageloader.view;
 
 import android.graphics.Bitmap;
+import android.os.Bundle;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -11,12 +12,36 @@ import com.example.zhaolexi.imageloader.presenter.ImageDetailPresenter;
 public class ImageDetailActivity extends BaseActivity<ImageDetailViewInterface,ImageDetailPresenter> implements ImageDetailViewInterface {
 
     private ImageView mImageView;
+    private String mUrl;
+    private boolean mHasFullImg;
+    private int mMaxWidth;
+    private int mMaxHeight;
+    private Bitmap mBitmap;
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        String url=getIntent().getStringExtra("url");
-        mPresenter.loadBitmap(url);
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (mHasFullImg) {
+            mPresenter.loadFullImage(mUrl, mImageView, mMaxWidth, mMaxHeight);
+        }else {
+            mPresenter.loadBitmapFromDiskCache(mUrl, mMaxWidth, mMaxHeight);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if(mBitmap!=null) {
+            mBitmap.recycle();
+        }
+    }
+
+    @Override
+    protected void initData() {
+        mUrl=getIntent().getStringExtra("url");
+        mHasFullImg = getIntent().getBooleanExtra("hasFullImg",false);
+        mMaxWidth= 700;
+        mMaxHeight=1400;
     }
 
     @Override
@@ -33,7 +58,10 @@ public class ImageDetailActivity extends BaseActivity<ImageDetailViewInterface,I
 
     @Override
     public void showImage(Bitmap bitmap) {
-        mImageView.setImageBitmap(bitmap);
+        if(bitmap!=null) {
+            mBitmap=bitmap;
+            mImageView.setImageBitmap(bitmap);
+        }
     }
 
     @Override

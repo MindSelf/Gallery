@@ -2,6 +2,7 @@ package com.example.zhaolexi.imageloader.model;
 
 import com.example.zhaolexi.imageloader.bean.Image;
 import com.example.zhaolexi.imageloader.presenter.ImagePresenter;
+import com.example.zhaolexi.imageloader.utils.SharePreferencesUtils;
 import com.example.zhaolexi.imageloader.utils.Uri;
 import com.google.gson.Gson;
 
@@ -27,15 +28,17 @@ public class ImageModelImpl implements ImageModel {
 
     private ImagePresenter mPresenter;
     private OkHttpClient mClient;
+    private String mUri;
 
-    public ImageModelImpl(ImagePresenter presenter){
-        this.mPresenter=presenter;
-        mClient=new OkHttpClient();
+    public ImageModelImpl(ImagePresenter presenter) {
+        this.mPresenter = presenter;
+        mClient = new OkHttpClient();
+        mUri = SharePreferencesUtils.getString(SharePreferencesUtils.Url, Uri.Girls);
     }
 
     @Override
     public void loadUri(int currentPage, final ImagePresenter.OnLoadFinishListener listener) {
-        Request request=new Request.Builder().url(Uri.girls+currentPage).build();
+        Request request=new Request.Builder().url(mUri+currentPage).build();
         Call call= mClient.newCall(request);
         call.enqueue(new Callback() {
             @Override
@@ -47,20 +50,16 @@ public class ImageModelImpl implements ImageModel {
             public void onResponse(Call call, Response response) throws IOException {
 
                 try {
-                    JSONObject jsonObject=new JSONObject(response.body().string());
-                    if(!jsonObject.getBoolean("error")){
-                        JSONArray result=jsonObject.getJSONArray("results");
-                        if(result.length()<10){
-                            listener.noMoreData();
-                        }else {
-                            List<Image> newData = new ArrayList<>();
-                            Gson gson = new Gson();
-                            for (int i = 0; i < result.length(); i++) {
-                                newData.add(gson.fromJson(result.getJSONObject(i).toString(), Image.class));
-                            }
-                            listener.onLoadSuccess(newData);
+                    JSONObject jsonObject = new JSONObject(response.body().string());
+                    if (!jsonObject.getBoolean("error")) {
+                        JSONArray result = jsonObject.getJSONArray("results");
+                        List<Image> newData = new ArrayList<>();
+                        Gson gson = new Gson();
+                        for (int i = 0; i < result.length(); i++) {
+                            newData.add(gson.fromJson(result.getJSONObject(i).toString(), Image.class));
                         }
-                    }else{
+                        listener.onLoadSuccess(result.length() >= 10, newData);
+                    } else {
                         listener.onLoadFail();
                     }
                 } catch (JSONException e) {
@@ -68,5 +67,10 @@ public class ImageModelImpl implements ImageModel {
                 }
             }
         });
+    }
+
+    @Override
+    public void setUri(String newUrl) {
+        mUri=newUrl;
     }
 }

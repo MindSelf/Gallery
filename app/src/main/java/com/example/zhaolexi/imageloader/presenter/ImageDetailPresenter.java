@@ -3,6 +3,7 @@ package com.example.zhaolexi.imageloader.presenter;
 import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.Message;
+import android.widget.ImageView;
 
 import com.example.zhaolexi.imageloader.base.BasePresenter;
 import com.example.zhaolexi.imageloader.model.ImageDetailModel;
@@ -42,8 +43,8 @@ public class ImageDetailPresenter extends BasePresenter<ImageDetailViewInterface
         mModel=new ImageDetailModelImpl(this);
     }
 
-    public void loadBitmap(String url){
-        mModel.loadBitmapFromDisk(url, new onLoadFinishListener() {
+    public void loadBitmapFromDiskCache(String url, int reqWidth, int reqHeight) {
+        mModel.loadBitmapFromDiskCache(url, reqWidth, reqHeight, new onLoadFinishListener() {
             @Override
             public void onSuccess(Bitmap bitmap) {
                 Message message = Message.obtain(mHandler, MSG_LOAD_SUCCESS, bitmap);
@@ -55,6 +56,10 @@ public class ImageDetailPresenter extends BasePresenter<ImageDetailViewInterface
                 mHandler.sendEmptyMessage(MSG_LOAD_FAIL);
             }
         });
+    }
+
+    public void loadFullImage(String url, ImageView imageView, int reqWidth, int reqHeight) {
+        mModel.loadFullImg(url, imageView, reqWidth, reqHeight);
     }
 
     public interface onLoadFinishListener{

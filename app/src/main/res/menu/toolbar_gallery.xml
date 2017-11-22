@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/select_photo"
+        android:title="添加图片"
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/add_album"
+        android:title="新建相册"
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/open_album"
+        android:title="打开相册"
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/random"
+        android:title="随便看看"
+        app:showAsAction="never"/>
+
+</menu>

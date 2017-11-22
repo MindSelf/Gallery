@@ -16,6 +16,7 @@ import android.util.Log;
 import android.widget.ImageView;
 
 import com.example.zhaolexi.imageloader.R;
+import com.example.zhaolexi.imageloader.utils.MD5;
 import com.example.zhaolexi.imageloader.utils.MyUtils;
 
 import java.io.BufferedInputStream;
@@ -26,8 +27,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.SocketTimeoutException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
@@ -39,7 +38,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-import static java.lang.System.in;
 
 public class ImageLoader {
 
@@ -192,21 +190,26 @@ public class ImageLoader {
          */
     }
 
-    public Bitmap loadRawBitmap(String url) throws IOException {
+    public Bitmap loadRawBitmap(String url,int reqWidth,int reqHeight) throws IOException {
         if (Looper.myLooper() == Looper.getMainLooper()) {
             Log.w(TAG, "load bitmap from UI Thread, it's not recommended!");
         }
+
+        if (url.startsWith("/")) {
+            return mImageResizer.decodeSampledBitmapFromFile(url, reqWidth, reqHeight);
+        }
+
         if (mDiskLruCache == null) {
             return null;
         }
 
         Bitmap bitmap = null;
-        String key = hashKeyFormUrl(url);
+        String key = MD5.digest(url);
         DiskLruCache.Snapshot snapShot = mDiskLruCache.get(key);
         if (snapShot != null) {
             FileInputStream fileInputStream = (FileInputStream)snapShot.getInputStream(DISK_CACHE_INDEX);
             FileDescriptor fileDescriptor = fileInputStream.getFD();
-            bitmap = mImageResizer.decodeSampledBitmapFromFileDescriptor(fileDescriptor, 0, 0);
+            bitmap = mImageResizer.decodeSampledBitmapFromFileDescriptor(fileDescriptor, reqWidth, reqHeight);
         }
 
         return bitmap;
@@ -227,10 +230,16 @@ public class ImageLoader {
             return bitmap;
         }
 
+        if(uri.startsWith("/")){
+            bitmap = mImageResizer.decodeSampledBitmapFromFile(uri, reqWidth, reqHeight);
+            addBitmapToMemoryCache(MD5.digest(uri), bitmap);
+            return bitmap;
+        }
+
         try {
             bitmap = loadBitmapFromDiskCache(uri, reqWidth, reqHeight);
             if (bitmap != null) {
-                Log.d(TAG, "loadBitmapFromDisk,url:" + uri);
+                Log.d(TAG, "loadBitmapFromDiskCache,url:" + uri);
                 return bitmap;
             }
             bitmap = loadBitmapFromHttp(uri, reqWidth, reqHeight);
@@ -262,7 +271,7 @@ public class ImageLoader {
     }
 
     public Bitmap loadBitmapFromMemCache(String url) {
-        final String key = hashKeyFormUrl(url);
+        final String key = MD5.digest(url);
         Bitmap bitmap = getBitmapFromMemCache(key);
         return bitmap;
     }
@@ -277,7 +286,7 @@ public class ImageLoader {
             return null;
         }
 
-        String key = hashKeyFormUrl(url);
+        String key = MD5.digest(url);
         DiskLruCache.Editor editor = mDiskLruCache.edit(key);
 
         //将从网络中加载的原图放入磁盘缓存
@@ -303,7 +312,7 @@ public class ImageLoader {
         }
 
         Bitmap bitmap = null;
-        String key = hashKeyFormUrl(url);
+        String key = MD5.digest(url);
         DiskLruCache.Snapshot snapShot = mDiskLruCache.get(key);
         if (snapShot != null) {
             FileInputStream fileInputStream = (FileInputStream)snapShot.getInputStream(DISK_CACHE_INDEX);
@@ -361,10 +370,11 @@ public class ImageLoader {
                 .connectTimeout(5,TimeUnit.SECONDS)
                 .build();
         Request request=new Request.Builder().url(urlString).build();
+        BufferedInputStream in=null;
         Bitmap bitmap=null;
         try{
             Response response=client.newCall(request).execute();
-            BufferedInputStream in = new BufferedInputStream(response.body().byteStream(), IO_BUFFER_SIZE);
+            in = new BufferedInputStream(response.body().byteStream(), IO_BUFFER_SIZE);
             bitmap=BitmapFactory.decodeStream(in);
         } catch (IOException e) {
             if(e instanceof SocketTimeoutException)
@@ -376,30 +386,6 @@ public class ImageLoader {
         }
 
         return bitmap;
-    }
-
-    private String hashKeyFormUrl(String url) {
-        String cacheKey;
-        try {
-            final MessageDigest mDigest = MessageDigest.getInstance("MD5");
-            mDigest.update(url.getBytes());
-            cacheKey = bytesToHexString(mDigest.digest());
-        } catch (NoSuchAlgorithmException e) {
-            cacheKey = String.valueOf(url.hashCode());
-        }
-        return cacheKey;
-    }
-
-    private String bytesToHexString(byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < bytes.length; i++) {
-            String hex = Integer.toHexString(0xFF & bytes[i]);
-            if (hex.length() == 1) {
-                sb.append('0');
-            }
-            sb.append(hex);
-        }
-        return sb.toString();
     }
 
     /**
