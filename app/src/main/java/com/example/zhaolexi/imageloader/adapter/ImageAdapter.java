@@ -39,35 +39,35 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
     private OnItemClickListener onItemClickListener;
 
     //初始值为true，因为我们是在onScrollStateChange时设置idle值，而刚打开时不会回调onScrollStateChange
-    private boolean mIsIdle=true;
+    private boolean mIsIdle = true;
     private int mFooterState;
     private int mImageWidth;
 
-    public static final int TYPE_NORMAL=1;
-    public static final int TYPE_FOOTER=2;
-    public  static final int FOOTER_LOADING=1<<1;
-    public static final int FOOTER_NEWDATA =1<<2;
-    public static final int FOOTER_ERROR=1<<3;
-    public static final int FOOTER_NODATA=1<<4;
+    public static final int TYPE_NORMAL = 1;
+    public static final int TYPE_FOOTER = 2;
+    public static final int FOOTER_LOADING = 1 << 1;
+    public static final int FOOTER_NEWDATA = 1 << 2;
+    public static final int FOOTER_ERROR = 1 << 3;
+    public static final int FOOTER_NODATA = 1 << 4;
 
     public ImageAdapter(Context context) {
         mImageList = new ArrayList<>();
-        mImageLoader = ImageLoader.getInstance(context);
+        mImageLoader = ImageLoader.Builder.build(context);
         mDefaultBitmapDrawable = context.getResources().getDrawable(R.drawable.image_default);
         int screenWidth = MyUtils.getScreenMetrics(context).widthPixels;
-        mImageWidth = screenWidth / 2;
+        mImageWidth = (screenWidth - MyUtils.dp2px(context, 16)) / 2;
     }
 
     public void setFooterState(int footerState) {
-        mFooterState=footerState;
+        mFooterState = footerState;
     }
 
     public void setIsIdle(boolean isIdle) {
         this.mIsIdle = isIdle;
     }
 
-    public void setOnItemClickListener(OnItemClickListener listener){
-        this.onItemClickListener=listener;
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.onItemClickListener = listener;
     }
 
     public void clearImages() {
@@ -82,10 +82,10 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
     @Override
     public void onViewAttachedToWindow(RecyclerView.ViewHolder holder) {
         super.onViewAttachedToWindow(holder);
-        ViewGroup.LayoutParams layoutParams=holder.itemView.getLayoutParams();
-        if(layoutParams!=null&&layoutParams instanceof StaggeredGridLayoutManager.LayoutParams){
-            StaggeredGridLayoutManager.LayoutParams lp=(StaggeredGridLayoutManager.LayoutParams) layoutParams;
-            lp.setFullSpan(getItemViewType(holder.getLayoutPosition())==TYPE_FOOTER);
+        ViewGroup.LayoutParams layoutParams = holder.itemView.getLayoutParams();
+        if (layoutParams != null && layoutParams instanceof StaggeredGridLayoutManager.LayoutParams) {
+            StaggeredGridLayoutManager.LayoutParams lp = (StaggeredGridLayoutManager.LayoutParams) layoutParams;
+            lp.setFullSpan(getItemViewType(holder.getLayoutPosition()) == TYPE_FOOTER);
         }
     }
 
@@ -93,7 +93,7 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
     public void onAttachedToRecyclerView(RecyclerView recyclerView) {
         super.onAttachedToRecyclerView(recyclerView);
         RecyclerView.LayoutManager manager = recyclerView.getLayoutManager();
-        if(manager instanceof GridLayoutManager) {
+        if (manager instanceof GridLayoutManager) {
             final GridLayoutManager gridManager = ((GridLayoutManager) manager);
             gridManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
                 @Override
@@ -107,16 +107,16 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
 
     @Override
     public int getItemViewType(int position) {
-        int type=position+1==getItemCount()?TYPE_FOOTER:TYPE_NORMAL;
+        int type = position + 1 == getItemCount() ? TYPE_FOOTER : TYPE_NORMAL;
         return type;
     }
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        if(viewType==TYPE_NORMAL){
-            View view= LayoutInflater.from(parent.getContext()).inflate(R.layout.image_list_item,parent,false);
+        if (viewType == TYPE_NORMAL) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.image_list_item, parent, false);
             return new ItemViewHolder(view);
-        }else{
+        } else {
             mFooter = LayoutInflater.from(parent.getContext()).inflate(R.layout.image_list_footer, parent, false);
             return new FooterViewHolder(mFooter);
         }
@@ -125,9 +125,9 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         if (getItemViewType(position) == TYPE_NORMAL) {
-            ItemViewHolder viewholder=(ItemViewHolder) holder;
-            ImageView imageView=viewholder.imageView;
-            TextView textView=viewholder.description;
+            ItemViewHolder viewholder = (ItemViewHolder) holder;
+            ImageView imageView = viewholder.imageView;
+            TextView textView = viewholder.description;
             textView.setText(mImageList.get(position).getDescription());
 
             final String tag = (String) imageView.getTag();
@@ -141,16 +141,16 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
                 } else {
                     imageView.setImageDrawable(mDefaultBitmapDrawable);
                 }
-                bitmap=null;
+                bitmap = null;
             }
             //优化列表卡顿，为了避免频繁的加载图片，只在列表停下来的时候才加载图片
             if (mIsIdle) {
                 imageView.setTag(uri);
-                mImageLoader.bindBitmap(uri, imageView, mImageWidth, 0);
+                mImageLoader.bindBitmap(uri, imageView, new ImageLoader.TaskOptions(mImageWidth, 0));
             }
 
-        }else{
-            FooterViewHolder viewHolder=(FooterViewHolder) holder;
+        } else {
+            FooterViewHolder viewHolder = (FooterViewHolder) holder;
             switch (mFooterState) {
                 case FOOTER_NEWDATA:
                     viewHolder.progressBar.setVisibility(View.GONE);
@@ -175,13 +175,13 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
 
     @Override
     public int getItemCount() {
-        return mImageList.size()+1;
+        return mImageList.size() + 1;
     }
 
     @Override
     public void onItemMove(int fromPosition, int toPosition) {
         Collections.swap(mImageList, fromPosition, toPosition);
-        notifyItemMoved(fromPosition,toPosition);
+        notifyItemMoved(fromPosition, toPosition);
     }
 
     public Image getItem(int position) {
@@ -207,7 +207,7 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
         }
     }
 
-    public class FooterViewHolder extends RecyclerView.ViewHolder{
+    public class FooterViewHolder extends RecyclerView.ViewHolder {
 
         TextView textView;
         ProgressBar progressBar;

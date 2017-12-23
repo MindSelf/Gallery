@@ -13,19 +13,25 @@ import com.example.zhaolexi.imageloader.base.MyApplication;
 import com.example.zhaolexi.imageloader.bean.Photo;
 import com.example.zhaolexi.imageloader.bean.PhotoBucket;
 import com.example.zhaolexi.imageloader.presenter.SeletePhotoPresenter;
+import com.example.zhaolexi.imageloader.utils.MyUtils;
 import com.example.zhaolexi.imageloader.utils.SharePreferencesUtils;
 import com.example.zhaolexi.imageloader.utils.Uri;
+import com.example.zhaolexi.imageloader.utils.loader.ImageLoader;
+import com.example.zhaolexi.imageloader.utils.loader.ImageResizer;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -42,31 +48,47 @@ import okhttp3.Response;
 
 public class LocalPhotoModelImpl implements LocalPhotoModel {
 
+    private static final String TAG = "LocalPhotoModelImpl";
+    private AtomicInteger totalsize = new AtomicInteger(0);
+
     private static final MediaType MEDIA_TYPE_PNG = MediaType.parse("image/png");
     private static final int SUCCESS = 1;
+    private static final int MAX_UPLOAD_SIZE=2*1024*1024;
 
+    private ImageLoader mImageLoader;
     private OkHttpClient mClient;
     private Call mCall;
     private ContentResolver mContentResolver;
-    private SparseArray<String> mThumbnailList;
-    private SparseArray<PhotoBucket> mBucketList;
-    private List<PhotoBucket> mBuckets;
+    private SparseArray<String> mThumbnails; //缩略图
+    private SparseArray<PhotoBucket> mBuckets;   //相册id与相册的map
+    private List<PhotoBucket> mBucketList;    //相册的list
+    private int mEdge;
 
     public LocalPhotoModelImpl() {
         mContentResolver = MyApplication.getContext().getContentResolver();
-        mThumbnailList = new SparseArray<>();
-        mBucketList = new SparseArray<>();
+        mImageLoader = ImageLoader.Builder.build(MyApplication.getContext());
+        mThumbnails = new SparseArray<>();
+        mBuckets = new SparseArray<>();
         mClient = new OkHttpClient.Builder()
                 .connectTimeout(10, TimeUnit.SECONDS)
                 .writeTimeout(0, TimeUnit.SECONDS)
                 .readTimeout(0, TimeUnit.SECONDS)
                 .build();
+        mEdge = MyUtils.dp2px(MyApplication.getContext(), 80);
     }
 
+    /**
+     * 获取系统相册
+     *
+     * @return 相册的list
+     */
     @Override
     public List<PhotoBucket> getBuckets() {
 
-        if (mBuckets == null) {
+        //第一次获取系统相册时创建mBuckets
+        if (mBucketList == null) {
+            mBucketList = new ArrayList<>();
+
             getThumbnails();
 
             String[] projection = {Media._ID, Media.BUCKET_ID, Media.DATA, Media.BUCKET_DISPLAY_NAME};
@@ -81,54 +103,91 @@ public class LocalPhotoModelImpl implements LocalPhotoModel {
                 String path = cursor.getString(column_path);
                 String name = cursor.getString(column_display_name);
 
-                PhotoBucket bucket = mBucketList.get(bucket_id);
+                //相册名相同的照片放在同一个Bucket中
+
+                PhotoBucket bucket = mBuckets.get(bucket_id);
+                //如果相册不存在则向mBuckets中添加一个Bucket
                 if (bucket == null) {
                     bucket = new PhotoBucket();
                     bucket.setName(name);
-                    mBucketList.put(bucket_id, bucket);
+                    mBuckets.put(bucket_id, bucket);
                 }
                 Photo photo = new Photo();
                 photo.setPath(path);
-                photo.setThumbnailPath(mThumbnailList.get(id));
+                photo.setThumbnailPath(mThumbnails.get(id));
                 bucket.getPhotoList().add(photo);
                 bucket.setCount(bucket.getCount() + 1);
             }
+            cursor.close();
 
-            List<PhotoBucket> buckets = new ArrayList<>();
-
-            PhotoBucket totalBucket = new PhotoBucket();
+            final PhotoBucket totalBucket = new PhotoBucket();
             totalBucket.setName("所有图片");
-            buckets.add(totalBucket);
+            mBucketList.add(totalBucket);
             int sum = 0;
 
-            for (int i = 0; i < mBucketList.size(); i++) {
-                int key = mBucketList.keyAt(i);
-                PhotoBucket bucket = mBucketList.get(key);
+            for (int i = 0; i < mBuckets.size(); i++) {
+                int key = mBuckets.keyAt(i);
+                final PhotoBucket bucket = mBuckets.get(key);
 
-                Bitmap cover = BitmapFactory.decodeFile(bucket.getPhotoList().get(0).getThumbnailPath());
-                if (cover == null) {
-                    cover = BitmapFactory.decodeFile(bucket.getPhotoList().get(0).getPath());
-                }
-                bucket.setCover(cover);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Bitmap cover = null;
+                        try {
+                            cover = mImageLoader.loadBitmapFromDisk(bucket.getPhotoList().get(0).getThumbnailPath(), new ImageLoader.TaskOptions(mEdge, mEdge,100));
+                            if (cover == null) {
+                                //Unable to decode stream or ThumbnailPath is null
+                                cover = mImageLoader.loadBitmapFromDisk(bucket.getPhotoList().get(0).getPath(), new ImageLoader.TaskOptions(mEdge, mEdge,100));
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        bucket.setCover(cover);
+                        Log.d(TAG, "cover: "+cover.getByteCount()/1024);
+                        totalsize.addAndGet(cover.getByteCount());
+                    }
+                }).start();
 
-                buckets.add(bucket);
+                mBucketList.add(bucket);
 
                 totalBucket.getPhotoList().addAll(bucket.getPhotoList());
                 sum += bucket.getCount();
             }
 
             totalBucket.setCount(sum);
-            Bitmap cover = BitmapFactory.decodeFile(totalBucket.getPhotoList().get(0).getThumbnailPath());
-            if (cover == null) {
-                cover = BitmapFactory.decodeFile(totalBucket.getPhotoList().get(0).getPath());
-            }
-            totalBucket.setCover(cover);
 
-            mBuckets = buckets;
+            if (sum > 0) {
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Bitmap cover = null;
+                        try {
+                            cover = mImageLoader.loadBitmapFromDisk(totalBucket.getPhotoList().get(0).getThumbnailPath(), new ImageLoader.TaskOptions(mEdge, mEdge,100));
+                            if (cover == null) {
+                                //Unable to decode stream or ThumbnailPath is null
+                                cover = mImageLoader.loadBitmapFromDisk(totalBucket.getPhotoList().get(0).getPath(), new ImageLoader.TaskOptions(mEdge, mEdge,100));
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        totalBucket.setCover(cover);
+                        Log.d(TAG, "cover: "+cover.getByteCount()/1024);
+                        totalsize.addAndGet(cover.getByteCount());
+                    }
+                }).start();
+            }
+
         }
-        return mBuckets;
+        Log.d(TAG, "totalsize: " + totalsize.get() / 1024);
+        return mBucketList;
     }
 
+    /**
+     * 上传图片
+     *
+     * @param files    所要上传的图片文件
+     * @param listener 回调接口
+     */
     @Override
     public void uploadImg(List<File> files, final SeletePhotoPresenter.OnUploadFinishListener listener) {
 
@@ -137,7 +196,13 @@ public class LocalPhotoModelImpl implements LocalPhotoModel {
         for (File file : files) {
             if (file != null) {
                 //将File转化成输入流放入表单中
-                builder.addFormDataPart("photos", file.getName(), RequestBody.create(MEDIA_TYPE_PNG, file));
+                Bitmap bitmap = null;
+                try {
+                    bitmap = BitmapFactory.decodeStream(new FileInputStream(file));
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+                builder.addFormDataPart("photos", file.getName(), RequestBody.create(MEDIA_TYPE_PNG, ImageResizer.compressImage(bitmap,MAX_UPLOAD_SIZE)));
             }
         }
         //添加其他信息
@@ -171,10 +236,10 @@ public class LocalPhotoModelImpl implements LocalPhotoModel {
                     JSONObject jsonObject = new JSONObject(response.body().string());
                     int code = jsonObject.getInt("code");
                     String msg = jsonObject.getString("msg");
-                    if(code==SUCCESS) {
+                    if (code == SUCCESS) {
                         listener.onUploadFinish(true, msg);
-                    }else{
-                        listener.onUploadFinish(false,msg);
+                    } else {
+                        listener.onUploadFinish(false, msg);
                     }
                 } catch (JSONException e) {
                     listener.onUploadFinish(false, "服务器异常");
@@ -184,9 +249,14 @@ public class LocalPhotoModelImpl implements LocalPhotoModel {
         });
     }
 
+    /**
+     * 取消图片上传
+     *
+     * @return 取消上传任务是否成功
+     */
     @Override
     public boolean cancle() {
-        if (mCall!=null&&!mCall.isCanceled()) {
+        if (mCall != null && !mCall.isCanceled()) {
             mCall.cancel();
             return true;
         } else {
@@ -194,6 +264,9 @@ public class LocalPhotoModelImpl implements LocalPhotoModel {
         }
     }
 
+    /*
+    获取手机中的缩略图
+     */
     private void getThumbnails() {
         String[] projection = {Thumbnails.IMAGE_ID, Thumbnails.DATA};
         Cursor cursor = mContentResolver.query(Thumbnails.EXTERNAL_CONTENT_URI, projection, null, null, null);
@@ -202,7 +275,7 @@ public class LocalPhotoModelImpl implements LocalPhotoModel {
         while (cursor.moveToNext()) {
             int id = cursor.getInt(column_id);
             String path = cursor.getString(column_data);
-            mThumbnailList.put(id, path);
+            mThumbnails.put(id, path);
         }
         cursor.close();
     }

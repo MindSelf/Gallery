@@ -41,31 +41,17 @@ import okhttp3.Response;
 
 public class ImageLoader {
 
-    private static volatile ImageLoader instance;
-
     private static final String TAG = "ImageLoader";
 
-    public static final int MESSAGE_POST_RESULT = 1;
 
     /*
-    线程池参数：核心线程数为2*CPU核心数，线程限制超时时长10s
+    默认线程池参数：为适应IO密集型操作，总线程数=核心线程数=2*CPU，采用无界的阻塞队列
      */
     private static final int CPU_COUNT = Runtime.getRuntime()
             .availableProcessors();
-    private static final int CORE_POOL_SIZE = 2*CPU_COUNT ;
-    private static final int MAXIMUM_POOL_SIZE = 2*CPU_COUNT;
+    private static final int CORE_POOL_SIZE = 2 * CPU_COUNT;
+    private static final int MAXIMUM_POOL_SIZE = 2 * CPU_COUNT;
     private static final long KEEP_ALIVE = 5L;
-
-    /*
-    磁盘缓存参数：缓存容量为50M，节点数为1
-     */
-//    private static final int TAG_KEY_LOADING=R.id.imageloader_loading;
-    private static final int TAG_KEY_URI = R.id.imageloader_uri;
-    private static final long DISK_CACHE_SIZE = 1024 * 1024 * 50;
-    private static final int IO_BUFFER_SIZE = 8 * 1024;
-    private static final int DISK_CACHE_INDEX = 0;
-    private boolean mIsDiskLruCacheCreated = false;
-
     private static final ThreadFactory sThreadFactory = new ThreadFactory() {
         private final AtomicInteger mCount = new AtomicInteger(1);
 
@@ -73,38 +59,66 @@ public class ImageLoader {
             return new Thread(r, "ImageLoader#" + mCount.getAndIncrement());
         }
     };
-
-    public static final Executor THREAD_POOL_EXECUTOR = new ThreadPoolExecutor(
+    public static final Executor sDefaultExecutor = new ThreadPoolExecutor(
             CORE_POOL_SIZE, MAXIMUM_POOL_SIZE,
             KEEP_ALIVE, TimeUnit.SECONDS,
             new LinkedBlockingQueue<Runnable>(), sThreadFactory);
 
+    /*
+    磁盘缓存参数：默认缓存容量为50M，节点数为1
+     */
+    private static long sDiskCacheSize = 1024 * 1024 * 50;
+    private static final int DISK_CACHE_INDEX = 0;
+    private boolean mIsDiskLruCacheCreated = false;
+
+    /*
+    内存缓存参数：默认容量为可用内存的1/8
+     */
+    private static int sMemoryCacheRate = 8;
+
+    /*
+    IO流用于缓冲区的数组大小为8k
+     */
+    private static final int IO_BUFFER_SIZE = 8 * 1024;
+
+    private static final int TAG_KEY_URI = R.id.imageloader_uri;
+    public static final int MESSAGE_POST_RESULT = 1;
     private Handler mMainHandler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
-            LoaderResult result = (LoaderResult) msg.obj;
-            ImageView imageView = result.imageView;
-            String uri = (String) imageView.getTag(TAG_KEY_URI);
-            if (uri.equals(result.uri)) {
-                imageView.setImageBitmap(result.bitmap);
-            } else {
-                //列表错位问题：滑太快的话图片加载完成要设置图片时已经设置到复用的item上
-                //解决办法，判断image的url有没有改变
-                Log.w(TAG, "set image bitmap,but url has changed, ignored!");
+            switch (msg.what) {
+                //将加载完的图片显示到imageView上
+                case MESSAGE_POST_RESULT:
+                    LoaderResult result = (LoaderResult) msg.obj;
+                    ImageView imageView = result.imageView;
+                    //列表错位问题：滑太快的话图片加载完成要设置图片时已经设置到复用的item上
+                    //解决办法，判断image的url有没有改变
+                    String uri = (String) imageView.getTag(TAG_KEY_URI);
+                    if (uri.equals(result.uri)) {
+                        imageView.setImageBitmap(result.bitmap);
+                    } else {
+                        Log.w(TAG, "set image bitmap,but url has changed, ignored!");
+                    }
+                    break;
+                default:
+                    super.handleMessage(msg);
             }
+
         }
     };
 
     private Context mContext;
+    private Executor mExecutor = sDefaultExecutor;
     private ImageResizer mImageResizer = new ImageResizer();
     private LruCache<String, Bitmap> mMemoryCache;
     private DiskLruCache mDiskLruCache;
 
     private ImageLoader(Context context) {
-        mContext = context.getApplicationContext();
-        //缓存空间为当前可用内存的1/8，单位kb
+        mContext = context;
+
+        //内存缓存，默认为可用内存的1/8
         int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
-        int cacheSize = maxMemory / 4;
+        int cacheSize = maxMemory / sMemoryCacheRate;
         mMemoryCache = new LruCache<String, Bitmap>(cacheSize) {
             //计算缓存对象大小
             @Override
@@ -113,51 +127,69 @@ public class ImageLoader {
             }
         };
 
+        //磁盘缓存，默认为20M
         File diskCacheDir = getDiskCacheDir(mContext, "bitmap");
         if (!diskCacheDir.exists()) {
             diskCacheDir.mkdirs();
         }
-        if (getUsableSpace(diskCacheDir) > DISK_CACHE_SIZE) {
+        if (getUsableSpace(diskCacheDir) > sDiskCacheSize) {
             try {
                 mDiskLruCache = DiskLruCache.open(diskCacheDir, 1, 1,
-                        DISK_CACHE_SIZE);
+                        sDiskCacheSize);
                 mIsDiskLruCacheCreated = true;
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        } else {
+            Log.w(TAG, "ImageLoader: insufficient memory when create diskCache!");
         }
-        //机身内存不足，磁盘缓存失效
     }
 
     /**
-     * getInstance a new instance of ImageLoader
-     * @param context
-     * @return a new instance of ImageLoader
+     * build a singleton of ImageLoader
+     * you can choose to initialize a ThreadPool、MemoryCache or DiskCache
      */
-    public static ImageLoader getInstance(Context context) {
-        if(instance==null){
-            synchronized (ImageLoader.class) {
-                if(instance==null){
-                    instance = new ImageLoader(context);
+    public static class Builder {
+        private static volatile ImageLoader sInstance;
+
+        public static ImageLoader build(Context context) {
+            if (sInstance == null) {
+                synchronized (ImageLoader.class) {
+                    if (sInstance == null) {
+                        sInstance = new ImageLoader(context);
+                    }
                 }
             }
+            return sInstance;
         }
-        return instance;
-    }
 
+        private Builder initExecutor(ThreadPoolExecutor executor) {
+            sInstance.mExecutor = executor;
+            return this;
+        }
+
+        private Builder initMemoryCacheRate(int rate) {
+            sInstance.sMemoryCacheRate = rate;
+            return this;
+        }
+
+        private Builder initDiskCacheSize(long size) {
+            sInstance.sDiskCacheSize = size;
+            return this;
+        }
+
+    }
 
     /**
      * load bitmap from memory cache or disk cache or network async, then bind imageView and bitmap.
      * NOTE THAT: should run in UI Thread
-     * @param uri http url
-     * @param imageView bitmap's bind object
+     *
+     * @param uri         http url/path
+     * @param imageView   bitmap's bind object
+     * @param taskOptions
      */
-    public void bindBitmap(final String uri, final ImageView imageView) {
-        bindBitmap(uri, imageView, 0, 0);
-    }
-
-    public void bindBitmap(final String uri, final ImageView imageView,
-            final int reqWidth, final int reqHeight) {
+    public void bindBitmap(final String uri, final ImageView imageView, final TaskOptions taskOptions) {
+        imageView.getWidth();
         imageView.setTag(TAG_KEY_URI, uri);
         Bitmap bitmap = loadBitmapFromMemCache(uri);
         if (bitmap != null) {
@@ -172,9 +204,12 @@ public class ImageLoader {
             public void run() {
                 Bitmap bitmap = null;
                 try {
-                    bitmap = loadBitmap(uri, reqWidth, reqHeight);
+                    bitmap = loadBitmap(uri, taskOptions);
                 } catch (SocketTimeoutException e) {
                     bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.image_fail);
+                    if (taskOptions.handler != null) {
+                        taskOptions.handler.onHandleSocketTimeout();
+                    }
                 }
                 if (bitmap != null) {
                     LoaderResult result = new LoaderResult(imageView, uri, bitmap);
@@ -182,23 +217,187 @@ public class ImageLoader {
                 }
             }
         };
-        THREAD_POOL_EXECUTOR.execute(loadBitmapTask);
 
         /*
         如果采用普通线程加载图片，随着列表的滑动可能会产生大量线程，影响整体效率
         不使用AsyncTask是因为3.0以上无法实现并发效果
          */
+        mExecutor.execute(loadBitmapTask);
+
     }
 
-    public Bitmap loadRawBitmap(String url,int reqWidth,int reqHeight) throws IOException {
+    /**
+     * only load bitmap from memory cache
+     *
+     * @param url
+     * @return
+     */
+    public Bitmap loadBitmapFromMemCache(String url) {
+        if (url == null) {
+            return null;
+        }
+        final String key = MD5.digest(url);
+        Bitmap bitmap = getBitmapFromMemCache(key);
+        return bitmap;
+    }
+
+    /**
+     * only load bitmap from disk（because bitmap from memory cache has been resized）
+     * NOTE THAT: should run in UI Thread
+     *
+     * @param url
+     * @param taskOptions   include reqWidth and reqHeight
+     * @return
+     * @throws IOException
+     */
+    public Bitmap loadBitmapFromDisk(String url, TaskOptions taskOptions) throws IOException {
+        if(url==null) {
+            return null;
+        }
+
         if (Looper.myLooper() == Looper.getMainLooper()) {
             Log.w(TAG, "load bitmap from UI Thread, it's not recommended!");
         }
 
         if (url.startsWith("/")) {
-            return mImageResizer.decodeSampledBitmapFromFile(url, reqWidth, reqHeight);
+            FileInputStream fis = new FileInputStream(url);
+            FileDescriptor fd = fis.getFD();
+            return mImageResizer.decodeSampledBitmapFromFileDescriptor(fd,taskOptions);
         }
 
+        if (mDiskLruCache == null) {
+            return downloadBitmapFromUrl(url, taskOptions);
+        }
+
+        Bitmap bitmap = null;
+        String key = MD5.digest(url);
+        DiskLruCache.Snapshot snapShot = mDiskLruCache.get(key);
+        if (snapShot != null) {
+            FileInputStream fileInputStream = (FileInputStream) snapShot.getInputStream(DISK_CACHE_INDEX);
+            FileDescriptor fileDescriptor = fileInputStream.getFD();
+            bitmap = mImageResizer.decodeSampledBitmapFromFileDescriptor(fileDescriptor,taskOptions);
+        }
+
+        return bitmap;
+    }
+
+    /**
+     * only load bitmap from net
+     *
+     * @param urlString
+     * @param taskOptions
+     * @return
+     * @throws SocketTimeoutException
+     */
+    public Bitmap downloadBitmapFromUrl(String urlString, TaskOptions taskOptions) throws SocketTimeoutException {
+
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            throw new RuntimeException("can not visit network from UI Thread.");
+        }
+
+        if (urlString == null) {
+            return null;
+        }
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(5, TimeUnit.SECONDS)
+                .build();
+        Request request = new Request.Builder().url(urlString).build();
+        BufferedInputStream in = null;
+        Bitmap bitmap = null;
+        try {
+            Response response = client.newCall(request).execute();
+            in = new BufferedInputStream(response.body().byteStream(), IO_BUFFER_SIZE);
+            bitmap = mImageResizer.decodeSampledBitmapFromStream(in, taskOptions);
+        } catch (SocketTimeoutException e) {
+            throw e;
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            MyUtils.close(in);
+        }
+
+        return bitmap;
+    }
+
+    /**
+     * load bitmap from memory cache or disk cache or network.
+     *
+     * @param uri         http url
+     * @param taskOptions
+     * @return bitmap, maybe null.
+     */
+    private Bitmap loadBitmap(String uri, TaskOptions taskOptions) throws SocketTimeoutException {
+        Bitmap bitmap = loadBitmapFromMemCache(uri);
+        if (bitmap != null) {
+            Log.d(TAG, "loadBitmapFromMemCache,url:" + uri);
+            return bitmap;
+        }
+
+        //如果读取的是本地图片，则从sd卡中读取图片并缓存在内存中
+        if (uri.startsWith("/")) {
+            FileInputStream fis = null;
+            FileDescriptor fd = null;
+            try {
+                fis = new FileInputStream(uri);
+                fd = fis.getFD();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            bitmap = mImageResizer.decodeSampledBitmapFromFileDescriptor(fd, taskOptions);
+            addBitmapToMemoryCache(MD5.digest(uri), bitmap);
+            Log.d(TAG, "loadBitmapFromDisk,url:" + uri);
+            return bitmap;
+        }
+
+        try {
+            bitmap = loadBitmapFromDiskCache(uri, taskOptions);
+            if (bitmap != null) {
+                Log.d(TAG, "loadBitmapFromDiskCache,url:" + uri);
+                return bitmap;
+            }
+            bitmap = loadBitmapFromHttp(uri,taskOptions);
+            Log.d(TAG, "loadBitmapFromHttp,url:" + uri);
+        } catch (SocketTimeoutException e) {
+            throw e;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        //因为磁盘缓存失效导致Bitmap没有加载
+        if (bitmap == null && !mIsDiskLruCacheCreated) {
+            Log.w(TAG, "encounter error, DiskLruCache is not created.");
+            bitmap = downloadBitmapFromUrl(uri,taskOptions );
+        }
+
+        return bitmap;
+    }
+
+
+    /*
+    addBitmapToMemoryCache  将图片添加到内存缓存
+     */
+    private void addBitmapToMemoryCache(String key, Bitmap bitmap) {
+        if (bitmap != null && getBitmapFromMemCache(key) == null) {
+            mMemoryCache.put(key, bitmap);
+        }
+    }
+
+    /*
+    getBitmapFromMemCache 从内存缓存中获取图片
+     */
+    private Bitmap getBitmapFromMemCache(String key) {
+        return mMemoryCache.get(key);
+    }
+
+    /*
+    loadBitmapFromDiskCache 从磁盘缓存中获取图片，并将压缩后的图片添加到内存缓存
+     */
+    private Bitmap loadBitmapFromDiskCache(String url, TaskOptions taskOptions) throws IOException {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            Log.w(TAG, "load bitmap from UI Thread, it's not recommended!");
+        }
         if (mDiskLruCache == null) {
             return null;
         }
@@ -207,78 +406,23 @@ public class ImageLoader {
         String key = MD5.digest(url);
         DiskLruCache.Snapshot snapShot = mDiskLruCache.get(key);
         if (snapShot != null) {
-            FileInputStream fileInputStream = (FileInputStream)snapShot.getInputStream(DISK_CACHE_INDEX);
+            FileInputStream fileInputStream = (FileInputStream) snapShot.getInputStream(DISK_CACHE_INDEX);
             FileDescriptor fileDescriptor = fileInputStream.getFD();
-            bitmap = mImageResizer.decodeSampledBitmapFromFileDescriptor(fileDescriptor, reqWidth, reqHeight);
-        }
-
-        return bitmap;
-    }
-
-
-    /**
-     * load bitmap from memory cache or disk cache or network.
-     * @param uri http url
-     * @param reqWidth the width ImageView desired
-     * @param reqHeight the height ImageView desired
-     * @return bitmap, maybe null.
-     */
-    private Bitmap loadBitmap(String uri, int reqWidth, int reqHeight) throws SocketTimeoutException {
-        Bitmap bitmap = loadBitmapFromMemCache(uri);
-        if (bitmap != null) {
-            Log.d(TAG, "loadBitmapFromMemCache,url:" + uri);
-            return bitmap;
-        }
-
-        if(uri.startsWith("/")){
-            bitmap = mImageResizer.decodeSampledBitmapFromFile(uri, reqWidth, reqHeight);
-            addBitmapToMemoryCache(MD5.digest(uri), bitmap);
-            return bitmap;
-        }
-
-        try {
-            bitmap = loadBitmapFromDiskCache(uri, reqWidth, reqHeight);
+            bitmap = mImageResizer.decodeSampledBitmapFromFileDescriptor(fileDescriptor, taskOptions);
             if (bitmap != null) {
-                Log.d(TAG, "loadBitmapFromDiskCache,url:" + uri);
-                return bitmap;
+                //将压缩后的图片放入内存缓存
+                addBitmapToMemoryCache(key, bitmap);
             }
-            bitmap = loadBitmapFromHttp(uri, reqWidth, reqHeight);
-            Log.d(TAG, "loadBitmapFromHttp,url:" + uri);
-        } catch (IOException e) {
-            if(e instanceof SocketTimeoutException)
-                throw (SocketTimeoutException)e;
-            else
-                e.printStackTrace();
-        }
-
-        //因为磁盘缓存失效导致Bitmap没有加载
-        if (bitmap == null && !mIsDiskLruCacheCreated) {
-            Log.w(TAG, "encounter error, DiskLruCache is not created.");
-            bitmap = downloadBitmapFromUrl(uri);
         }
 
         return bitmap;
     }
 
-    private void addBitmapToMemoryCache(String key, Bitmap bitmap) {
-        if (getBitmapFromMemCache(key) == null) {
-            mMemoryCache.put(key, bitmap);
-        }
-    }
-
-    private Bitmap getBitmapFromMemCache(String key) {
-        return mMemoryCache.get(key);
-    }
-
-    public Bitmap loadBitmapFromMemCache(String url) {
-        final String key = MD5.digest(url);
-        Bitmap bitmap = getBitmapFromMemCache(key);
-        return bitmap;
-    }
-
-    private Bitmap loadBitmapFromHttp(String url, int reqWidth, int reqHeight)
+    /*
+    loadBitmapFromHttp  从网络中获取图片，并将图片添加到磁盘缓存
+     */
+    private Bitmap loadBitmapFromHttp(String url, TaskOptions taskOptions)
             throws IOException {
-        //显式禁止在UI线程进行I/O操作
         if (Looper.myLooper() == Looper.getMainLooper()) {
             throw new RuntimeException("can not visit network from UI Thread.");
         }
@@ -299,52 +443,25 @@ public class ImageLoader {
             }
         }
 
-        return loadBitmapFromDiskCache(url, reqWidth, reqHeight);
+        return loadBitmapFromDiskCache(url,taskOptions);
     }
 
-    private Bitmap loadBitmapFromDiskCache(String url, int reqWidth,
-            int reqHeight) throws IOException {
-        if (Looper.myLooper() == Looper.getMainLooper()) {
-            Log.w(TAG, "load bitmap from UI Thread, it's not recommended!");
-        }
-        if (mDiskLruCache == null) {
-            return null;
-        }
-
-        Bitmap bitmap = null;
-        String key = MD5.digest(url);
-        DiskLruCache.Snapshot snapShot = mDiskLruCache.get(key);
-        if (snapShot != null) {
-            FileInputStream fileInputStream = (FileInputStream)snapShot.getInputStream(DISK_CACHE_INDEX);
-            FileDescriptor fileDescriptor = fileInputStream.getFD();
-            bitmap = mImageResizer.decodeSampledBitmapFromFileDescriptor(fileDescriptor,
-                    reqWidth, reqHeight);
-            if (bitmap != null) {
-                //将压缩后的图片放入内存缓存
-                addBitmapToMemoryCache(key, bitmap);
-            }
-        }
-
-        return bitmap;
-    }
-
-
-    public boolean downloadUrlToStream(String urlString,
-            OutputStream outputStream) throws SocketTimeoutException {
+    private boolean downloadUrlToStream(String urlString,
+                                        OutputStream outputStream) throws SocketTimeoutException {
 
         //连接超时的时间默认是10s，在这期间核心线程会被阻塞，新的任务会被添加到LinkedBrokingQueue中，
         //LinkedBrokingQueue默认长度是Integer.MAX_VALUE，所以新的任务会一直排队，导致即使想从磁盘中获取缓存
         //图片也还是会阻塞，所以将连接超时时间缩短为5s，并且对超时进行异常处理
-        OkHttpClient client=new OkHttpClient.Builder()
-                .connectTimeout(5,TimeUnit.SECONDS)   //SocketTimeOutException
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(5, TimeUnit.SECONDS)   //SocketTimeOutException
                 .build();
-        Request request=new Request.Builder().url(urlString).build();
+        Request request = new Request.Builder().url(urlString).build();
         BufferedOutputStream out = null;
         BufferedInputStream in = null;
 
         try {
-            Response response=client.newCall(request).execute();
-            in=new BufferedInputStream(response.body().byteStream(),IO_BUFFER_SIZE);
+            Response response = client.newCall(request).execute();
+            in = new BufferedInputStream(response.body().byteStream(), IO_BUFFER_SIZE);
             out = new BufferedOutputStream(outputStream, IO_BUFFER_SIZE);
 
             int b;
@@ -353,11 +470,10 @@ public class ImageLoader {
             }
             return true;
 
+        } catch (SocketTimeoutException e) {
+            throw e;
         } catch (IOException e) {
-            if(e instanceof SocketTimeoutException)
-                throw (SocketTimeoutException)e;
-            else
-                e.printStackTrace();
+            e.printStackTrace();
         } finally {
             MyUtils.close(out);
             MyUtils.close(in);
@@ -365,34 +481,11 @@ public class ImageLoader {
         return false;
     }
 
-    public Bitmap downloadBitmapFromUrl(String urlString) throws SocketTimeoutException {
-        OkHttpClient client=new OkHttpClient.Builder()
-                .connectTimeout(5,TimeUnit.SECONDS)
-                .build();
-        Request request=new Request.Builder().url(urlString).build();
-        BufferedInputStream in=null;
-        Bitmap bitmap=null;
-        try{
-            Response response=client.newCall(request).execute();
-            in = new BufferedInputStream(response.body().byteStream(), IO_BUFFER_SIZE);
-            bitmap=BitmapFactory.decodeStream(in);
-        } catch (IOException e) {
-            if(e instanceof SocketTimeoutException)
-                throw (SocketTimeoutException)e;
-            else
-                e.printStackTrace();
-        }finally {
-            MyUtils.close(in);
-        }
-
-        return bitmap;
-    }
-
-    /**
-        获取缓存目录，如果sd卡可用就用外部存储，否则用内部存储
-        内部存储在机身内存不足时会删除缓存
+    /*
+     * 获取缓存目录，如果sd卡可用就用外部存储，否则用内部存储
+     * 内部存储在机身内存不足时会删除缓存
      */
-    public File getDiskCacheDir(Context context, String uniqueName) {
+    private File getDiskCacheDir(Context context, String uniqueName) {
         boolean externalStorageAvailable = Environment
                 .getExternalStorageState().equals(Environment.MEDIA_MOUNTED);
         final String cachePath;
@@ -405,6 +498,9 @@ public class ImageLoader {
         return new File(cachePath + File.separator + uniqueName);
     }
 
+    /*
+     * 返回此抽象路径名指定的分区上可用于此虚拟机的字节数
+     */
     @TargetApi(VERSION_CODES.GINGERBREAD)
     private long getUsableSpace(File path) {
         if (Build.VERSION.SDK_INT >= VERSION_CODES.GINGERBREAD) {
@@ -426,6 +522,31 @@ public class ImageLoader {
             this.imageView = imageView;
             this.uri = uri;
             this.bitmap = bitmap;
+        }
+    }
+
+    /**
+     * 加载图片的选项。包括Options、超时处理、目标图片的尺寸和大小等
+     */
+    public static class TaskOptions {
+        public BitmapFactory.Options options;
+        public SocketTimeoutHanlder handler;
+        public int maxSize;
+        int reqWidth;
+        int reqHeight;
+
+        public TaskOptions(int reqWidth, int reqHeight) {
+            this.reqWidth = reqWidth;
+            this.reqHeight = reqHeight;
+        }
+
+        public TaskOptions(int reqWidth, int reqHeight, int maxSize) {
+            this(reqWidth, reqHeight);
+            this.maxSize=maxSize*1024;
+        }
+
+        interface SocketTimeoutHanlder {
+            void onHandleSocketTimeout();
         }
     }
 }

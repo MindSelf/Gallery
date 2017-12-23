@@ -21,7 +21,7 @@ public class ImageDetailModelImpl implements ImageDetailModel {
 
     public ImageDetailModelImpl(ImageDetailPresenter presenter) {
         mPresenter = presenter;
-        mImageLoader = ImageLoader.getInstance(MyApplication.getContext());
+        mImageLoader = ImageLoader.Builder.build(MyApplication.getContext());
     }
 
     @Override
@@ -29,19 +29,22 @@ public class ImageDetailModelImpl implements ImageDetailModel {
                                         final int reqHeight, final ImageDetailPresenter.onLoadFinishListener listener) {
         new Thread(new Runnable() {
             Bitmap bitmap = null;
-            long current=SystemClock.currentThreadTimeMillis();
+            long current = SystemClock.currentThreadTimeMillis();
+
             @Override
             public void run() {
-                while(bitmap==null&&SystemClock.currentThreadTimeMillis()-current<10000){
+                //如果列表图片还没有下载完，那么等到图片下载完并添加到磁盘缓存后再从磁盘中加载
+                //这样的好处是避免重复从网络中获取图片
+                while (bitmap == null && SystemClock.currentThreadTimeMillis() - current < 10000) {
                     try {
-                        bitmap=mImageLoader.loadRawBitmap(url,reqWidth,reqHeight);
+                        bitmap = mImageLoader.loadBitmapFromDisk(url, new ImageLoader.TaskOptions(reqWidth, reqHeight));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }
                 if (bitmap != null) {
                     listener.onSuccess(bitmap);
-                }else{
+                } else {
                     listener.onFail("加载超时");
                 }
             }
@@ -50,6 +53,6 @@ public class ImageDetailModelImpl implements ImageDetailModel {
 
     @Override
     public void loadFullImg(String url, ImageView imageView, int reqWidth, int reqHeight) {
-        mImageLoader.bindBitmap(url, imageView, reqWidth, reqHeight);
+        mImageLoader.bindBitmap(url, imageView, new ImageLoader.TaskOptions(reqWidth, reqHeight));
     }
 }

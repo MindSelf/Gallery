@@ -14,6 +14,7 @@ public class MyApplication extends Application {
     @Override
     public void onCreate() {
         context=getApplicationContext();
+//        LeakCanary.install(this);
         super.onCreate();
     }
 

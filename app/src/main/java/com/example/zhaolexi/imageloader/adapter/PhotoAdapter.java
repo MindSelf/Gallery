@@ -1,6 +1,7 @@
 package com.example.zhaolexi.imageloader.adapter;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -29,7 +30,7 @@ import java.util.Set;
 
 public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> {
 
-    public  static final int MAX_SIZE=4;
+    public static final int MAX_SIZE = 4;
     private List<Photo> mDatas;
     private Set<Integer> mSelected;
     private ImageLoader mImageLoader;
@@ -39,15 +40,15 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
     private OnSelectCountChangeListner mOnSelectCountChangeListener;
 
     private int mEdge;
-    private boolean mIsIdle=true;
+    private boolean mIsIdle = true;
 
     public PhotoAdapter(Context context) {
-        mDatas=new ArrayList<>();
+        mDatas = new ArrayList<>();
         mSelected = new HashSet<>(MAX_SIZE);
-        mImageLoader = ImageLoader.getInstance(MyApplication.getContext());
+        mImageLoader = ImageLoader.Builder.build(MyApplication.getContext());
         mDefaultDrawable = context.getResources().getDrawable(R.drawable.image_default);
         int screenWidth = MyUtils.getScreenMetrics(context).widthPixels;
-        mEdge = screenWidth / 3;
+        mEdge = (screenWidth - MyUtils.dp2px(context, 6)) / 3;
     }
 
     public void setDatas(List<Photo> newDatas) {
@@ -69,7 +70,7 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
 
     public List<File> getSelectedPhotos() {
         List<File> list = new ArrayList<>();
-        Iterator<Integer> iterator=mSelected.iterator();
+        Iterator<Integer> iterator = mSelected.iterator();
         while (iterator.hasNext()) {
             File file = new File(mDatas.get(iterator.next()).getPath());
             list.add(file);
@@ -94,12 +95,12 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
 
     @Override
     public void onBindViewHolder(final PhotoAdapter.ViewHolder holder, final int position) {
-        final ImageView image=holder.iv_image;
-        final ImageView block=holder.iv_block;
-        final CheckBox checkBox=holder.checkBox;
+        final ImageView image = holder.iv_image;
+        final ImageView block = holder.iv_block;
+        final CheckBox checkBox = holder.checkBox;
 
 
-        if(mSelected.contains(position)&&!checkBox.isChecked()){
+        if (mSelected.contains(position) && !checkBox.isChecked()) {
             //先清空监听器，防止对setChecked结果产生干扰
             checkBox.setOnCheckedChangeListener(null);
             checkBox.setChecked(true);
@@ -114,13 +115,13 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
         image.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mOnItemClickListener.onItemClick(v,holder.getLayoutPosition());
+                mOnItemClickListener.onItemClick(v, holder.getLayoutPosition());
             }
         });
         checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(mSelected.size()>=MAX_SIZE&&isChecked) {
+                if (mSelected.size() >= MAX_SIZE && isChecked) {
                     checkBox.setChecked(false);
                     mOnSelectCountChangeListener.onOverSelect();
                 } else if (isChecked) {
@@ -138,16 +139,23 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
         String tag = (String) image.getTag();
         String uri = mDatas.get(position).getThumbnailPath();
         if (uri == null) {
-            uri=mDatas.get(position).getPath();
+            uri = mDatas.get(position).getPath();
         }
 
         if (!uri.equals(tag)) {
-            image.setImageDrawable(mDefaultDrawable);
+            //为了避免View复用导致显示旧的bitmap，这里会先显示内存中缓存的图片，没有再显示占位图
+            Bitmap bitmap = mImageLoader.loadBitmapFromMemCache(uri);
+            if (bitmap != null) {
+                image.setImageBitmap(bitmap);
+            } else {
+                image.setImageDrawable(mDefaultDrawable);
+            }
+            bitmap = null;
         }
         //优化列表卡顿，为了避免频繁的加载图片，只在列表停下来的时候才加载图片
         if (mIsIdle) {
             image.setTag(uri);
-            mImageLoader.bindBitmap(uri, image, mEdge, mEdge);
+            mImageLoader.bindBitmap(uri, image, new ImageLoader.TaskOptions(mEdge, mEdge,300));
         }
     }
 

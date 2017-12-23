@@ -5,6 +5,7 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.NonNull;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.EditText;
@@ -30,6 +31,8 @@ import okhttp3.Response;
  */
 
 public class PasswordDialog extends Dialog implements View.OnClickListener {
+
+    private static final String TAG = "PasswordDialog";
 
     private static final int SUCCESS=1;
     private static final int FAIL=-1;
@@ -115,7 +118,7 @@ public class PasswordDialog extends Dialog implements View.OnClickListener {
         mClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-
+                Log.e(TAG, "onFailure: "+e);
             }
 
             @Override

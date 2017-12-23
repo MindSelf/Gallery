@@ -41,7 +41,7 @@ public class ImageDetailActivity extends BaseActivity<ImageDetailViewInterface,I
         mUrl=getIntent().getStringExtra("url");
         mHasFullImg = getIntent().getBooleanExtra("hasFullImg",false);
         mMaxWidth= 700;
-        mMaxHeight=1400;
+        mMaxHeight=0;
     }
 
     @Override

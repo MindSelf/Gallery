@@ -1,10 +1,15 @@
 package com.example.zhaolexi.imageloader.view;
 
+import android.Manifest;
 import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -36,6 +41,8 @@ import java.util.List;
 
 public class SelectPhotoActivity extends BaseActivity<SelectPhotoViewInterface,SeletePhotoPresenter> implements SelectPhotoViewInterface, View.OnClickListener, View.OnTouchListener, AdapterView.OnItemClickListener, OnItemClickListener, PhotoAdapter.OnSelectCountChangeListner {
 
+    private static final int READ_EXTERNAL_STORAGE = 1;
+
     private Toolbar mToolbar;
     private TextView mSubmit;
     private RecyclerView mPhotoList;
@@ -54,7 +61,25 @@ public class SelectPhotoActivity extends BaseActivity<SelectPhotoViewInterface,S
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mPresenter.displayAllPhotos();
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},READ_EXTERNAL_STORAGE);
+        }else{
+            mPresenter.displayAllPhotos();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode){
+            case READ_EXTERNAL_STORAGE:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    mPresenter.displayAllPhotos();
+                }else{
+                    Toast.makeText(this, "读取相册失败", Toast.LENGTH_SHORT).show();
+                }
+                break;
+            default:
+        }
     }
 
     @Override
@@ -85,7 +110,7 @@ public class SelectPhotoActivity extends BaseActivity<SelectPhotoViewInterface,S
         });
 
         mPhotoList.setAdapter(mPhotoAdapter);
-        mPhotoList.setLayoutManager(new GridLayoutManager(this, 3));
+        mPhotoList.setLayoutManager(new GridLayoutManager(this,3));
         mPhotoList.addItemDecoration(new SpacesItemDecoration(MyUtils.dp2px(this,1)));
         mPhotoList.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
