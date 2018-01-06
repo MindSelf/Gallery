@@ -15,6 +15,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.example.zhaolexi.imageloader.R;
+import com.example.zhaolexi.imageloader.base.MyApplication;
 import com.example.zhaolexi.imageloader.bean.Image;
 import com.example.zhaolexi.imageloader.ui.GridItemTouchHelperCallback;
 import com.example.zhaolexi.imageloader.utils.MyUtils;
@@ -42,6 +43,7 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
     private boolean mIsIdle = true;
     private int mFooterState;
     private int mImageWidth;
+    private static final int IMAGE_MIN_HEIGHT=150;
 
     public static final int TYPE_NORMAL = 1;
     public static final int TYPE_FOOTER = 2;
@@ -53,7 +55,7 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
     public ImageAdapter(Context context) {
         mImageList = new ArrayList<>();
         mImageLoader = ImageLoader.Builder.build(context);
-        mDefaultBitmapDrawable = context.getResources().getDrawable(R.drawable.image_default);
+        mDefaultBitmapDrawable = context.getResources().getDrawable(R.mipmap.image_default);
         int screenWidth = MyUtils.getScreenMetrics(context).widthPixels;
         mImageWidth = (screenWidth - MyUtils.dp2px(context, 16)) / 2;
     }
@@ -70,9 +72,8 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
         this.onItemClickListener = listener;
     }
 
-    public void clearImages() {
+    public void cleanImages() {
         mImageList.clear();
-        notifyDataSetChanged();
     }
 
     public void addImages(List<Image> newDatas) {
@@ -146,7 +147,9 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
             //优化列表卡顿，为了避免频繁的加载图片，只在列表停下来的时候才加载图片
             if (mIsIdle) {
                 imageView.setTag(uri);
-                mImageLoader.bindBitmap(uri, imageView, new ImageLoader.TaskOptions(mImageWidth, 0));
+                ImageLoader.TaskOptions options = new ImageLoader.TaskOptions(mImageWidth, 0);
+                options.minHeight = MyUtils.dp2px(MyApplication.getContext(), IMAGE_MIN_HEIGHT);
+                mImageLoader.bindBitmap(uri, imageView, options);
             }
 
         } else {
@@ -159,14 +162,17 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
                 case FOOTER_LOADING:
                     viewHolder.progressBar.setVisibility(View.VISIBLE);
                     viewHolder.textView.setVisibility(View.VISIBLE);
-                    viewHolder.textView.setText("正在加载");
+                    viewHolder.textView.setText(R.string.footer_loading);
                     break;
                 case FOOTER_ERROR:
+                    viewHolder.progressBar.setVisibility(View.GONE);
+                    viewHolder.textView.setVisibility(View.VISIBLE);
+                    viewHolder.textView.setText(R.string.footer_error);
                     break;
                 case FOOTER_NODATA:
                     viewHolder.progressBar.setVisibility(View.GONE);
                     viewHolder.textView.setVisibility(View.VISIBLE);
-                    viewHolder.textView.setText("没有更多图片了");
+                    viewHolder.textView.setText(R.string.footer_nodata);
                     break;
                 default:
             }

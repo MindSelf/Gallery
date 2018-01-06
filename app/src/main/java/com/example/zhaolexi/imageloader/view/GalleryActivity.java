@@ -3,6 +3,8 @@ package com.example.zhaolexi.imageloader.view;
 
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
@@ -38,6 +40,8 @@ public class GalleryActivity extends BaseActivity<GalleryViewInterface, ImagePre
 
     private RecyclerView mImageList;
     private Toolbar mToolbar;
+    private FloatingActionButton mFab;
+    private SwipeRefreshLayout mSwipeRefresh;
     private AlertDialog.Builder mAlertBuilder;
     private PasswordDialog.Builder mPasswordBuilder;
     private ImageAdapter mAdapter;
@@ -49,7 +53,7 @@ public class GalleryActivity extends BaseActivity<GalleryViewInterface, ImagePre
         if (!MyUtils.isWifi(this))
             mAlertBuilder.show();
         else
-            mPresenter.loadMore();
+            mPresenter.refresh();
     }
 
     @Override
@@ -57,10 +61,10 @@ public class GalleryActivity extends BaseActivity<GalleryViewInterface, ImagePre
         EventBus.getDefault().register(this);
     }
 
+    //当然也可以用onRestart
     @Subscribe
     public void onMessageEventMain(MessageEvent event) {
-        mPresenter.resetState();
-        mPresenter.loadMore();
+        mPresenter.refresh();
     }
 
     @Override
@@ -80,6 +84,24 @@ public class GalleryActivity extends BaseActivity<GalleryViewInterface, ImagePre
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
+
+        mFab = (FloatingActionButton) findViewById(R.id.add_photos);
+        mFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!TextUtils.isEmpty(SharePreferencesUtils.getString("aid", "")))
+                    mPresenter.addPhoto();
+            }
+        });
+
+        mSwipeRefresh = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh);
+        mSwipeRefresh.setColorSchemeResources(R.color.colorPrimary);
+        mSwipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                mPresenter.refresh();
+            }
+        });
 
         mImageList = (RecyclerView) findViewById(R.id.recyclerview);
         mImageList.setLayoutManager(new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));
@@ -116,12 +138,13 @@ public class GalleryActivity extends BaseActivity<GalleryViewInterface, ImagePre
         itemTouchHelper.attachToRecyclerView(mImageList);
 
         mAlertBuilder = new AlertDialog.Builder(this);
+        mAlertBuilder.setCancelable(false);
         mAlertBuilder.setMessage("您当前为非Wifi环境，是否继续加载图片");
         mAlertBuilder.setTitle("注意");
         mAlertBuilder.setPositiveButton("是", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                mPresenter.loadMore();
+                mPresenter.refresh();
             }
         });
         mAlertBuilder.setNegativeButton("否", null);
@@ -178,6 +201,11 @@ public class GalleryActivity extends BaseActivity<GalleryViewInterface, ImagePre
     }
 
     @Override
+    public void setRefreshing(boolean isRefreshing) {
+        mSwipeRefresh.setRefreshing(isRefreshing);
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.toolbar_gallery, menu);
         return true;
@@ -186,11 +214,6 @@ public class GalleryActivity extends BaseActivity<GalleryViewInterface, ImagePre
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.select_photo:
-                if (TextUtils.isEmpty(SharePreferencesUtils.getString("aid", "")))
-                    return false;
-                mPresenter.selectPhoto();
-                break;
             case R.id.add_album:
                 mPasswordBuilder.setTitle("创建相册")
                         .setUrl(Uri.Add_Album)
@@ -204,10 +227,8 @@ public class GalleryActivity extends BaseActivity<GalleryViewInterface, ImagePre
                         .build().show();
                 break;
             case R.id.random:
-                mAdapter.clearImages();
                 mPresenter.setUrl(Uri.Girls);
-                mPresenter.resetState();
-                mPresenter.loadMore();
+                mPresenter.refresh();
                 SharePreferencesUtils.putString(SharePreferencesUtils.Url, Uri.Girls);
                 SharePreferencesUtils.putString(SharePreferencesUtils.Album, "");
                 break;
@@ -227,14 +248,16 @@ public class GalleryActivity extends BaseActivity<GalleryViewInterface, ImagePre
 
     @Override
     public void onSuccess(String aid) {
-        mAdapter.clearImages();
         if (!TextUtils.isEmpty(aid)) {
             String newURL = Uri.Load_Img + "&album.aid=" + aid + "&currPage=";
             mPresenter.setUrl(newURL);
-            mPresenter.resetState();
-            mPresenter.loadMore();
+            mPresenter.refresh();
             SharePreferencesUtils.putString(SharePreferencesUtils.Url, newURL);
             SharePreferencesUtils.putString(SharePreferencesUtils.Album, aid);
         }
+    }
+
+    public ImageAdapter getAdapter() {
+        return mAdapter;
     }
 }

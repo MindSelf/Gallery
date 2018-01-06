@@ -13,6 +13,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -32,7 +33,9 @@ public class ImageModelImpl implements ImageModel {
 
     public ImageModelImpl(ImagePresenter presenter) {
         this.mPresenter = presenter;
-        mClient = new OkHttpClient();
+        mClient = new OkHttpClient.Builder()
+                .connectTimeout(10, TimeUnit.SECONDS)
+                .build();
         mUri = SharePreferencesUtils.getString(SharePreferencesUtils.Url, Uri.Girls);
     }
 

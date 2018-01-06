@@ -46,7 +46,7 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
         mDatas = new ArrayList<>();
         mSelected = new HashSet<>(MAX_SIZE);
         mImageLoader = ImageLoader.Builder.build(MyApplication.getContext());
-        mDefaultDrawable = context.getResources().getDrawable(R.drawable.image_default);
+        mDefaultDrawable = context.getResources().getDrawable(R.mipmap.image_default);
         int screenWidth = MyUtils.getScreenMetrics(context).widthPixels;
         mEdge = (screenWidth - MyUtils.dp2px(context, 6)) / 3;
     }
@@ -155,7 +155,7 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
         //优化列表卡顿，为了避免频繁的加载图片，只在列表停下来的时候才加载图片
         if (mIsIdle) {
             image.setTag(uri);
-            mImageLoader.bindBitmap(uri, image, new ImageLoader.TaskOptions(mEdge, mEdge,300));
+            mImageLoader.bindBitmap(uri, image, new ImageLoader.TaskOptions(mEdge, mEdge));
         }
     }
 

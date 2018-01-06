@@ -16,4 +16,5 @@ public interface GalleryViewInterface {
 
     void showLoading();
 
+    void setRefreshing(boolean isRefreshing);
 }

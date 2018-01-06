@@ -134,10 +134,10 @@ public class LocalPhotoModelImpl implements LocalPhotoModel {
                     public void run() {
                         Bitmap cover = null;
                         try {
-                            cover = mImageLoader.loadBitmapFromDisk(bucket.getPhotoList().get(0).getThumbnailPath(), new ImageLoader.TaskOptions(mEdge, mEdge,100));
+                            cover = mImageLoader.loadBitmapFromDisk(bucket.getPhotoList().get(0).getThumbnailPath(), new ImageLoader.TaskOptions(mEdge, mEdge));
                             if (cover == null) {
                                 //Unable to decode stream or ThumbnailPath is null
-                                cover = mImageLoader.loadBitmapFromDisk(bucket.getPhotoList().get(0).getPath(), new ImageLoader.TaskOptions(mEdge, mEdge,100));
+                                cover = mImageLoader.loadBitmapFromDisk(bucket.getPhotoList().get(0).getPath(), new ImageLoader.TaskOptions(mEdge, mEdge));
                             }
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -162,10 +162,10 @@ public class LocalPhotoModelImpl implements LocalPhotoModel {
                     public void run() {
                         Bitmap cover = null;
                         try {
-                            cover = mImageLoader.loadBitmapFromDisk(totalBucket.getPhotoList().get(0).getThumbnailPath(), new ImageLoader.TaskOptions(mEdge, mEdge,100));
+                            cover = mImageLoader.loadBitmapFromDisk(totalBucket.getPhotoList().get(0).getThumbnailPath(), new ImageLoader.TaskOptions(mEdge, mEdge));
                             if (cover == null) {
                                 //Unable to decode stream or ThumbnailPath is null
-                                cover = mImageLoader.loadBitmapFromDisk(totalBucket.getPhotoList().get(0).getPath(), new ImageLoader.TaskOptions(mEdge, mEdge,100));
+                                cover = mImageLoader.loadBitmapFromDisk(totalBucket.getPhotoList().get(0).getPath(), new ImageLoader.TaskOptions(mEdge, mEdge));
                             }
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -223,7 +223,7 @@ public class LocalPhotoModelImpl implements LocalPhotoModel {
         mCall.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                Log.d("ZLX", "onFailure: " + e.getCause());
+                Log.d("Upload", "onFailure: " + e.getCause());
                 if (!call.isCanceled()) {
                     listener.onUploadFinish(false, "服务器异常");
                 }
@@ -231,7 +231,7 @@ public class LocalPhotoModelImpl implements LocalPhotoModel {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                Log.d("test", "onResponse: " + response.toString());
+                Log.d("Upload", "onResponse: " + response.toString());
                 try {
                     JSONObject jsonObject = new JSONObject(response.body().string());
                     int code = jsonObject.getInt("code");

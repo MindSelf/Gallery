@@ -13,5 +13,5 @@
         android:layout_marginTop="2dp"
         android:layout_marginBottom="2dp"
         android:scaleType="centerCrop"
-        tools:background="@drawable/image_default"/>
+        tools:background="@mipmap/image_default"/>
 </RelativeLayout>

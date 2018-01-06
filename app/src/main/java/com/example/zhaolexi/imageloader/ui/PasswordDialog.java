@@ -123,6 +123,7 @@ public class PasswordDialog extends Dialog implements View.OnClickListener {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
+                Log.d(TAG, "onResponse: "+response);
                 try {
                     JSONObject jsonObject = new JSONObject(response.body().string());
                     Result result=new Result();

@@ -206,7 +206,7 @@ public class ImageLoader {
                 try {
                     bitmap = loadBitmap(uri, taskOptions);
                 } catch (SocketTimeoutException e) {
-                    bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.image_fail);
+                    bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.mipmap.image_fail);
                     if (taskOptions.handler != null) {
                         taskOptions.handler.onHandleSocketTimeout();
                     }
@@ -529,19 +529,36 @@ public class ImageLoader {
      * 加载图片的选项。包括Options、超时处理、目标图片的尺寸和大小等
      */
     public static class TaskOptions {
+
         public BitmapFactory.Options options;
         public SocketTimeoutHanlder handler;
+
+        /*
+         * 若同时指定maxSize和reqWidth/reqHeight，则优先满足reqWidth/reqHeight
+         */
         public int maxSize;
-        int reqWidth;
-        int reqHeight;
+
+        /*
+         * 图片的目标尺寸：
+         * 指定长和宽，按比例缩放图片使图片大于或等于目标尺寸，并截取图片居中位置显示，相当于center_crop
+         * 只指定长或宽，图片的目标尺寸将根据图片的比例计算得到，缩放规则同上
+         * 如果都不指定，表示不对图片进行缩放
+         */
+        public int reqWidth;
+        public int reqHeight;
+
+        /*
+         * 该参数只在只指定长或宽时有效，表示图片按比例缩放时的最小长度
+         */
+        public int minWidth;
+        public int minHeight;
 
         public TaskOptions(int reqWidth, int reqHeight) {
             this.reqWidth = reqWidth;
             this.reqHeight = reqHeight;
         }
 
-        public TaskOptions(int reqWidth, int reqHeight, int maxSize) {
-            this(reqWidth, reqHeight);
+        public TaskOptions(int maxSize) {
             this.maxSize=maxSize*1024;
         }
 

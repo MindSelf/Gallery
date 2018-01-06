@@ -48,7 +48,7 @@ public class ImageDetailActivity extends BaseActivity<ImageDetailViewInterface,I
     protected void initView() {
         setContentView(R.layout.activity_image_detail);
         mImageView = (ImageView) findViewById(R.id.image);
-        mImageView.setImageResource(R.drawable.image_default);
+        mImageView.setImageResource(R.mipmap.image_default);
     }
 
     @Override
