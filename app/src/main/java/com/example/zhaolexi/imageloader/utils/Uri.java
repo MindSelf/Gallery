@@ -19,7 +19,7 @@ public class Uri {
     //获取图片
     public static final String Load_Img = Server + "Photo!data.action?pageSize=10";
     //创建相册
-    public static final String Add_Album = Server + "Album!add.action";
+    public static final String Add_Album = Server + "Album!add.action"+"?aname=%s&apassword=%s";
     //打开相册
-    public static final String Open_Album = Server + "Album!open.action";
+    public static final String Open_Album = Server + "Album!open.action"+"?aname=%s&apassword=%s";
 }

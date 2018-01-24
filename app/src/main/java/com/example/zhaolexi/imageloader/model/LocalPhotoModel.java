@@ -1,7 +1,7 @@
 package com.example.zhaolexi.imageloader.model;
 
 import com.example.zhaolexi.imageloader.bean.PhotoBucket;
-import com.example.zhaolexi.imageloader.presenter.SeletePhotoPresenter;
+import com.example.zhaolexi.imageloader.presenter.SelectPhotoPresenter;
 
 import java.io.File;
 import java.util.List;
@@ -13,7 +13,7 @@ import java.util.List;
 public interface LocalPhotoModel {
     List<PhotoBucket> getBuckets();
 
-    void uploadImg(List<File> files, SeletePhotoPresenter.OnUploadFinishListener listener);
+    void uploadImg(List<File> files, SelectPhotoPresenter.OnUploadFinishListener listener);
 
-    boolean cancle();
+    boolean cancel();
 }

@@ -21,12 +21,11 @@ public class ImageDetailModelImpl implements ImageDetailModel {
 
     public ImageDetailModelImpl(ImageDetailPresenter presenter) {
         mPresenter = presenter;
-        mImageLoader = ImageLoader.Builder.build(MyApplication.getContext());
+        mImageLoader = new ImageLoader.Builder(MyApplication.getContext()).build();
     }
 
     @Override
-    public void loadBitmapFromDiskCache(final String url, final int reqWidth,
-                                        final int reqHeight, final ImageDetailPresenter.onLoadFinishListener listener) {
+    public void loadBitmapFromDiskCache(final String url, final ImageLoader.TaskOptions options, final ImageDetailPresenter.onLoadFinishListener listener) {
         new Thread(new Runnable() {
             Bitmap bitmap = null;
             long current = SystemClock.currentThreadTimeMillis();
@@ -37,7 +36,7 @@ public class ImageDetailModelImpl implements ImageDetailModel {
                 //这样的好处是避免重复从网络中获取图片
                 while (bitmap == null && SystemClock.currentThreadTimeMillis() - current < 10000) {
                     try {
-                        bitmap = mImageLoader.loadBitmapFromDisk(url, new ImageLoader.TaskOptions(reqWidth, reqHeight));
+                        bitmap = mImageLoader.loadBitmapFromDisk(url, options);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -52,7 +51,7 @@ public class ImageDetailModelImpl implements ImageDetailModel {
     }
 
     @Override
-    public void loadFullImg(String url, ImageView imageView, int reqWidth, int reqHeight) {
-        mImageLoader.bindBitmap(url, imageView, new ImageLoader.TaskOptions(reqWidth, reqHeight));
+    public void loadFullImg(String url, ImageView imageView, ImageLoader.TaskOptions options) {
+        mImageLoader.bindBitmap(url, imageView, options);
     }
 }

@@ -10,10 +10,10 @@ public abstract class BaseActivity<V,T extends BasePresenter> extends AppCompatA
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        initData();
-        initView();
         mPresenter=createPresenter();
         mPresenter.attachView((V)this);
+        initData();
+        initView();
     }
 
     @Override

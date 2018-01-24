@@ -1,5 +1,6 @@
 package com.example.zhaolexi.imageloader.presenter;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Handler;
@@ -20,12 +21,13 @@ import java.util.List;
  * Created by ZHAOLEXI on 2017/11/16.
  */
 
-public class SeletePhotoPresenter extends BasePresenter<SelectPhotoViewInterface> {
+public class SelectPhotoPresenter extends BasePresenter<SelectPhotoViewInterface> {
 
     private LocalPhotoModel mModel;
     private boolean mIsListOpen;
     private static final int MSG_SUCCESS = 1;
     private static final int MSG_FAIL = -1;
+    @SuppressLint("HandlerLeak")
     private Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -48,7 +50,7 @@ public class SeletePhotoPresenter extends BasePresenter<SelectPhotoViewInterface
         }
     };
 
-    public SeletePhotoPresenter() {
+    public SelectPhotoPresenter() {
         mModel = new LocalPhotoModelImpl();
     }
 
@@ -116,8 +118,8 @@ public class SeletePhotoPresenter extends BasePresenter<SelectPhotoViewInterface
         return false;
     }
 
-    public boolean cancleTask() {
-        return mModel.cancle();
+    public boolean cancelTask() {
+        return mModel.cancel();
     }
 
     public interface OnUploadFinishListener {

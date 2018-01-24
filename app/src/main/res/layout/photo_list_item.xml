@@ -14,7 +14,7 @@
         android:id="@+id/iv_block"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/selector_bg"/>
+        android:background="@drawable/bg_select_photo"/>
 
     <CheckBox
         android:id="@+id/cb_select"

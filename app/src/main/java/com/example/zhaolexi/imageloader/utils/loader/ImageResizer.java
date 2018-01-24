@@ -30,12 +30,15 @@ public class ImageResizer {
         taskOptions.options.inSampleSize = calculateInSampleSize(taskOptions.options, taskOptions);
         taskOptions.options.inJustDecodeBounds = false;
         Bitmap src = BitmapFactory.decodeFileDescriptor(fd, null, taskOptions.options);
-        Log.d(TAG, "src: " + src.getByteCount() / 1024);
 
-        //由于采样率只能为2的幂，所以需要对Bitmap进一步缩放
-        Bitmap dst = createScaledBitmap(src, taskOptions, taskOptions.options);
+        Bitmap dst = null;
+        if (src != null) {
+            Log.d(TAG, "src: " + src.getByteCount() / 1024);
+            //由于采样率只能为2的幂，所以需要对Bitmap进一步缩放
+            dst = createScaledBitmap(src, taskOptions, taskOptions.options);
 
-        Log.d(TAG, "dst: " + dst.getByteCount() / 1024);
+            Log.d(TAG, "dst: " + dst.getByteCount() / 1024);
+        }
         return dst;
     }
 
@@ -51,12 +54,15 @@ public class ImageResizer {
         taskOptions.options.inSampleSize = calculateInSampleSize(taskOptions.options, taskOptions);
         taskOptions.options.inJustDecodeBounds = false;
         Bitmap src = BitmapFactory.decodeStream(is, null, taskOptions.options);
-        Log.d(TAG, "src: " + src.getByteCount() / 1024);
 
-        //由于采样率只能为2的幂，所以需要对Bitmap进一步缩放
-        Bitmap dst = createScaledBitmap(src, taskOptions, taskOptions.options);
+        Bitmap dst = null;
+        if (src != null) {
+            Log.d(TAG, "src: " + src.getByteCount() / 1024);
+            //由于采样率只能为2的幂，所以需要对Bitmap进一步缩放
+            dst = createScaledBitmap(src, taskOptions, taskOptions.options);
 
-        Log.d(TAG, "dst: " + dst.getByteCount() / 1024);
+            Log.d(TAG, "dst: " + dst.getByteCount() / 1024);
+        }
         return dst;
     }
 
@@ -72,12 +78,15 @@ public class ImageResizer {
         taskOptions.options.inSampleSize = calculateInSampleSize(taskOptions.options, taskOptions);
         taskOptions.options.inJustDecodeBounds = false;
         Bitmap src = BitmapFactory.decodeFile(uri, taskOptions.options);
-        Log.d(TAG, "src: " + src.getByteCount() / 1024);
 
-        //由于采样率只能为2的幂，所以需要对Bitmap进一步缩放
-        Bitmap dst = createScaledBitmap(src, taskOptions, taskOptions.options);
+        Bitmap dst = null;
+        if (src != null) {
+            Log.d(TAG, "src: " + src.getByteCount() / 1024);
+            //由于采样率只能为2的幂，所以需要对Bitmap进一步缩放
+            dst = createScaledBitmap(src, taskOptions, taskOptions.options);
 
-        Log.d(TAG, "dst: " + dst.getByteCount() / 1024);
+            Log.d(TAG, "dst: " + dst.getByteCount() / 1024);
+        }
         return dst;
     }
 
@@ -94,12 +103,15 @@ public class ImageResizer {
         taskOptions.options.inSampleSize = calculateInSampleSize(taskOptions.options, taskOptions);
         taskOptions.options.inJustDecodeBounds = false;
         Bitmap src = BitmapFactory.decodeResource(res, resId, taskOptions.options);
-        Log.d(TAG, "src: " + src.getByteCount() / 1024);
 
-        //由于采样率只能为2的幂，所以需要对Bitmap进一步缩放
-        Bitmap dst = createScaledBitmap(src, taskOptions, taskOptions.options);
+        Bitmap dst = null;
+        if (src != null) {
+            Log.d(TAG, "src: " + src.getByteCount() / 1024);
+            //由于采样率只能为2的幂，所以需要对Bitmap进一步缩放
+            dst = createScaledBitmap(src, taskOptions, taskOptions.options);
 
-        Log.d(TAG, "dst: " + dst.getByteCount() / 1024);
+            Log.d(TAG, "dst: " + dst.getByteCount() / 1024);
+        }
         return dst;
     }
 
@@ -116,13 +128,9 @@ public class ImageResizer {
         //当只给定高/宽时计算出按比例缩放后的宽/高
         //若有指定最小值，缩放后的结果不能小于最小值
         if (taskOptions.reqHeight == 0) {
-            taskOptions.reqHeight = taskOptions.minHeight > 0 ?
-                    Math.max(taskOptions.minHeight, taskOptions.reqWidth * height / width) :
-                    taskOptions.reqWidth * height / width;
+            taskOptions.reqHeight = taskOptions.reqWidth * height / width;
         } else if (taskOptions.reqWidth == 0) {
-            taskOptions.reqWidth = taskOptions.minWidth > 0 ?
-                    Math.max(taskOptions.minWidth, taskOptions.reqHeight * width / height) :
-                    taskOptions.reqHeight * width / height;
+            taskOptions.reqWidth = taskOptions.reqHeight * width / height;
         }
 
         //重新计算图片的高宽
@@ -160,8 +168,15 @@ public class ImageResizer {
 
         //若同时指定maxSize和reqWidth/reqHeight，则优先满足reqWidth/reqHeight
         if (!(taskOptions.reqHeight == 0 && taskOptions.reqWidth == 0)) {
-            //使图片的较短边等于目标尺寸
-            scale = Math.max((float) taskOptions.reqHeight / (float) src.getHeight(), (float) taskOptions.reqWidth / (float) src.getWidth());
+            switch (taskOptions.scaleType) {
+                case CENTER_CROP:
+                    scale = Math.max((float) taskOptions.reqHeight / (float) src.getHeight(), (float) taskOptions.reqWidth / (float) src.getWidth());
+                    break;
+                case CENTER_INSIDE:
+                    scale = Math.min((float) taskOptions.reqHeight / (float) src.getHeight(), (float) taskOptions.reqWidth / (float) src.getWidth());
+                    break;
+                default:
+            }
         }
 
         //将图片按比例缩放
@@ -169,12 +184,12 @@ public class ImageResizer {
         matrix.setScale(scale, scale);
         dst = Bitmap.createBitmap(src, 0, 0, src.getWidth(), src.getHeight(), matrix, false);
 
-        //如果偏移量x和y为0，表示目标图片可以由原图按比例缩放得到，相当于fit_xy
-        //如果偏移量x和y不为0，表示目标图片无法由原图按比例缩放得到，需要截取图片居中部分显示，相当于center_crop
-        int x = Math.round((src.getWidth() * scale - taskOptions.reqWidth) / 2);
-        int y = Math.round((src.getHeight() * scale - taskOptions.reqHeight) / 2);
-        dst = Bitmap.createBitmap(dst, x, y, taskOptions.reqWidth, taskOptions.reqHeight);
-
+        if (taskOptions.scaleType == ImageLoader.TaskOptions.ScaleType.CENTER_CROP) {
+            //如果偏移量x和y不为0，表示目标图片无法由原图按比例缩放得到，需要截取图片居中部分显示
+            int x = Math.round((src.getWidth() * scale - taskOptions.reqWidth) / 2);
+            int y = Math.round((src.getHeight() * scale - taskOptions.reqHeight) / 2);
+            dst = Bitmap.createBitmap(dst, x, y, taskOptions.reqWidth, taskOptions.reqHeight);
+        }
 
         if (dst != src) {
             src.recycle();

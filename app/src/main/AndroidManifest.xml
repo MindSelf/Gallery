@@ -26,8 +26,8 @@
         <activity
             android:name=".view.ImageDetailActivity"
             android:theme="@style/DialogTheme"/>
-        <activity android:name=".view.SelectPhotoActivity">
-        </activity>
+        <activity android:name=".view.SelectPhotoActivity"
+            android:hardwareAccelerated="true"/>
     </application>
 
 </manifest>

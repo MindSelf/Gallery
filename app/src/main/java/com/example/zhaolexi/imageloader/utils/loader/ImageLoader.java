@@ -1,5 +1,6 @@
 package com.example.zhaolexi.imageloader.utils.loader;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -67,14 +68,14 @@ public class ImageLoader {
     /*
     磁盘缓存参数：默认缓存容量为50M，节点数为1
      */
-    private static long sDiskCacheSize = 1024 * 1024 * 50;
+    private long sDiskCacheSize = 1024 * 1024 * 50;
     private static final int DISK_CACHE_INDEX = 0;
     private boolean mIsDiskLruCacheCreated = false;
 
     /*
     内存缓存参数：默认容量为可用内存的1/8
      */
-    private static int sMemoryCacheRate = 8;
+    private int sMemoryCacheRate = 8;
 
     /*
     IO流用于缓冲区的数组大小为8k
@@ -150,9 +151,10 @@ public class ImageLoader {
      * you can choose to initialize a ThreadPool、MemoryCache or DiskCache
      */
     public static class Builder {
+        @SuppressLint("StaticFieldLeak")
         private static volatile ImageLoader sInstance;
 
-        public static ImageLoader build(Context context) {
+        public Builder(Context context) {
             if (sInstance == null) {
                 synchronized (ImageLoader.class) {
                     if (sInstance == null) {
@@ -160,20 +162,23 @@ public class ImageLoader {
                     }
                 }
             }
+        }
+
+        public ImageLoader build() {
             return sInstance;
         }
 
-        private Builder initExecutor(ThreadPoolExecutor executor) {
+        public Builder initExecutor(ThreadPoolExecutor executor) {
             sInstance.mExecutor = executor;
             return this;
         }
 
-        private Builder initMemoryCacheRate(int rate) {
+        public Builder initMemoryCacheRate(int rate) {
             sInstance.sMemoryCacheRate = rate;
             return this;
         }
 
-        private Builder initDiskCacheSize(long size) {
+        public Builder initDiskCacheSize(long size) {
             sInstance.sDiskCacheSize = size;
             return this;
         }
@@ -194,6 +199,10 @@ public class ImageLoader {
         Bitmap bitmap = loadBitmapFromMemCache(uri);
         if (bitmap != null) {
             imageView.setImageBitmap(bitmap);
+            TaskOptions.OnLoadBitmapListener listener = taskOptions.onLoadBitmapListener;
+            if (listener != null) {
+                taskOptions.onLoadBitmapListener.onFinish(bitmap);
+            }
             return;
         }
 
@@ -207,11 +216,16 @@ public class ImageLoader {
                     bitmap = loadBitmap(uri, taskOptions);
                 } catch (SocketTimeoutException e) {
                     bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.mipmap.image_fail);
-                    if (taskOptions.handler != null) {
-                        taskOptions.handler.onHandleSocketTimeout();
+                    if (taskOptions.socketTimeoutHanlder != null) {
+                        taskOptions.socketTimeoutHanlder.onHandleSocketTimeOut();
                     }
                 }
+
                 if (bitmap != null) {
+                    TaskOptions.OnLoadBitmapListener listener = taskOptions.onLoadBitmapListener;
+                    if (listener != null) {
+                        taskOptions.onLoadBitmapListener.onFinish(bitmap);
+                    }
                     LoaderResult result = new LoaderResult(imageView, uri, bitmap);
                     mMainHandler.obtainMessage(MESSAGE_POST_RESULT, result).sendToTarget();
                 }
@@ -246,12 +260,12 @@ public class ImageLoader {
      * NOTE THAT: should run in UI Thread
      *
      * @param url
-     * @param taskOptions   include reqWidth and reqHeight
+     * @param taskOptions include reqWidth and reqHeight
      * @return
      * @throws IOException
      */
     public Bitmap loadBitmapFromDisk(String url, TaskOptions taskOptions) throws IOException {
-        if(url==null) {
+        if (url == null) {
             return null;
         }
 
@@ -259,14 +273,18 @@ public class ImageLoader {
             Log.w(TAG, "load bitmap from UI Thread, it's not recommended!");
         }
 
+        //加载本地图片
         if (url.startsWith("/")) {
             FileInputStream fis = new FileInputStream(url);
             FileDescriptor fd = fis.getFD();
-            return mImageResizer.decodeSampledBitmapFromFileDescriptor(fd,taskOptions);
+            Bitmap bitmap = mImageResizer.decodeSampledBitmapFromFileDescriptor(fd, taskOptions);
+            return bitmap == null ? BitmapFactory.decodeResource(mContext.getResources(), R.mipmap.image_fail) : bitmap;
         }
 
         if (mDiskLruCache == null) {
-            return downloadBitmapFromUrl(url, taskOptions);
+            Bitmap bitmap = downloadBitmapFromUrl(url, taskOptions);
+            return bitmap == null ? BitmapFactory.decodeResource(mContext.getResources(), R.mipmap.image_fail) : bitmap;
+
         }
 
         Bitmap bitmap = null;
@@ -275,10 +293,10 @@ public class ImageLoader {
         if (snapShot != null) {
             FileInputStream fileInputStream = (FileInputStream) snapShot.getInputStream(DISK_CACHE_INDEX);
             FileDescriptor fileDescriptor = fileInputStream.getFD();
-            bitmap = mImageResizer.decodeSampledBitmapFromFileDescriptor(fileDescriptor,taskOptions);
+            bitmap = mImageResizer.decodeSampledBitmapFromFileDescriptor(fileDescriptor, taskOptions);
         }
 
-        return bitmap;
+        return bitmap == null ? BitmapFactory.decodeResource(mContext.getResources(), R.mipmap.image_fail) : bitmap;
     }
 
     /**
@@ -357,7 +375,7 @@ public class ImageLoader {
                 Log.d(TAG, "loadBitmapFromDiskCache,url:" + uri);
                 return bitmap;
             }
-            bitmap = loadBitmapFromHttp(uri,taskOptions);
+            bitmap = loadBitmapFromHttp(uri, taskOptions);
             Log.d(TAG, "loadBitmapFromHttp,url:" + uri);
         } catch (SocketTimeoutException e) {
             throw e;
@@ -368,7 +386,7 @@ public class ImageLoader {
         //因为磁盘缓存失效导致Bitmap没有加载
         if (bitmap == null && !mIsDiskLruCacheCreated) {
             Log.w(TAG, "encounter error, DiskLruCache is not created.");
-            bitmap = downloadBitmapFromUrl(uri,taskOptions );
+            bitmap = downloadBitmapFromUrl(uri, taskOptions);
         }
 
         return bitmap;
@@ -408,13 +426,13 @@ public class ImageLoader {
         if (snapShot != null) {
             FileInputStream fileInputStream = (FileInputStream) snapShot.getInputStream(DISK_CACHE_INDEX);
             FileDescriptor fileDescriptor = fileInputStream.getFD();
+            //maybe null
             bitmap = mImageResizer.decodeSampledBitmapFromFileDescriptor(fileDescriptor, taskOptions);
             if (bitmap != null) {
                 //将压缩后的图片放入内存缓存
                 addBitmapToMemoryCache(key, bitmap);
             }
         }
-
         return bitmap;
     }
 
@@ -443,7 +461,7 @@ public class ImageLoader {
             }
         }
 
-        return loadBitmapFromDiskCache(url,taskOptions);
+        return loadBitmapFromDiskCache(url, taskOptions);
     }
 
     private boolean downloadUrlToStream(String urlString,
@@ -531,7 +549,8 @@ public class ImageLoader {
     public static class TaskOptions {
 
         public BitmapFactory.Options options;
-        public SocketTimeoutHanlder handler;
+        public SocketTimeOutHanlder socketTimeoutHanlder;
+        public OnLoadBitmapListener onLoadBitmapListener;
 
         /*
          * 若同时指定maxSize和reqWidth/reqHeight，则优先满足reqWidth/reqHeight
@@ -547,11 +566,8 @@ public class ImageLoader {
         public int reqWidth;
         public int reqHeight;
 
-        /*
-         * 该参数只在只指定长或宽时有效，表示图片按比例缩放时的最小长度
-         */
-        public int minWidth;
-        public int minHeight;
+        //图片的缩放模式，默认为CENTER_CROP
+        public ScaleType scaleType = ScaleType.CENTER_CROP;
 
         public TaskOptions(int reqWidth, int reqHeight) {
             this.reqWidth = reqWidth;
@@ -559,11 +575,22 @@ public class ImageLoader {
         }
 
         public TaskOptions(int maxSize) {
-            this.maxSize=maxSize*1024;
+            this.maxSize = maxSize * 1024;
         }
 
-        interface SocketTimeoutHanlder {
-            void onHandleSocketTimeout();
+        public interface SocketTimeOutHanlder {
+            void onHandleSocketTimeOut();
+        }
+
+        public interface OnLoadBitmapListener {
+            void onFinish(Bitmap bitmap);
+        }
+
+        public enum ScaleType {
+            //按比例扩大图片的size，使得图片长(宽)等于或大于View的长(宽)，当图片长/宽超过View的长/宽，则截取图片的居中部分显示
+            CENTER_CROP,
+            //将图片的内容完整居中显示，通过按比例缩小或原来的size使得图片长/宽等于或小于View的长/宽
+            CENTER_INSIDE;
         }
     }
 }

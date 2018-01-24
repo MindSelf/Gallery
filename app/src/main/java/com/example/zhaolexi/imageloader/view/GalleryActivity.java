@@ -16,16 +16,18 @@ import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import com.example.zhaolexi.imageloader.R;
 import com.example.zhaolexi.imageloader.adapter.ImageAdapter;
 import com.example.zhaolexi.imageloader.adapter.OnItemClickListener;
 import com.example.zhaolexi.imageloader.base.BaseActivity;
+import com.example.zhaolexi.imageloader.base.PasswordDialog;
 import com.example.zhaolexi.imageloader.bean.Image;
 import com.example.zhaolexi.imageloader.bean.MessageEvent;
 import com.example.zhaolexi.imageloader.presenter.ImagePresenter;
+import com.example.zhaolexi.imageloader.ui.AlbumPasswordDialog;
 import com.example.zhaolexi.imageloader.ui.GridItemTouchHelperCallback;
-import com.example.zhaolexi.imageloader.ui.PasswordDialog;
 import com.example.zhaolexi.imageloader.ui.SpacesItemDecoration;
 import com.example.zhaolexi.imageloader.utils.MyUtils;
 import com.example.zhaolexi.imageloader.utils.SharePreferencesUtils;
@@ -36,14 +38,13 @@ import org.greenrobot.eventbus.Subscribe;
 
 import java.util.List;
 
-public class GalleryActivity extends BaseActivity<GalleryViewInterface, ImagePresenter> implements GalleryViewInterface, OnItemClickListener, PasswordDialog.Builder.OnResponseListener {
+public class GalleryActivity extends BaseActivity<GalleryViewInterface, ImagePresenter> implements GalleryViewInterface, OnItemClickListener, PasswordDialog.OnResponseListener<AlbumPasswordDialog.AlbumResult> {
 
     private RecyclerView mImageList;
     private Toolbar mToolbar;
     private FloatingActionButton mFab;
     private SwipeRefreshLayout mSwipeRefresh;
     private AlertDialog.Builder mAlertBuilder;
-    private PasswordDialog.Builder mPasswordBuilder;
     private ImageAdapter mAdapter;
     private boolean mIsLoading = false;
 
@@ -80,7 +81,7 @@ public class GalleryActivity extends BaseActivity<GalleryViewInterface, ImagePre
 
     @Override
     protected void initView() {
-        setContentView(R.layout.activity_image);
+        setContentView(R.layout.frag_album);
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
@@ -104,12 +105,10 @@ public class GalleryActivity extends BaseActivity<GalleryViewInterface, ImagePre
         });
 
         mImageList = (RecyclerView) findViewById(R.id.recyclerview);
-        mImageList.setLayoutManager(new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));
         mImageList.addItemDecoration(new SpacesItemDecoration(MyUtils.dp2px(this, 4)));
         mImageList.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-                super.onScrollStateChanged(recyclerView, newState);
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
                     mAdapter.setIsIdle(true);
                     //滑动时onBindViewHolder先于回调方法，所以静止时要提醒Adapter更新数据
@@ -122,12 +121,19 @@ public class GalleryActivity extends BaseActivity<GalleryViewInterface, ImagePre
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 int lastVisiblePosition = getLastVisiblePosition();
+                //当item都显示在屏幕中时，onScrolled不会触发，所以在footer中添加点击重试的链接
+                //当然也可以给RecyclerView设置OnTouchListener
+                //getItemCount-1表示footer的位置
                 if (!mIsLoading && lastVisiblePosition + 1 == mAdapter.getItemCount() && dy > 0) {
                     mPresenter.loadMore();
                 }
-                super.onScrolled(recyclerView, dx, dy);
             }
         });
+
+        StaggeredGridLayoutManager manager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
+        //解决瀑布流item跳动的问题
+        manager.setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_NONE);
+        mImageList.setLayoutManager(manager);
 
         mAdapter = new ImageAdapter(this);
         mAdapter.setOnItemClickListener(this);
@@ -148,8 +154,6 @@ public class GalleryActivity extends BaseActivity<GalleryViewInterface, ImagePre
             }
         });
         mAlertBuilder.setNegativeButton("否", null);
-
-        mPasswordBuilder = new PasswordDialog.Builder(this);
     }
 
     private int getLastVisiblePosition() {
@@ -215,22 +219,16 @@ public class GalleryActivity extends BaseActivity<GalleryViewInterface, ImagePre
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.add_album:
-                mPasswordBuilder.setTitle("创建相册")
-                        .setUrl(Uri.Add_Album)
+                new AlbumPasswordDialog.Builder(this).setTitle(AlbumPasswordDialog.CREATE_ALBUM)
+                        .setVerifyUrl(Uri.Add_Album)
                         .setOnResponseListener(this)
                         .build().show();
                 break;
             case R.id.open_album:
-                mPasswordBuilder.setTitle("进入相册")
-                        .setUrl(Uri.Open_Album)
+                new AlbumPasswordDialog.Builder(this).setTitle(AlbumPasswordDialog.ENTER_ALBUM)
+                        .setVerifyUrl(Uri.Open_Album)
                         .setOnResponseListener(this)
                         .build().show();
-                break;
-            case R.id.random:
-                mPresenter.setUrl(Uri.Girls);
-                mPresenter.refresh();
-                SharePreferencesUtils.putString(SharePreferencesUtils.Url, Uri.Girls);
-                SharePreferencesUtils.putString(SharePreferencesUtils.Album, "");
                 break;
         }
         return true;
@@ -247,13 +245,27 @@ public class GalleryActivity extends BaseActivity<GalleryViewInterface, ImagePre
     }
 
     @Override
-    public void onSuccess(String aid) {
-        if (!TextUtils.isEmpty(aid)) {
+    public void onSuccess(AlbumPasswordDialog.AlbumResult result) {
+        String aid=result.aid;
+        String msg=result.msg;
+
+        if(!TextUtils.isEmpty(aid)) {
             String newURL = Uri.Load_Img + "&album.aid=" + aid + "&currPage=";
             mPresenter.setUrl(newURL);
             mPresenter.refresh();
             SharePreferencesUtils.putString(SharePreferencesUtils.Url, newURL);
             SharePreferencesUtils.putString(SharePreferencesUtils.Album, aid);
+        }
+
+        if(!TextUtils.isEmpty(msg)) {
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onFail(String msg) {
+        if(!TextUtils.isEmpty(msg)) {
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
         }
     }
 

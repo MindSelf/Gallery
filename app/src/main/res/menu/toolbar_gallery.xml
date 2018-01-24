@@ -12,9 +12,4 @@
         android:title="打开相册"
         app:showAsAction="never"/>
 
-    <item
-        android:id="@+id/random"
-        android:title="随便看看"
-        app:showAsAction="never"/>
-
 </menu>

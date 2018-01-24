@@ -1,24 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!--蓝色-->
     <item>
         <shape android:shape="rectangle">
             <solid android:color="#9bb4f4"/>
         </shape>
     </item>
 
+    <!--由于白色的遮罩层有6dp的偏移，所以剩下一个高6dp的蓝色区域-->
     <item android:bottom="6dp">
         <shape android:shape="rectangle">
-            <solid android:color="#ffffff"/>
+            <solid android:color="#f2f2f2"/>
         </shape>
     </item>
 
+    <!--在剩下的蓝色区域中截取，剩下左下右的各1dp的“凹”型区域-->
     <item
         android:bottom="1dp"
         android:left="1dp"
         android:right="1dp">
         <shape android:shape="rectangle">
-            <solid android:color="#ffffff"/>
+            <solid android:color="#f2f2f2"/>
         </shape>
     </item>
 </layer-list>

@@ -9,11 +9,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.ImageView;
 
 import com.example.zhaolexi.imageloader.R;
-import com.example.zhaolexi.imageloader.base.MyApplication;
 import com.example.zhaolexi.imageloader.bean.Photo;
+import com.example.zhaolexi.imageloader.ui.SquareImageView;
 import com.example.zhaolexi.imageloader.utils.MyUtils;
 import com.example.zhaolexi.imageloader.utils.loader.ImageLoader;
 
@@ -41,11 +40,12 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
 
     private int mEdge;
     private boolean mIsIdle = true;
+    private boolean mIsUploading=false;
 
     public PhotoAdapter(Context context) {
         mDatas = new ArrayList<>();
         mSelected = new HashSet<>(MAX_SIZE);
-        mImageLoader = ImageLoader.Builder.build(MyApplication.getContext());
+        mImageLoader = new ImageLoader.Builder(context).build();
         mDefaultDrawable = context.getResources().getDrawable(R.mipmap.image_default);
         int screenWidth = MyUtils.getScreenMetrics(context).widthPixels;
         mEdge = (screenWidth - MyUtils.dp2px(context, 6)) / 3;
@@ -54,6 +54,10 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
     public void setDatas(List<Photo> newDatas) {
         mDatas.clear();
         mDatas.addAll(newDatas);
+    }
+
+    public void setIsUploading(boolean isUploading) {
+        this.mIsUploading=isUploading;
     }
 
     public void setIsIdle(boolean isIdle) {
@@ -95,10 +99,12 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
 
     @Override
     public void onBindViewHolder(final PhotoAdapter.ViewHolder holder, final int position) {
-        final ImageView image = holder.iv_image;
-        final ImageView block = holder.iv_block;
+        final SquareImageView image = holder.iv_image;
+        final SquareImageView block = holder.iv_block;
         final CheckBox checkBox = holder.checkBox;
 
+        //上传的时候不允许交互操作
+        checkBox.setClickable(!mIsUploading);
 
         if (mSelected.contains(position) && !checkBox.isChecked()) {
             //先清空监听器，防止对setChecked结果产生干扰
@@ -111,16 +117,10 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
             block.setSelected(false);
         }
 
-        //设置监听器
-        image.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mOnItemClickListener.onItemClick(v, holder.getLayoutPosition());
-            }
-        });
         checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
                 if (mSelected.size() >= MAX_SIZE && isChecked) {
                     checkBox.setChecked(false);
                     mOnSelectCountChangeListener.onOverSelect();
@@ -135,6 +135,18 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
                 }
             }
         });
+
+        //设置监听器
+        image.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mOnItemClickListener.onItemClick(v, holder.getLayoutPosition());
+            }
+        });
+        //上传的时候不允许交互操作
+        //setOnClickListener会将clickable置为true，所以应该放在setOnClickListener后面
+        image.setClickable(!mIsUploading);
+
 
         String tag = (String) image.getTag();
         String uri = mDatas.get(position).getThumbnailPath();
@@ -170,13 +182,13 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
-        ImageView iv_image, iv_block;
+        SquareImageView iv_image, iv_block;
         CheckBox checkBox;
 
         public ViewHolder(View itemView) {
             super(itemView);
-            iv_image = (ImageView) itemView.findViewById(R.id.iv_image);
-            iv_block = (ImageView) itemView.findViewById(R.id.iv_block);
+            iv_image = (SquareImageView) itemView.findViewById(R.id.iv_image);
+            iv_block = (SquareImageView) itemView.findViewById(R.id.iv_block);
             checkBox = (CheckBox) itemView.findViewById(R.id.cb_select);
         }
     }

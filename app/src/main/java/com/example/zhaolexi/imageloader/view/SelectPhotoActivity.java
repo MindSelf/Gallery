@@ -30,7 +30,7 @@ import com.example.zhaolexi.imageloader.base.BaseActivity;
 import com.example.zhaolexi.imageloader.bean.MessageEvent;
 import com.example.zhaolexi.imageloader.bean.Photo;
 import com.example.zhaolexi.imageloader.bean.PhotoBucket;
-import com.example.zhaolexi.imageloader.presenter.SeletePhotoPresenter;
+import com.example.zhaolexi.imageloader.presenter.SelectPhotoPresenter;
 import com.example.zhaolexi.imageloader.ui.SpacesItemDecoration;
 import com.example.zhaolexi.imageloader.utils.MyUtils;
 
@@ -39,7 +39,7 @@ import org.greenrobot.eventbus.EventBus;
 import java.util.List;
 
 
-public class SelectPhotoActivity extends BaseActivity<SelectPhotoViewInterface,SeletePhotoPresenter> implements SelectPhotoViewInterface, View.OnClickListener, View.OnTouchListener, AdapterView.OnItemClickListener, OnItemClickListener, PhotoAdapter.OnSelectCountChangeListner {
+public class SelectPhotoActivity extends BaseActivity<SelectPhotoViewInterface,SelectPhotoPresenter> implements SelectPhotoViewInterface, View.OnClickListener, View.OnTouchListener, AdapterView.OnItemClickListener, OnItemClickListener, PhotoAdapter.OnSelectCountChangeListner {
 
     private static final int READ_EXTERNAL_STORAGE = 1;
 
@@ -105,6 +105,7 @@ public class SelectPhotoActivity extends BaseActivity<SelectPhotoViewInterface,S
         mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                mPresenter.cancelTask();
                 finish();
             }
         });
@@ -202,8 +203,8 @@ public class SelectPhotoActivity extends BaseActivity<SelectPhotoViewInterface,S
     }
 
     @Override
-    protected SeletePhotoPresenter createPresenter() {
-        return new SeletePhotoPresenter();
+    protected SelectPhotoPresenter createPresenter() {
+        return new SelectPhotoPresenter();
     }
 
     @Override
@@ -260,6 +261,8 @@ public class SelectPhotoActivity extends BaseActivity<SelectPhotoViewInterface,S
             mSubmit.setSelected(true);
         }
         mSubmit.setEnabled(true);
+        mPhotoAdapter.setIsUploading(false);
+        mPhotoAdapter.notifyDataSetChanged();
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
@@ -302,6 +305,8 @@ public class SelectPhotoActivity extends BaseActivity<SelectPhotoViewInterface,S
                 mSubmit.setEnabled(false);
                 mSubmit.setText("上传中...");
                 mPresenter.upLoadImage(mPhotoAdapter.getSelectedPhotos());
+                mPhotoAdapter.setIsUploading(true);
+                mPhotoAdapter.notifyDataSetChanged();
                 break;
             default:
                 break;
@@ -336,10 +341,12 @@ public class SelectPhotoActivity extends BaseActivity<SelectPhotoViewInterface,S
             case KeyEvent.KEYCODE_BACK:
                 if (mPresenter.onBackPressed())
                     return true;
-                if (mPresenter.cancleTask()) {
+                if (mPresenter.cancelTask()) {
                     mSubmit.setText(String.format("完成(%d/%d)", mPhotoAdapter.getSelectedCount(),PhotoAdapter.MAX_SIZE));
                     mSubmit.setEnabled(true);
                     mSubmit.setSelected(true);
+                    mPhotoAdapter.setIsUploading(false);
+                    mPhotoAdapter.notifyDataSetChanged();
                     return true;
                 }
                 break;

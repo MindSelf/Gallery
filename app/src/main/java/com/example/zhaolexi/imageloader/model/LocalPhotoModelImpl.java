@@ -12,7 +12,7 @@ import android.util.SparseArray;
 import com.example.zhaolexi.imageloader.base.MyApplication;
 import com.example.zhaolexi.imageloader.bean.Photo;
 import com.example.zhaolexi.imageloader.bean.PhotoBucket;
-import com.example.zhaolexi.imageloader.presenter.SeletePhotoPresenter;
+import com.example.zhaolexi.imageloader.presenter.SelectPhotoPresenter;
 import com.example.zhaolexi.imageloader.utils.MyUtils;
 import com.example.zhaolexi.imageloader.utils.SharePreferencesUtils;
 import com.example.zhaolexi.imageloader.utils.Uri;
@@ -66,7 +66,7 @@ public class LocalPhotoModelImpl implements LocalPhotoModel {
 
     public LocalPhotoModelImpl() {
         mContentResolver = MyApplication.getContext().getContentResolver();
-        mImageLoader = ImageLoader.Builder.build(MyApplication.getContext());
+        mImageLoader = new ImageLoader.Builder(MyApplication.getContext()).build();
         mThumbnails = new SparseArray<>();
         mBuckets = new SparseArray<>();
         mClient = new OkHttpClient.Builder()
@@ -189,7 +189,7 @@ public class LocalPhotoModelImpl implements LocalPhotoModel {
      * @param listener 回调接口
      */
     @Override
-    public void uploadImg(List<File> files, final SeletePhotoPresenter.OnUploadFinishListener listener) {
+    public void uploadImg(List<File> files, final SelectPhotoPresenter.OnUploadFinishListener listener) {
 
         MultipartBody.Builder builder = new MultipartBody.Builder().setType(MultipartBody.FORM);
 
@@ -223,7 +223,7 @@ public class LocalPhotoModelImpl implements LocalPhotoModel {
         mCall.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                Log.d("Upload", "onFailure: " + e.getCause());
+                Log.d("Upload", "onFailure: " + e);
                 if (!call.isCanceled()) {
                     listener.onUploadFinish(false, "服务器异常");
                 }
@@ -242,8 +242,7 @@ public class LocalPhotoModelImpl implements LocalPhotoModel {
                         listener.onUploadFinish(false, msg);
                     }
                 } catch (JSONException e) {
-                    listener.onUploadFinish(false, "服务器异常");
-                    e.printStackTrace();
+                    listener.onUploadFinish(false, "数据异常");
                 }
             }
         });
@@ -255,7 +254,7 @@ public class LocalPhotoModelImpl implements LocalPhotoModel {
      * @return 取消上传任务是否成功
      */
     @Override
-    public boolean cancle() {
+    public boolean cancel() {
         if (mCall != null && !mCall.isCanceled()) {
             mCall.cancel();
             return true;
