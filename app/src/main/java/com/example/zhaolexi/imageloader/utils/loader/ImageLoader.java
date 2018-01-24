@@ -216,8 +216,8 @@ public class ImageLoader {
                     bitmap = loadBitmap(uri, taskOptions);
                 } catch (SocketTimeoutException e) {
                     bitmap = BitmapFactory.decodeResource(mContext.getResources(), R.mipmap.image_fail);
-                    if (taskOptions.socketTimeoutHanlder != null) {
-                        taskOptions.socketTimeoutHanlder.onHandleSocketTimeOut();
+                    if (taskOptions.socketTimeoutHandler != null) {
+                        taskOptions.socketTimeoutHandler.onHandleSocketTimeOut();
                     }
                 }
 
@@ -549,7 +549,7 @@ public class ImageLoader {
     public static class TaskOptions {
 
         public BitmapFactory.Options options;
-        public SocketTimeOutHanlder socketTimeoutHanlder;
+        public SocketTimeOutHandler socketTimeoutHandler;
         public OnLoadBitmapListener onLoadBitmapListener;
 
         /*
@@ -578,7 +578,7 @@ public class ImageLoader {
             this.maxSize = maxSize * 1024;
         }
 
-        public interface SocketTimeOutHanlder {
+        public interface SocketTimeOutHandler {
             void onHandleSocketTimeOut();
         }
 
