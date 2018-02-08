@@ -20,9 +20,9 @@ public class Image {
      * who : 代码家
      */
 
+    //private String id;
     @SerializedName(value = "pdesc", alternate = "desc" )
     private String description;
-
     @SerializedName(value = "thumbUrl",alternate = "url")
     private String thumbUrl;
     private String fullUrl;

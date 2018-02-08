@@ -148,7 +148,7 @@ public class ImageLoader {
 
     /**
      * build a singleton of ImageLoader
-     * you can choose to initialize a ThreadPool、MemoryCache or DiskCache
+     * you can choose to initialize a ThreadPool、MemoryCache or DiskCache at the first time.
      */
     public static class Builder {
         @SuppressLint("StaticFieldLeak")

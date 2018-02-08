@@ -16,7 +16,8 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".view.GalleryActivity"
-            android:hardwareAccelerated="true">
+            android:hardwareAccelerated="true"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
@@ -25,9 +26,13 @@
         </activity>
         <activity
             android:name=".view.ImageDetailActivity"
+            android:screenOrientation="portrait"
             android:theme="@style/DialogTheme"/>
-        <activity android:name=".view.SelectPhotoActivity"
-            android:hardwareAccelerated="true"/>
+        <activity
+            android:name=".view.UploadPhotoActivity"
+            android:hardwareAccelerated="true"
+            android:screenOrientation="portrait"/>
+
     </application>
 
 </manifest>

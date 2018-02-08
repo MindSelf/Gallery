@@ -11,7 +11,7 @@ import com.example.zhaolexi.imageloader.presenter.ImageDetailPresenter;
 import com.example.zhaolexi.imageloader.utils.MyUtils;
 import com.example.zhaolexi.imageloader.utils.loader.ImageLoader;
 
-public class ImageDetailActivity extends BaseActivity<ImageDetailViewInterface, ImageDetailPresenter> implements ImageDetailViewInterface {
+public class ImageDetailActivity extends BaseActivity<ImageDetailPresenter> implements ImageDetailViewInterface {
 
     private ImageView mImageView;
     private String mUrl;
@@ -44,7 +44,7 @@ public class ImageDetailActivity extends BaseActivity<ImageDetailViewInterface, 
     protected void initData() {
         mUrl = getIntent().getStringExtra("url");
         mHasFullImg = getIntent().getBooleanExtra("hasFullImg", false);
-        mMaxWidth = MyUtils.getScreenMetrics(this).widthPixels - MyUtils.dp2px(this, 40);
+        mMaxWidth = MyUtils.getScreenMetrics(this).widthPixels - MyUtils.dp2px(this, 60);
         mMaxHeight = 0;
     }
 

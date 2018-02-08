@@ -19,12 +19,13 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.example.zhaolexi.imageloader.R;
+import com.example.zhaolexi.imageloader.base.BaseFragment;
 import com.example.zhaolexi.imageloader.bean.Image;
-import com.example.zhaolexi.imageloader.presenter.ImagePresenter;
-import com.example.zhaolexi.imageloader.ui.GridItemTouchHelperCallback;
+import com.example.zhaolexi.imageloader.callback.OnItemClickListener;
+import com.example.zhaolexi.imageloader.presenter.AlbumPresenter;
+import com.example.zhaolexi.imageloader.ui.ImageItemTouchHelperCallback;
 import com.example.zhaolexi.imageloader.utils.MyUtils;
 import com.example.zhaolexi.imageloader.utils.loader.ImageLoader;
-import com.example.zhaolexi.imageloader.view.GalleryActivity;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,42 +35,47 @@ import java.util.List;
  * Created by ZHAOLEXI on 2017/10/14.
  */
 
-public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchHelperCallback.ItemTouchHelperAdapter {
+public class ImageAdapter extends RecyclerView.Adapter implements ImageItemTouchHelperCallback.ItemTouchHelperAdapter {
 
     private List<Image> mImageList;
     //记录图片高度
-//    private SparseIntArray mHeightsArray;
-
+    //    private SparseIntArray mHeightsArray;
     private ImageLoader mImageLoader;
     private Context mCtx;
+    private AlbumPresenter mPresenter;
     private Drawable mDefaultBitmapDrawable;
-    private View mFooter;
     private OnItemClickListener onItemClickListener;
 
     //初始值为true，因为我们是在onScrollStateChange时设置idle值，而刚打开时不会回调onScrollStateChange
     private boolean mIsIdle = true;
-    private int mFooterState;
+    //初始为NEWDATA，说明当前没有加载图片
+    private int mFooterState = FOOTER_NEWDATA;
     private int mImageWidth;
 
     public static final int TYPE_NORMAL = 1;
     public static final int TYPE_FOOTER = 2;
-    public static final int FOOTER_LOADING = 1 << 1;
-    public static final int FOOTER_NEWDATA = 1 << 2;
+    public static final int FOOTER_NEWDATA = 1 << 1;
+    public static final int FOOTER_LOADING = 1 << 2;
     public static final int FOOTER_ERROR = 1 << 3;
     public static final int FOOTER_NODATA = 1 << 4;
 
-    public ImageAdapter(Context context) {
-        mCtx=context;
+    public ImageAdapter(BaseFragment fragment) {
+        mCtx = fragment.getContext();
+        mPresenter = (AlbumPresenter) fragment.getPresenter();
         mImageList = new ArrayList<>();
-//        mHeightsArray = new SparseIntArray();
-        mImageLoader = new ImageLoader.Builder(context).initMemoryCacheRate(4).build();
-        mDefaultBitmapDrawable = context.getResources().getDrawable(R.mipmap.image_default);
-        int screenWidth = MyUtils.getScreenMetrics(context).widthPixels;
-        mImageWidth = (screenWidth - MyUtils.dp2px(context, 16)) / 2;
+        //        mHeightsArray = new SparseIntArray();
+        mImageLoader = new ImageLoader.Builder(mCtx).initMemoryCacheRate(4).build();
+        mDefaultBitmapDrawable = mCtx.getResources().getDrawable(R.color.windowBackground);
+        int screenWidth = MyUtils.getScreenMetrics(mCtx).widthPixels;
+        mImageWidth = (screenWidth - MyUtils.dp2px(mCtx, 16)) / 2;
     }
 
     public void setFooterState(int footerState) {
         mFooterState = footerState;
+    }
+
+    public int getFooterState() {
+        return mFooterState;
     }
 
     public void setIsIdle(boolean isIdle) {
@@ -115,17 +121,16 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
 
     @Override
     public int getItemViewType(int position) {
-        int type = position + 1 == getItemCount() ? TYPE_FOOTER : TYPE_NORMAL;
-        return type;
+        return position + 1 == getItemCount() ? TYPE_FOOTER : TYPE_NORMAL;
     }
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         if (viewType == TYPE_NORMAL) {
-            View view = LayoutInflater.from(mCtx).inflate(R.layout.image_list_item, parent, false);
+            View view = LayoutInflater.from(mCtx).inflate(R.layout.item_image_list, parent, false);
             return new ItemViewHolder(view);
         } else {
-            mFooter = LayoutInflater.from(mCtx).inflate(R.layout.image_list_footer, parent, false);
+            View mFooter = LayoutInflater.from(mCtx).inflate(R.layout.footer_image_list, parent, false);
             return new FooterViewHolder(mFooter);
         }
     }
@@ -133,11 +138,12 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
     @Override
     public void onBindViewHolder(final RecyclerView.ViewHolder holder, final int position) {
         if (getItemViewType(position) == TYPE_NORMAL) {
-            ItemViewHolder viewholder = (ItemViewHolder) holder;
-            ImageView imageView = viewholder.imageView;
-            TextView textView = viewholder.description;
+            ItemViewHolder viewHolder = (ItemViewHolder) holder;
+            ImageView imageView = viewHolder.imageView;
+            TextView textView = viewHolder.description;
             textView.setText(mImageList.get(position).getDescription());
 
+            //加载和显示图片
             final String tag = (String) imageView.getTag();
             final String uri = mImageList.get(position).getThumbUrl();
 
@@ -179,6 +185,7 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
             FooterViewHolder viewHolder = (FooterViewHolder) holder;
             switch (mFooterState) {
                 case FOOTER_NEWDATA:
+                    //当前没有加载图片，隐藏footer
                     viewHolder.progressBar.setVisibility(View.GONE);
                     viewHolder.textView.setVisibility(View.GONE);
                     break;
@@ -189,7 +196,7 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
                     break;
                 case FOOTER_ERROR:
                     viewHolder.progressBar.setVisibility(View.GONE);
-                    TextView textView=viewHolder.textView;
+                    TextView textView = viewHolder.textView;
                     textView.setVisibility(View.VISIBLE);
                     SpannableString ss = new SpannableString(
                             mCtx.getResources().getText(R.string.footer_error));
@@ -197,9 +204,7 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
                         @Override
                         public void onClick(View widget) {
                             //重新加载
-                            GalleryActivity activity=(GalleryActivity) mCtx;
-                            ImagePresenter presenter=activity.getPresenter();
-                            presenter.loadMore();
+                            mPresenter.loadMore();
                         }
                     }, 5, 9, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
                     textView.setText(ss);
@@ -238,7 +243,7 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
         ImageView imageView;
         TextView description;
 
-        public ItemViewHolder(View itemView) {
+        ItemViewHolder(View itemView) {
             super(itemView);
             imageView = (ImageView) itemView.findViewById(R.id.iv_image);
             description = (TextView) itemView.findViewById(R.id.description);
@@ -256,7 +261,7 @@ public class ImageAdapter extends RecyclerView.Adapter implements GridItemTouchH
         TextView textView;
         ProgressBar progressBar;
 
-        public FooterViewHolder(View itemView) {
+        FooterViewHolder(View itemView) {
             super(itemView);
             textView = (TextView) itemView.findViewById(R.id.footer_tv);
             progressBar = (ProgressBar) itemView.findViewById(R.id.footer_pb);

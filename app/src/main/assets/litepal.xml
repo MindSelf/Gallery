@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<litepal>
+    <dbname value="Gallery"/>
+
+    <version value="1"/>
+
+    <list>
+        <mapping class="com.example.zhaolexi.imageloader.bean.Album"/>
+    </list>
+
+</litepal>

@@ -13,8 +13,11 @@ public class SharePreferencesUtils {
 
     private static SharedPreferences sPreference = PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext());
 
+    @Deprecated
     public static String Url = "url";
+    @Deprecated
     public static String Album = "aid";
+    public static String User = "usr";
 
     public static void putString(String key, String value) {
         SharedPreferences.Editor editor=sPreference.edit();

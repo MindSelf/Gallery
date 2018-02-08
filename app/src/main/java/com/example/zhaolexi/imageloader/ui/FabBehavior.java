@@ -15,7 +15,7 @@ import android.view.animation.ScaleAnimation;
 
 public class FabBehavior extends CoordinatorLayout.Behavior<FloatingActionButton> {
 
-    private static long DURATION = 100; //milliseconds
+    private static long DURATION = 150; //milliseconds
     private boolean mIsAnimating, mIsVisible;
     private ScaleAnimation mOpenAnimation, mCloseAnimation;
 
@@ -82,4 +82,20 @@ public class FabBehavior extends CoordinatorLayout.Behavior<FloatingActionButton
         }
     }
 
+    public void startOpening(FloatingActionButton view) {
+        if(view.getVisibility()!=View.VISIBLE) {
+            view.setVisibility(View.VISIBLE);
+            view.startAnimation(mOpenAnimation);
+        }
+    }
+
+    public void startClosing(FloatingActionButton view) {
+        if(view.getVisibility()==View.VISIBLE) {
+            view.startAnimation(mCloseAnimation);
+            //由于动画使用了animation.setFillAfter(true），这会使mCurrentAnimation在动画结束时不置空
+            //当ViewGroup在绘制子View时，如果子View的mCurrentAnimation不为null，就算不为visible也照样会进行绘制
+            view.clearAnimation();
+            view.setVisibility(View.GONE);
+        }
+    }
 }

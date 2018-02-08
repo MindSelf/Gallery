@@ -4,4 +4,7 @@
     <string name="footer_nodata">没有更多图片了</string>
     <string name="footer_error">加载失败，点击重试</string>
     <string name="random"><u>随便看看</u></string>
+    <string name="manage_guide_press">长按进行编辑</string>
+    <string name="manage_guide_drag">可拖动进行排序</string>
+
 </resources>

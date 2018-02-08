@@ -1,20 +1,25 @@
 package com.example.zhaolexi.imageloader.view;
 
-import com.example.zhaolexi.imageloader.bean.Image;
+import com.example.zhaolexi.imageloader.adapter.ManagedAlbumAdapter;
+import com.example.zhaolexi.imageloader.bean.Album;
 
 import java.util.List;
 
 /**
- * Created by ZHAOLEXI on 2017/10/14.
+ * Created by ZHAOLEXI on 2018/2/5.
  */
 
 public interface GalleryViewInterface {
 
-    void showNewDatas(boolean hasMore,List<Image> newDatas);
+    void showAlertDialog();
 
-    void showError();
+    void showManagePage(boolean animated);
 
-    void showLoading();
+    void dismissManagePage();
 
-    void setRefreshing(boolean isRefreshing);
+    void showRandom(List<Album> albums);
+
+    void showError(String reason);
+
+    ManagedAlbumAdapter getAlbumAdapter();
 }

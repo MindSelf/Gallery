@@ -19,6 +19,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.lang.ref.SoftReference;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -36,7 +37,6 @@ public abstract class PasswordDialog<T extends PasswordDialog.Result> extends Di
     protected static final int SUCCESS = 1;
     protected static final int FAIL = -1;
 
-    protected Context mCtx;
     protected String mVerifyUrl;
     protected TextView tv_title, tv_account_name, tv_password_name,
             tv_negative, tv_positive;
@@ -47,7 +47,6 @@ public abstract class PasswordDialog<T extends PasswordDialog.Result> extends Di
 
     protected PasswordDialog(@NonNull Context context) {
         super(context);
-        mCtx = context;
         initDialog();
     }
 
@@ -64,7 +63,7 @@ public abstract class PasswordDialog<T extends PasswordDialog.Result> extends Di
 
         tv_negative.setOnClickListener(this);
         tv_positive.setOnClickListener(this);
-        mClient = new OkHttpClient();
+        mClient = new OkHttpClient.Builder().connectTimeout(5, TimeUnit.SECONDS).build();
         mHandler = new PasswordDialogHandler<T>(this);
     }
 
@@ -147,7 +146,7 @@ public abstract class PasswordDialog<T extends PasswordDialog.Result> extends Di
                 T result = (T) msg.obj;
                 switch (msg.what) {
                     case SUCCESS:
-                        dialog.mListener.onSuccess(result);
+                        dialog.mListener.onSuccess(dialog.tv_title.getText().toString(), result);
                         dialog.dismiss();
                         break;
                     case FAIL:
@@ -161,7 +160,7 @@ public abstract class PasswordDialog<T extends PasswordDialog.Result> extends Di
     }
 
     public interface OnResponseListener<T extends Result> {
-        void onSuccess(T result);
+        void onSuccess(String title, T result);
 
         void onFail(String msg);
     }

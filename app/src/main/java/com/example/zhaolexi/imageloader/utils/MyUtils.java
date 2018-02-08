@@ -4,7 +4,6 @@ import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.content.Context;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.WindowManager;
@@ -52,13 +51,19 @@ public class MyUtils {
                 context.getResources().getDisplayMetrics());
     }
 
-    public static boolean isWifi(Context context) {
-        ConnectivityManager connectivityManager = (ConnectivityManager) context
+    public static boolean isNetWorkAvailable(Context context) {
+        ConnectivityManager manager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (manager != null && manager.getActiveNetworkInfo() != null) {
+            return manager.getActiveNetworkInfo().isAvailable();
+        }
+        return false;
+    }
+
+    public static boolean isWifiAvailable(Context context) {
+        ConnectivityManager manager = (ConnectivityManager) context
                 .getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetInfo = connectivityManager.getActiveNetworkInfo();
-        if (activeNetInfo != null
-                && activeNetInfo.getType() == ConnectivityManager.TYPE_WIFI) {
-            return true;
+        if (manager != null && manager.getActiveNetworkInfo() != null) {
+            return manager.getActiveNetworkInfo().getType()==ConnectivityManager.TYPE_WIFI;
         }
         return false;
     }

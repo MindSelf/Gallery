@@ -5,7 +5,7 @@ import android.os.SystemClock;
 import android.widget.ImageView;
 
 import com.example.zhaolexi.imageloader.base.MyApplication;
-import com.example.zhaolexi.imageloader.presenter.ImageDetailPresenter;
+import com.example.zhaolexi.imageloader.callback.OnLoadFinishListener;
 import com.example.zhaolexi.imageloader.utils.loader.ImageLoader;
 
 import java.io.IOException;
@@ -16,16 +16,14 @@ import java.io.IOException;
 
 public class ImageDetailModelImpl implements ImageDetailModel {
 
-    private ImageDetailPresenter mPresenter;
     private ImageLoader mImageLoader;
 
-    public ImageDetailModelImpl(ImageDetailPresenter presenter) {
-        mPresenter = presenter;
+    public ImageDetailModelImpl() {
         mImageLoader = new ImageLoader.Builder(MyApplication.getContext()).build();
     }
 
     @Override
-    public void loadBitmapFromDiskCache(final String url, final ImageLoader.TaskOptions options, final ImageDetailPresenter.onLoadFinishListener listener) {
+    public void loadBitmapFromDiskCache(final String url, final ImageLoader.TaskOptions options, final OnLoadFinishListener<Bitmap> listener) {
         new Thread(new Runnable() {
             Bitmap bitmap = null;
             long current = SystemClock.currentThreadTimeMillis();

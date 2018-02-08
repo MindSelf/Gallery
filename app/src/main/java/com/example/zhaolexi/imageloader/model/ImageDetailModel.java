@@ -1,8 +1,9 @@
 package com.example.zhaolexi.imageloader.model;
 
+import android.graphics.Bitmap;
 import android.widget.ImageView;
 
-import com.example.zhaolexi.imageloader.presenter.ImageDetailPresenter;
+import com.example.zhaolexi.imageloader.callback.OnLoadFinishListener;
 import com.example.zhaolexi.imageloader.utils.loader.ImageLoader;
 
 /**
@@ -12,7 +13,7 @@ import com.example.zhaolexi.imageloader.utils.loader.ImageLoader;
 public interface ImageDetailModel {
 
     void loadBitmapFromDiskCache(String url, ImageLoader.TaskOptions options,
-                                 ImageDetailPresenter.onLoadFinishListener listener);
+                                 OnLoadFinishListener<Bitmap> listener);
 
     void loadFullImg(String url, ImageView imageView, ImageLoader.TaskOptions options);
 }

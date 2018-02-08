@@ -11,6 +11,16 @@
     <style name="DialogTheme" parent="Theme.AppCompat.Light.Dialog">
         <item name="windowNoTitle">true</item>
         <item name="windowActionBar">false</item>
+        <!--背景颜色及透明程度-->
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <!--是否浮现在activity之上-->
+        <!--<item name="android:windowIsFloating">true</item>-->
+        <!--是否模糊-->
+        <!--<item name="android:backgroundDimEnabled">true</item>-->
+    </style>
+
+    <style name="PopupWindowTheme" parent="@style/Base.ThemeOverlay.AppCompat.Light">
+        <item name="android:colorBackground">@color/windowBackground</item>
     </style>
 
 </resources>

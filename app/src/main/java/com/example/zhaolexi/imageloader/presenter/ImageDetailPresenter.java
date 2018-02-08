@@ -1,8 +1,6 @@
 package com.example.zhaolexi.imageloader.presenter;
 
-import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
-import android.os.Handler;
 import android.os.Message;
 import android.widget.ImageView;
 
@@ -16,47 +14,35 @@ import com.example.zhaolexi.imageloader.view.ImageDetailViewInterface;
  * Created by ZHAOLEXI on 2017/11/14.
  */
 
-public class ImageDetailPresenter extends BasePresenter<ImageDetailViewInterface> {
+public class ImageDetailPresenter extends BasePresenter<ImageDetailViewInterface,ImageDetailModel> {
 
-    private final int MSG_LOAD_SUCCESS = 0;
-    private final int MSG_LOAD_FAIL = 1;
-    private ImageDetailModel mModel;
-    @SuppressLint("HandlerLeak")
-    private Handler mHandler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            if (isViewAttached()) {
-                ImageDetailViewInterface imageDetail = getView();
-                switch (msg.what) {
-                    case MSG_LOAD_SUCCESS:
-                        imageDetail.showImage((Bitmap) msg.obj);
-                        break;
-                    case MSG_LOAD_FAIL:
-                        imageDetail.showError("加载超时");
-                        break;
-                    default:
-                        super.handleMessage(msg);
-                        break;
-                }
-            }
-        }
-    };
+    @Override
+    protected ImageDetailModel newModel() {
+        return new ImageDetailModelImpl();
+    }
 
-    public ImageDetailPresenter() {
-        mModel = new ImageDetailModelImpl(this);
+    @Override
+    protected void onMessageSuccess(Message msg) {
+        ImageDetailViewInterface mView = getView();
+        mView.showImage((Bitmap) msg.obj);
+    }
+
+    @Override
+    protected void onMessageFail(Message msg) {
+        ImageDetailViewInterface mView = getView();
+        mView.showError((String) msg.obj);
     }
 
     public void loadBitmapFromDiskCache(String url, ImageLoader.TaskOptions options) {
-        mModel.loadBitmapFromDiskCache(url, options, new onLoadFinishListener() {
+        mModel.loadBitmapFromDiskCache(url, options, new com.example.zhaolexi.imageloader.callback.OnLoadFinishListener<Bitmap>() {
             @Override
-            public void onSuccess(Bitmap bitmap) {
-                Message message = Message.obtain(mHandler, MSG_LOAD_SUCCESS, bitmap);
-                message.sendToTarget();
+            public void onSuccess(Bitmap data) {
+                Message.obtain(mHandler, MSG_SUCCESS, data).sendToTarget();
             }
 
             @Override
             public void onFail(String reason) {
-                mHandler.sendEmptyMessage(MSG_LOAD_FAIL);
+                Message.obtain(mHandler, MSG_FAIL, reason).sendToTarget();
             }
         });
     }
@@ -65,9 +51,4 @@ public class ImageDetailPresenter extends BasePresenter<ImageDetailViewInterface
         mModel.loadFullImg(url, imageView, options);
     }
 
-    public interface onLoadFinishListener {
-        void onSuccess(Bitmap bitmap);
-
-        void onFail(String reason);
-    }
 }

@@ -1,5 +1,6 @@
 package com.example.zhaolexi.imageloader.adapter;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
@@ -12,6 +13,7 @@ import android.widget.CompoundButton;
 
 import com.example.zhaolexi.imageloader.R;
 import com.example.zhaolexi.imageloader.bean.Photo;
+import com.example.zhaolexi.imageloader.callback.OnItemClickListener;
 import com.example.zhaolexi.imageloader.ui.SquareImageView;
 import com.example.zhaolexi.imageloader.utils.MyUtils;
 import com.example.zhaolexi.imageloader.utils.loader.ImageLoader;
@@ -30,7 +32,7 @@ import java.util.Set;
 public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> {
 
     public static final int MAX_SIZE = 4;
-    private List<Photo> mDatas;
+    private List<Photo> mData;
     private Set<Integer> mSelected;
     private ImageLoader mImageLoader;
     private Drawable mDefaultDrawable;
@@ -43,7 +45,7 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
     private boolean mIsUploading=false;
 
     public PhotoAdapter(Context context) {
-        mDatas = new ArrayList<>();
+        mData = new ArrayList<>();
         mSelected = new HashSet<>(MAX_SIZE);
         mImageLoader = new ImageLoader.Builder(context).build();
         mDefaultDrawable = context.getResources().getDrawable(R.mipmap.image_default);
@@ -52,8 +54,8 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
     }
 
     public void setDatas(List<Photo> newDatas) {
-        mDatas.clear();
-        mDatas.addAll(newDatas);
+        mData.clear();
+        mData.addAll(newDatas);
     }
 
     public void setIsUploading(boolean isUploading) {
@@ -76,7 +78,7 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
         List<File> list = new ArrayList<>();
         Iterator<Integer> iterator = mSelected.iterator();
         while (iterator.hasNext()) {
-            File file = new File(mDatas.get(iterator.next()).getPath());
+            File file = new File(mData.get(iterator.next()).getPath());
             list.add(file);
         }
         return list;
@@ -93,12 +95,12 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.photo_list_item, parent, false);
+        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_photo_list, parent, false);
         return new ViewHolder(itemView);
     }
 
     @Override
-    public void onBindViewHolder(final PhotoAdapter.ViewHolder holder, final int position) {
+    public void onBindViewHolder(final PhotoAdapter.ViewHolder holder, @SuppressLint("RecyclerView") final int position) {
         final SquareImageView image = holder.iv_image;
         final SquareImageView block = holder.iv_block;
         final CheckBox checkBox = holder.checkBox;
@@ -149,9 +151,9 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
 
 
         String tag = (String) image.getTag();
-        String uri = mDatas.get(position).getThumbnailPath();
+        String uri = mData.get(position).getThumbnailPath();
         if (uri == null) {
-            uri = mDatas.get(position).getPath();
+            uri = mData.get(position).getPath();
         }
 
         if (!uri.equals(tag)) {
@@ -162,7 +164,6 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
             } else {
                 image.setImageDrawable(mDefaultDrawable);
             }
-            bitmap = null;
         }
         //优化列表卡顿，为了避免频繁的加载图片，只在列表停下来的时候才加载图片
         if (mIsIdle) {
@@ -173,19 +174,19 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
 
     @Override
     public int getItemCount() {
-        return mDatas.size();
+        return mData.size();
     }
 
     public Photo getItem(int position) {
-        return mDatas.get(position);
+        return mData.get(position);
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    class ViewHolder extends RecyclerView.ViewHolder {
 
         SquareImageView iv_image, iv_block;
         CheckBox checkBox;
 
-        public ViewHolder(View itemView) {
+        ViewHolder(View itemView) {
             super(itemView);
             iv_image = (SquareImageView) itemView.findViewById(R.id.iv_image);
             iv_block = (SquareImageView) itemView.findViewById(R.id.iv_block);

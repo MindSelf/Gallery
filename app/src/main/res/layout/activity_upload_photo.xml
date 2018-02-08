@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.zhaolexi.imageloader.view.UploadPhotoActivity">
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:background="@color/colorPrimary"
+        app:theme="@style/Base.ThemeOverlay.AppCompat.Dark.ActionBar">
+
+        <TextView
+            android:id="@+id/submit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:layout_margin="12dp"
+            android:text="完成"
+            android:textSize="16sp"
+            android:textColor="@android:color/white"
+            android:gravity="center"
+            android:clickable="true"
+            android:background="@drawable/bg_submit"/>
+    </android.support.v7.widget.Toolbar>
+
+    <RelativeLayout
+        android:id="@+id/rl_select_bucket"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_alignParentBottom="true"
+        android:gravity="center_vertical"
+        android:padding="15dp"
+        android:background="@color/colorPrimary">
+
+        <TextView
+            android:id="@+id/tv_select_bucket"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:clickable="true"
+            android:text="选择相册"
+            android:textSize="18sp"
+            android:textColor="@android:color/white"
+            android:gravity="center"/>
+
+    </RelativeLayout>
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/rv_list"
+        android:background="@color/windowBackground"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/toolbar"
+        android:layout_above="@+id/rl_select_bucket"
+        android:layout_alignParentStart="true"/>
+
+    <ViewStub
+        android:layout_width="match_parent"
+        android:layout_height="388dp"
+        android:id="@+id/stub"
+        android:inflatedId="@+id/lv_bucket"
+        android:layout="@layout/stub_bucket_list"
+        android:layout_above="@id/rl_select_bucket"/>
+
+</RelativeLayout>

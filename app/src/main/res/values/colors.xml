@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="colorPrimary">#5896d8</color>
-    <color name="colorPrimaryDark">#58c8d8</color>
+    <color name="colorPrimaryDark">#4682e2</color>
     <color name="colorAccent">#0ac39e</color>
-    <color name="windowBackground">#282997ab</color>
+    <color name="colorAccentLight">#58c8d8</color>
+    <color name="windowBackground">#cae4ea</color>
 
-    <color name="cyan">#0ac39e</color>
-    <color name="clear">#00000000</color>
-    <!--遮罩层，前两位表示透明度-->
+    <color name="clear">#00000000</color>   <!--遮罩层，前两位表示透明度-->
     <color name="block">#60000000</color>
     <color name="line">#9e9999</color>
     <color name="grey">#e6e6e6</color>
+    <color name="selected_album">#f2fffc</color>
 </resources>
