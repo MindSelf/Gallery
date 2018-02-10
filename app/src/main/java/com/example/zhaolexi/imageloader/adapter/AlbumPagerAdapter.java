@@ -30,7 +30,7 @@ public class AlbumPagerAdapter extends FragmentStatePagerAdapter {
         mFragmentList = new ArrayList<>();
     }
 
-    //getItem在instantiateItem时调用，instantiateItem返回的结果会封装成一个ItemInfo存储在ViewPager的list中
+    //getItem在PagerAdapter的instantiateItem中调用，返回的Fragment将作为Page的key
     @Override
     public Fragment getItem(int position) {
         //为了节省内存，在需要时才实例化Fragment
@@ -38,6 +38,7 @@ public class AlbumPagerAdapter extends FragmentStatePagerAdapter {
         if (position >= mFragmentList.size()) {
             mFragmentList.add(fragment);
         }else{
+            //之前添加过只是超出缓存后被清空，则添加到旧位置中
             mFragmentList.set(position, fragment);
         }
         return fragment;

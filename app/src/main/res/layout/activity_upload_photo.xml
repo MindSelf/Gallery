@@ -25,7 +25,6 @@
             android:textSize="16sp"
             android:textColor="@android:color/white"
             android:gravity="center"
-            android:clickable="true"
             android:background="@drawable/bg_submit"/>
     </android.support.v7.widget.Toolbar>
 
@@ -35,30 +34,68 @@
         android:layout_height="56dp"
         android:layout_alignParentBottom="true"
         android:gravity="center_vertical"
-        android:padding="15dp"
         android:background="@color/colorPrimary">
 
         <TextView
             android:id="@+id/tv_select_bucket"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:clickable="true"
+            android:layout_alignParentStart="true"
+            android:paddingLeft="15dp"
+            android:paddingTop="15dp"
+            android:paddingBottom="15dp"
             android:text="选择相册"
             android:textSize="18sp"
             android:textColor="@android:color/white"
             android:gravity="center"/>
 
+        <ImageView
+            android:id="@+id/iv_navigate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@id/tv_select_bucket"
+            android:layout_alignBottom="@id/tv_select_bucket"
+            android:paddingBottom="10dp"
+            android:src="@mipmap/ic_arrow_drop_up_white"/>
+
     </RelativeLayout>
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/rv_list"
-        android:background="@color/windowBackground"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/toolbar"
         android:layout_above="@+id/rl_select_bucket"
-        android:layout_alignParentStart="true"/>
+        android:layout_alignParentStart="true">
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/rv_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/windowBackground"/>
+
+        <ImageView
+            android:id="@+id/list_block"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/block"
+            android:visibility="gone"
+            tools:ignore="ContentDescription" />
+
+        <TextView
+            android:id="@+id/tv_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
+            android:paddingLeft="8dp"
+            android:gravity="left|center_vertical"
+            android:text="2016/7"
+            android:textSize="15sp"
+            android:textColor="@android:color/white"
+            android:background="@color/block"
+            android:visibility="gone"/>
+    </FrameLayout>
+
 
     <ViewStub
         android:layout_width="match_parent"

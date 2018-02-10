@@ -19,10 +19,14 @@ import com.example.zhaolexi.imageloader.utils.MyUtils;
 import com.example.zhaolexi.imageloader.utils.loader.ImageLoader;
 
 import java.io.File;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -36,13 +40,15 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
     private Set<Integer> mSelected;
     private ImageLoader mImageLoader;
     private Drawable mDefaultDrawable;
+    private String mCurrentDate;
 
     private OnItemClickListener mOnItemClickListener;
-    private OnSelectCountChangeListner mOnSelectCountChangeListener;
+    private OnSelectCountChangeListener mOnSelectCountChangeListener;
+    private OnDateChangedListener mOnDateChangedListener;
 
     private int mEdge;
     private boolean mIsIdle = true;
-    private boolean mIsUploading=false;
+    private boolean mIsUploading = false;
 
     public PhotoAdapter(Context context) {
         mData = new ArrayList<>();
@@ -50,28 +56,32 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
         mImageLoader = new ImageLoader.Builder(context).build();
         mDefaultDrawable = context.getResources().getDrawable(R.mipmap.image_default);
         int screenWidth = MyUtils.getScreenMetrics(context).widthPixels;
-        mEdge = (screenWidth - MyUtils.dp2px(context, 6)) / 3;
+        mEdge = (screenWidth - MyUtils.dp2px(context, 6)) / 4;
     }
 
-    public void setDatas(List<Photo> newDatas) {
+    public void setData(Set<Photo> newData) {
         mData.clear();
-        mData.addAll(newDatas);
+        mData.addAll(newData);  //将TreeSet里的集合按遍历顺序存放到ArrayList中
     }
 
     public void setIsUploading(boolean isUploading) {
-        this.mIsUploading=isUploading;
+        this.mIsUploading = isUploading;
     }
 
     public void setIsIdle(boolean isIdle) {
         this.mIsIdle = isIdle;
     }
 
-    public void setOnItemClickListner(OnItemClickListener onItemClickListener) {
+    public void setOnItemClickListener(OnItemClickListener onItemClickListener) {
         this.mOnItemClickListener = onItemClickListener;
     }
 
-    public void setSelectCountChangeListener(OnSelectCountChangeListner selectCountChangeListener) {
+    public void setSelectCountChangeListener(OnSelectCountChangeListener selectCountChangeListener) {
         this.mOnSelectCountChangeListener = selectCountChangeListener;
+    }
+
+    public void setOnDateChangedListener(OnDateChangedListener onDateChangedListener) {
+        this.mOnDateChangedListener = onDateChangedListener;
     }
 
     public List<File> getSelectedPhotos() {
@@ -107,18 +117,15 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
 
         //上传的时候不允许交互操作
         checkBox.setClickable(!mIsUploading);
-
         if (mSelected.contains(position) && !checkBox.isChecked()) {
-            //先清空监听器，防止对setChecked结果产生干扰
-            checkBox.setOnCheckedChangeListener(null);
+            checkBox.setOnCheckedChangeListener(null);  //先清空监听器，防止对setChecked结果产生干扰
             checkBox.setChecked(true);
-            block.setSelected(true);
+            block.setVisibility(View.VISIBLE);
         } else if (!mSelected.contains(position) && checkBox.isChecked()) {
             checkBox.setOnCheckedChangeListener(null);
             checkBox.setChecked(false);
-            block.setSelected(false);
+            block.setVisibility(View.GONE);
         }
-
         checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -127,11 +134,11 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
                     checkBox.setChecked(false);
                     mOnSelectCountChangeListener.onOverSelect();
                 } else if (isChecked) {
-                    block.setSelected(true);
+                    block.setVisibility(View.VISIBLE);
                     mSelected.add(position);
                     mOnSelectCountChangeListener.onSelectedCountChange(mSelected.size());
                 } else {
-                    block.setSelected(false);
+                    block.setVisibility(View.GONE);
                     mSelected.remove(position);
                     mOnSelectCountChangeListener.onSelectedCountChange(mSelected.size());
                 }
@@ -149,13 +156,12 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
         //setOnClickListener会将clickable置为true，所以应该放在setOnClickListener后面
         image.setClickable(!mIsUploading);
 
-
+        Photo photo = mData.get(position);
         String tag = (String) image.getTag();
-        String uri = mData.get(position).getThumbnailPath();
+        String uri = photo.getThumbnailPath();
         if (uri == null) {
-            uri = mData.get(position).getPath();
+            uri = photo.getPath();
         }
-
         if (!uri.equals(tag)) {
             //为了避免View复用导致显示旧的bitmap，这里会先显示内存中缓存的图片，没有再显示占位图
             Bitmap bitmap = mImageLoader.loadBitmapFromMemCache(uri);
@@ -169,6 +175,13 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
         if (mIsIdle) {
             image.setTag(uri);
             mImageLoader.bindBitmap(uri, image, new ImageLoader.TaskOptions(mEdge, mEdge));
+        }
+
+        DateFormat df = new SimpleDateFormat("yyyy/M", Locale.CHINA);
+        String date=df.format(new Date(photo.getLastModified()));
+        if (!date.equals(mCurrentDate)) {
+            mCurrentDate=date;
+            mOnDateChangedListener.onDateChanged(date);
         }
     }
 
@@ -189,15 +202,19 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.ViewHolder> 
         ViewHolder(View itemView) {
             super(itemView);
             iv_image = (SquareImageView) itemView.findViewById(R.id.iv_image);
-            iv_block = (SquareImageView) itemView.findViewById(R.id.iv_block);
+            iv_block = (SquareImageView) itemView.findViewById(R.id.photo_block);
             checkBox = (CheckBox) itemView.findViewById(R.id.cb_select);
         }
     }
 
-    public interface OnSelectCountChangeListner {
+    public interface OnSelectCountChangeListener {
 
         void onSelectedCountChange(int size);
 
         void onOverSelect();
+    }
+
+    public interface OnDateChangedListener{
+        void onDateChanged(String curDate);
     }
 }

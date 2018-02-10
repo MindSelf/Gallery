@@ -313,7 +313,7 @@ public class GalleryActivity extends BaseActivity<GalleryPresenter> implements G
 
     @Override
     public void onBackPressed() {
-        if (mManagedAlbumAdapter.isEditable()) {
+        if (mManagedAlbumAdapter != null && mManagedAlbumAdapter.isEditable()) {
             mManagedAlbumAdapter.setEditable(false);
         } else if (mIsInManagePage) {
             dismissManagePage();

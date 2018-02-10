@@ -15,6 +15,7 @@ import com.example.zhaolexi.imageloader.view.UploadPhotoViewInterface;
 
 import java.io.File;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by ZHAOLEXI on 2017/11/16.
@@ -65,7 +66,7 @@ public class UploadPhotoPresenter extends BasePresenter<UploadPhotoViewInterface
         if (isViewAttached()) {
             UploadPhotoViewInterface mView = getView();
             mView.onSelectedBucket(position);
-            mView.showPhotos(photoBucket.getPhotoList());
+            mView.showPhotos(photoBucket.getPhotoSet());
             mView.closeBucketList(true);
             mIsListOpen = false;
         }
@@ -74,8 +75,8 @@ public class UploadPhotoPresenter extends BasePresenter<UploadPhotoViewInterface
     public void displayAllPhotos() {
         if (isViewAttached()) {
             UploadPhotoViewInterface mView = getView();
-            List<Photo> list = mModel.getBuckets().get(0).getPhotoList();
-            mView.showPhotos(list);
+            Set<Photo> set = mModel.getBuckets().get(0).getPhotoSet();
+            mView.showPhotos(set);
         }
     }
 

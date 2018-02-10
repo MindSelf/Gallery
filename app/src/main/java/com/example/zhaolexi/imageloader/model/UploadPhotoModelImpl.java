@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -100,32 +101,34 @@ public class UploadPhotoModelImpl implements UploadPhotoModel {
 
             String[] projection = {Media._ID, Media.BUCKET_ID, Media.DATA, Media.BUCKET_DISPLAY_NAME};
             Cursor cursor = mContentResolver.query(Media.EXTERNAL_CONTENT_URI, projection, null, null, null);
-            int column_id = cursor.getColumnIndex(Media._ID);
-            int column_bucket_id = cursor.getColumnIndex(Media.BUCKET_ID);
-            int column_path = cursor.getColumnIndex(Media.DATA);
-            int column_display_name = cursor.getColumnIndex(Media.BUCKET_DISPLAY_NAME);
-            while (cursor.moveToNext()) {
-                int id = cursor.getInt(column_id);
-                int bucket_id = cursor.getInt(column_bucket_id);
-                String path = cursor.getString(column_path);
-                String name = cursor.getString(column_display_name);
+            if (cursor!=null) {
+                int column_id = cursor.getColumnIndex(Media._ID);
+                int column_bucket_id = cursor.getColumnIndex(Media.BUCKET_ID);
+                int column_path = cursor.getColumnIndex(Media.DATA);
+                int column_display_name = cursor.getColumnIndex(Media.BUCKET_DISPLAY_NAME);
+                while (cursor.moveToNext()) {
+                    int id = cursor.getInt(column_id);
+                    int bucket_id = cursor.getInt(column_bucket_id);
+                    String path = cursor.getString(column_path);
+                    String name = cursor.getString(column_display_name);
 
-                //相册名相同的照片放在同一个Bucket中
+                    //相册名相同的照片放在同一个Bucket中
 
-                PhotoBucket bucket = mBuckets.get(bucket_id);
-                //如果相册不存在则向mBuckets中添加一个Bucket
-                if (bucket == null) {
-                    bucket = new PhotoBucket();
-                    bucket.setName(name);
-                    mBuckets.put(bucket_id, bucket);
+                    PhotoBucket bucket = mBuckets.get(bucket_id);
+                    //如果相册不存在则向mBuckets中添加一个Bucket
+                    if (bucket == null) {
+                        bucket = new PhotoBucket();
+                        bucket.setName(name);
+                        mBuckets.put(bucket_id, bucket);
+                    }
+                    Photo photo = new Photo();
+                    photo.setPath(path);
+                    photo.setThumbnailPath(mThumbnails.get(id));
+                    bucket.getPhotoSet().add(photo);
+                    bucket.setCount(bucket.getCount() + 1);
                 }
-                Photo photo = new Photo();
-                photo.setPath(path);
-                photo.setThumbnailPath(mThumbnails.get(id));
-                bucket.getPhotoList().add(photo);
-                bucket.setCount(bucket.getCount() + 1);
+                cursor.close();
             }
-            cursor.close();
 
             final PhotoBucket totalBucket = new PhotoBucket();
             totalBucket.setName("所有图片");
@@ -141,10 +144,15 @@ public class UploadPhotoModelImpl implements UploadPhotoModel {
                     public void run() {
                         Bitmap cover = null;
                         try {
-                            cover = mImageLoader.loadBitmapFromDisk(bucket.getPhotoList().get(0).getThumbnailPath(), new ImageLoader.TaskOptions(mEdge, mEdge));
-                            if (cover == null) {
-                                //Unable to decode stream or ThumbnailPath is null
-                                cover = mImageLoader.loadBitmapFromDisk(bucket.getPhotoList().get(0).getPath(), new ImageLoader.TaskOptions(mEdge, mEdge));
+                            Iterator<Photo> iterator = bucket.getPhotoSet().iterator();
+                            Photo mFirst = null;
+                            if (iterator.hasNext()) mFirst = iterator.next();
+                            if (mFirst != null) {
+                                cover = mImageLoader.loadBitmapFromDisk(mFirst.getThumbnailPath(), new ImageLoader.TaskOptions(mEdge, mEdge));
+                                if (cover == null) {
+                                    //Unable to decode stream or ThumbnailPath is null
+                                    cover = mImageLoader.loadBitmapFromDisk(mFirst.getPath(), new ImageLoader.TaskOptions(mEdge, mEdge));
+                                }
                             }
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -157,7 +165,7 @@ public class UploadPhotoModelImpl implements UploadPhotoModel {
 
                 mBucketList.add(bucket);
 
-                totalBucket.getPhotoList().addAll(bucket.getPhotoList());
+                totalBucket.getPhotoSet().addAll(bucket.getPhotoSet());
                 sum += bucket.getCount();
             }
 
@@ -169,10 +177,15 @@ public class UploadPhotoModelImpl implements UploadPhotoModel {
                     public void run() {
                         Bitmap cover = null;
                         try {
-                            cover = mImageLoader.loadBitmapFromDisk(totalBucket.getPhotoList().get(0).getThumbnailPath(), new ImageLoader.TaskOptions(mEdge, mEdge));
-                            if (cover == null) {
-                                //Unable to decode stream or ThumbnailPath is null
-                                cover = mImageLoader.loadBitmapFromDisk(totalBucket.getPhotoList().get(0).getPath(), new ImageLoader.TaskOptions(mEdge, mEdge));
+                            Iterator<Photo> iterator = totalBucket.getPhotoSet().iterator();
+                            Photo mFirst = null;
+                            if (iterator.hasNext()) mFirst = iterator.next();
+                            if (mFirst != null) {
+                                cover = mImageLoader.loadBitmapFromDisk(mFirst.getThumbnailPath(), new ImageLoader.TaskOptions(mEdge, mEdge));
+                                if (cover == null) {
+                                    //Unable to decode stream or ThumbnailPath is null
+                                    cover = mImageLoader.loadBitmapFromDisk(mFirst.getPath(), new ImageLoader.TaskOptions(mEdge, mEdge));
+                                }
                             }
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -278,13 +291,15 @@ public class UploadPhotoModelImpl implements UploadPhotoModel {
     private void getThumbnails() {
         String[] projection = {Thumbnails.IMAGE_ID, Thumbnails.DATA};
         Cursor cursor = mContentResolver.query(Thumbnails.EXTERNAL_CONTENT_URI, projection, null, null, null);
-        int column_id = cursor.getColumnIndex(Thumbnails.IMAGE_ID);
-        int column_data = cursor.getColumnIndex(Thumbnails.DATA);
-        while (cursor.moveToNext()) {
-            int id = cursor.getInt(column_id);
-            String path = cursor.getString(column_data);
-            mThumbnails.put(id, path);
+        if (cursor!=null) {
+            int column_id = cursor.getColumnIndex(Thumbnails.IMAGE_ID);
+            int column_data = cursor.getColumnIndex(Thumbnails.DATA);
+            while (cursor.moveToNext()) {
+                int id = cursor.getInt(column_id);
+                String path = cursor.getString(column_data);
+                mThumbnails.put(id, path);
+            }
+            cursor.close();
         }
-        cursor.close();
     }
 }

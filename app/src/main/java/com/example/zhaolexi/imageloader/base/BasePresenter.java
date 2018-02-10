@@ -11,9 +11,6 @@ import java.lang.ref.WeakReference;
  * Created by ZHAOLEXI on 2017/10/14.
  */
 
-/*
-将与Model交互的逻辑抽象出来
- */
 public abstract class BasePresenter<V,M> {
 
     protected static final int MSG_FAIL = 0;

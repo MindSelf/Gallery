@@ -1,4 +1,4 @@
-package com.example.zhaolexi.imageloader.ui;
+package com.example.zhaolexi.imageloader.deprecated;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
@@ -13,6 +13,7 @@ import com.example.zhaolexi.imageloader.R;
  * Created by ZHAOLEXI on 2018/1/30.
  */
 
+@Deprecated
 public class MyTabLayout extends TabLayout {
 
     private OnTabClickListener mOnTabClickListener;

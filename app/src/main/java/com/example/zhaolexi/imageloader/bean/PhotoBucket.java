@@ -2,8 +2,8 @@ package com.example.zhaolexi.imageloader.bean;
 
 import android.graphics.Bitmap;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Created by ZHAOLEXI on 2017/11/3.
@@ -13,7 +13,7 @@ public class PhotoBucket {
 
     private int count;
     private String name;
-    private List<Photo> photoList;
+    private Set<Photo> photoSet;
     private Bitmap cover;
 
     public int getCount() {
@@ -40,14 +40,14 @@ public class PhotoBucket {
         this.name = name;
     }
 
-    public List<Photo> getPhotoList() {
-        if (photoList == null) {
-            photoList = new ArrayList<>();
+    public Set<Photo> getPhotoSet() {
+        if (photoSet == null) {
+            photoSet = new TreeSet<>();
         }
-        return photoList;
+        return photoSet;
     }
 
-    public void setPhotoList(List<Photo> photoList) {
-        this.photoList = photoList;
+    public void setPhotoSet(Set<Photo> photoSet) {
+        this.photoSet = photoSet;
     }
 }

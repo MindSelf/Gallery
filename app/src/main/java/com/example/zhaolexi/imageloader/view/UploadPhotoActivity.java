@@ -17,44 +17,49 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewStub;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
 import android.widget.AdapterView;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.zhaolexi.imageloader.R;
 import com.example.zhaolexi.imageloader.adapter.BucketAdapter;
-import com.example.zhaolexi.imageloader.callback.OnItemClickListener;
 import com.example.zhaolexi.imageloader.adapter.PhotoAdapter;
 import com.example.zhaolexi.imageloader.base.BaseActivity;
 import com.example.zhaolexi.imageloader.bean.Photo;
 import com.example.zhaolexi.imageloader.bean.PhotoBucket;
+import com.example.zhaolexi.imageloader.callback.OnItemClickListener;
 import com.example.zhaolexi.imageloader.presenter.UploadPhotoPresenter;
 import com.example.zhaolexi.imageloader.ui.SpacesItemDecoration;
 import com.example.zhaolexi.imageloader.utils.MyUtils;
 
 import java.util.List;
+import java.util.Set;
 
 
-public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> implements UploadPhotoViewInterface, View.OnClickListener, View.OnTouchListener, AdapterView.OnItemClickListener, OnItemClickListener, PhotoAdapter.OnSelectCountChangeListner {
+public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> implements UploadPhotoViewInterface, View.OnClickListener, View.OnTouchListener, AdapterView.OnItemClickListener, OnItemClickListener, PhotoAdapter.OnSelectCountChangeListener, PhotoAdapter.OnDateChangedListener {
 
     private static final int READ_EXTERNAL_STORAGE = 1;
 
-    private Toolbar mToolbar;
-    private TextView mSubmit;
+    private TextView mSubmit, mSelectBucket, mDate;
     private RecyclerView mPhotoList;
+    private ImageView mBlock, mNavigate;
     private ListView mBucketList;
-    private TextView mSelectBucket;
     private ViewStub mViewStub;
 
     private BucketAdapter mBucketAdapter;
     private PhotoAdapter mPhotoAdapter;
+    private AlphaAnimation mAppearAnimation;
+    private AlphaAnimation mDisappearAnimation;
     private ValueAnimator mOpenListAnimator;
     private ValueAnimator mCloseListAnimator;
 
     private String mUploadAid;
     private int mBucketListHeight;
-    private boolean mIsListAnimating;
+    private boolean mIsListAnimating, mIsDateVisible;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,8 +90,9 @@ public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> impl
         mUploadAid = getIntent().getStringExtra(AlbumFragment.KEY_AID);
         mBucketListHeight = MyUtils.dp2px(this, 450);
         mPhotoAdapter = new PhotoAdapter(this);
-        mPhotoAdapter.setOnItemClickListner(this);
+        mPhotoAdapter.setOnItemClickListener(this);
         mPhotoAdapter.setSelectCountChangeListener(this);
+        mPhotoAdapter.setOnDateChangedListener(this);
         initAnimator();
     }
 
@@ -94,10 +100,13 @@ public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> impl
     protected void initView() {
         setContentView(R.layout.activity_upload_photo);
 
-        mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar mToolbar = (Toolbar) findViewById(R.id.toolbar);
         mSubmit = (TextView) findViewById(R.id.submit);
         mPhotoList = (RecyclerView) findViewById(R.id.rv_list);
+        mBlock = (ImageView) findViewById(R.id.list_block);
+        mDate = (TextView) findViewById(R.id.tv_date);
         mSelectBucket = (TextView) findViewById(R.id.tv_select_bucket);
+        mNavigate = (ImageView) findViewById(R.id.iv_navigate);
         mViewStub = (ViewStub) findViewById(R.id.stub);
 
         mToolbar.setNavigationIcon(getResources().getDrawable(R.mipmap.ic_arrow_back));
@@ -110,18 +119,19 @@ public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> impl
         });
 
         mPhotoList.setAdapter(mPhotoAdapter);
-        mPhotoList.setLayoutManager(new GridLayoutManager(this, 3));
+        mPhotoList.setLayoutManager(new GridLayoutManager(this, 4));
         mPhotoList.addItemDecoration(new SpacesItemDecoration(MyUtils.dp2px(this, 1)));
         mPhotoList.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-                super.onScrollStateChanged(recyclerView, newState);
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
                     mPhotoAdapter.setIsIdle(true);
                     //滑动时onBindViewHolder先于回调方法，所以静止时要提醒Adapter更新数据
                     mPhotoAdapter.notifyDataSetChanged();
+                    if (mIsDateVisible) mDate.startAnimation(mDisappearAnimation);
                 } else {
                     mPhotoAdapter.setIsIdle(false);
+                    if (!mIsDateVisible) mDate.startAnimation(mAppearAnimation);
                 }
             }
         });
@@ -137,8 +147,7 @@ public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> impl
         mOpenListAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
-                int height = (int) animation.getAnimatedValue();
-                mBucketList.getLayoutParams().height = height;
+                mBucketList.getLayoutParams().height = (int) animation.getAnimatedValue();
                 mBucketList.requestLayout();
             }
         });
@@ -162,17 +171,15 @@ public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> impl
 
             @Override
             public void onAnimationRepeat(Animator animation) {
-
             }
         });
 
-        mCloseListAnimator = ValueAnimator.ofInt(mBucketListHeight, 0).setDuration(200);
+        mCloseListAnimator = ValueAnimator.ofInt(mBucketListHeight, 0).setDuration(500);
         mCloseListAnimator.setTarget(mBucketList);
         mCloseListAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
-                int height = (int) animation.getAnimatedValue();
-                mBucketList.getLayoutParams().height = height;
+                mBucketList.getLayoutParams().height = (int) animation.getAnimatedValue();
                 mBucketList.requestLayout();
             }
         });
@@ -195,9 +202,42 @@ public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> impl
             }
 
             @Override
-            public void onAnimationRepeat(Animator animation) {
+            public void onAnimationRepeat(Animator animation) {}
+        });
 
+        mAppearAnimation = new AlphaAnimation(0, 1f);
+        mAppearAnimation.setDuration(500);
+        mAppearAnimation.setFillAfter(true);
+        mAppearAnimation.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                mIsDateVisible = true;
+                mDate.setVisibility(View.VISIBLE);
             }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {}
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {}
+        });
+
+        mDisappearAnimation = new AlphaAnimation(1f, 0);
+        mDisappearAnimation.setDuration(100);
+        mDisappearAnimation.setFillAfter(true);
+        mDisappearAnimation.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                mIsDateVisible = false;
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                mDate.clearAnimation();
+                mDate.setVisibility(View.GONE);}
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {}
         });
     }
 
@@ -207,13 +247,13 @@ public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> impl
     }
 
     @Override
-    public void showPhotos(List<Photo> list) {
+    public void showPhotos(Set<Photo> set) {
         mSubmit.setText("完成");
         mSubmit.setSelected(false);
         mSubmit.setEnabled(false);
         mPhotoList.scrollToPosition(0);     //定位到列表顶部，这个方法由LayoutManager负责实现
         mPhotoAdapter.clearSelectedSet();
-        mPhotoAdapter.setDatas(list);
+        mPhotoAdapter.setData(set);
         mPhotoAdapter.notifyDataSetChanged();
     }
 
@@ -226,6 +266,7 @@ public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> impl
             mBucketList.setOnItemClickListener(this);
             mBucketList.setItemChecked(0, true);    //初次打开时选择"所有图片"
         }
+        mBlock.setVisibility(View.VISIBLE);
         mOpenListAnimator.start();
         //bucketList设置choiceMode="singleChoice"，点击时会记录当前选中数据项
         //定位到当前选中数据项的位置
@@ -240,6 +281,7 @@ public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> impl
             mBucketList.getLayoutParams().height = 0;
             mBucketList.requestLayout();
         }
+        mBlock.setVisibility(View.GONE);
     }
 
     @Override
@@ -252,6 +294,7 @@ public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> impl
          */
     }
 
+    @SuppressLint("DefaultLocale")
     @Override
     public void onOverSelect() {
         Toast.makeText(this, String.format("最多只能选择%d张照片", PhotoAdapter.MAX_SIZE), Toast.LENGTH_SHORT).show();
@@ -332,11 +375,13 @@ public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> impl
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                     case MotionEvent.ACTION_MOVE:
-                        mSelectBucket.setTextColor(Color.parseColor("#60000000"));
+                        mSelectBucket.setTextColor(getResources().getColor(R.color.block));
+                        mNavigate.setImageDrawable(getResources().getDrawable(R.mipmap.ic_arrow_drop_up_block));
                         break;
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
                         mSelectBucket.setTextColor(Color.WHITE);
+                        mNavigate.setImageDrawable(getResources().getDrawable(R.mipmap.ic_arrow_drop_up_white));
                         break;
                     default:
                         break;
@@ -347,6 +392,7 @@ public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> impl
     }
 
 
+    @SuppressLint("DefaultLocale")
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         switch (keyCode) {
@@ -369,4 +415,8 @@ public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> impl
         return super.onKeyDown(keyCode, event);
     }
 
+    @Override
+    public void onDateChanged(String curDate) {
+        mDate.setText(curDate);
+    }
 }
