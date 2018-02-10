@@ -330,8 +330,14 @@ public class GalleryActivity extends BaseActivity<GalleryPresenter> implements G
 
     @Override
     public void showManagePage(boolean animated) {
-        mPresenter.setCurrentPage(mViewPager.getCurrentItem());     //记录当前位置
+        if (mViewPager.getCurrentItem() != mPresenter.getCurrentPage()) {
+            mPresenter.setCurrentPage(mViewPager.getCurrentItem());     //记录当前位置
+            if (mManagedAlbumAdapter != null) {
+                mManagedAlbumAdapter.notifyDataSetChanged();
+            }
+        }
         initManagePage();
+        mPresenter.clearDataSetChangedState();
         mTabLayout.setVisibility(View.GONE);
         mFab.clearAnimation();
         mFab.setVisibility(View.GONE);

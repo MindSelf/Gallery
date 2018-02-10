@@ -50,6 +50,10 @@ public class GalleryPresenter extends BasePresenter<GalleryViewInterface, Galler
         return mHasDataSetChanged;
     }
 
+    public void clearDataSetChangedState() {
+        mHasDataSetChanged=false;
+    }
+
     public List<Album> getLocalHistory() {
         return mModel.loadLocalHistory();
     }
@@ -100,6 +104,9 @@ public class GalleryPresenter extends BasePresenter<GalleryViewInterface, Galler
     public void moveAlbum(int from, int to) {
         if (from == mCurrentPage) {
             mCurrentPage = to;
+            notifyCurrentPageChanged();
+        } else if (to == mCurrentPage) {
+            mCurrentPage=from;
             notifyCurrentPageChanged();
         }
         mHasDataSetChanged = true;
