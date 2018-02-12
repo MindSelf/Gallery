@@ -1,5 +1,6 @@
 package com.example.zhaolexi.imageloader.view;
 
+import com.example.zhaolexi.imageloader.adapter.AlbumPagerAdapter;
 import com.example.zhaolexi.imageloader.adapter.ManagedAlbumAdapter;
 import com.example.zhaolexi.imageloader.bean.Album;
 
@@ -22,4 +23,6 @@ public interface GalleryViewInterface {
     void showError(String reason);
 
     ManagedAlbumAdapter getAlbumAdapter();
+
+    AlbumPagerAdapter getPagerAdapter();
 }

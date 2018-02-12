@@ -25,7 +25,6 @@ import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.Interpolator;
 import android.view.animation.LinearInterpolator;
-import android.view.animation.RotateAnimation;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -63,8 +62,7 @@ public class GalleryActivity extends BaseActivity<GalleryPresenter> implements G
     private List<Album> mAlbumList;
     private List<Album> mRandomList;
     private AlphaAnimation mAlphaAppear, mAlphaDisappear;
-    private RotateAnimation mRotateOpen, mRotateClose;
-    private ValueAnimator mColorAppear, mColorDisappear;
+    private ValueAnimator mColorAppear, mColorDisappear,mRotateOpen,mRotateClose;
 
     public RecyclerView.RecycledViewPool mRecycledViewPool;
     public boolean mCanLoadWithoutWifi, mIsAnimating, mIsInManagePage;
@@ -89,10 +87,16 @@ public class GalleryActivity extends BaseActivity<GalleryPresenter> implements G
 
     private void initAnimation() {
         Interpolator interpolator = new LinearInterpolator();
-        ValueAnimator.AnimatorUpdateListener animatorUpdateListener = new ValueAnimator.AnimatorUpdateListener() {
+        ValueAnimator.AnimatorUpdateListener colorListener = new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 mContainer.setBackgroundColor((int) animation.getAnimatedValue());
+            }
+        };
+        ValueAnimator.AnimatorUpdateListener rotateListener=new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                mManage.setRotation((float) animation.getAnimatedValue());
             }
         };
         Animation.AnimationListener appearAnimationListener = new Animation.AnimationListener() {
@@ -142,23 +146,21 @@ public class GalleryActivity extends BaseActivity<GalleryPresenter> implements G
         mAlphaDisappear.setInterpolator(interpolator);
         mAlphaDisappear.setAnimationListener(disappearAnimationListener);
 
-        mRotateOpen = new RotateAnimation(0, 45f, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+        mRotateOpen = ValueAnimator.ofFloat(0, 45f);
         mRotateOpen.setDuration(DURATION);
-        mRotateOpen.setFillAfter(true);
         mRotateOpen.setInterpolator(interpolator);
-        mRotateOpen.setAnimationListener(appearAnimationListener);
+        mRotateOpen.addUpdateListener(rotateListener);
 
-        mRotateClose = new RotateAnimation(45f, 0, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+        mRotateClose = ValueAnimator.ofFloat(45f, 0);
         mRotateClose.setDuration(DURATION);
-        mRotateClose.setFillAfter(true);
         mRotateClose.setInterpolator(interpolator);
-        mRotateClose.setAnimationListener(disappearAnimationListener);
+        mRotateClose.addUpdateListener(rotateListener);
 
         mColorAppear = ValueAnimator.ofInt(getResources().getColor(R.color.colorPrimary), getResources().getColor(R.color.windowBackground));
         mColorAppear.setEvaluator(ArgbEvaluator.getInstance());
         mColorAppear.setInterpolator(interpolator);
         mColorAppear.setDuration(DURATION);
-        mColorAppear.addUpdateListener(animatorUpdateListener);
+        mColorAppear.addUpdateListener(colorListener);
         mColorAppear.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationCancel(Animator animation) {
@@ -183,7 +185,7 @@ public class GalleryActivity extends BaseActivity<GalleryPresenter> implements G
         mColorDisappear.setEvaluator(ArgbEvaluator.getInstance());
         mColorDisappear.setInterpolator(interpolator);
         mColorDisappear.setDuration(DURATION);
-        mColorDisappear.addUpdateListener(animatorUpdateListener);
+        mColorDisappear.addUpdateListener(colorListener);
         mColorDisappear.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationCancel(Animator animation) {
@@ -234,12 +236,14 @@ public class GalleryActivity extends BaseActivity<GalleryPresenter> implements G
             //如果删除当前item然后调用notifyDataSetChanged，也会调用setCurrentItem从而出发onPageSelected
             @Override
             public void onPageSelected(final int position) {
-                //FAB动画
-                FabBehavior behavior = (FabBehavior) ((CoordinatorLayout.LayoutParams) (mFab.getLayoutParams())).getBehavior();
-                if (isCurrentAlbumAccessible(position)) {
-                    behavior.startOpening(mFab);
-                } else {
-                    behavior.startClosing(mFab);
+                if (!mIsInManagePage) {
+                    //FAB动画
+                    FabBehavior behavior = (FabBehavior) ((CoordinatorLayout.LayoutParams) (mFab.getLayoutParams())).getBehavior();
+                    if (isCurrentAlbumAccessible(position)) {
+                        behavior.startOpening(mFab);
+                    } else {
+                        behavior.startClosing(mFab);
+                    }
                 }
 
                 initFabAndDialog(position);
@@ -337,41 +341,40 @@ public class GalleryActivity extends BaseActivity<GalleryPresenter> implements G
             }
         }
         initManagePage();
-        mPresenter.clearDataSetChangedState();
+//        mPresenter.clearDataSetChangedState();
         mTabLayout.setVisibility(View.GONE);
         mFab.clearAnimation();
         mFab.setVisibility(View.GONE);
         if (!animated) {
-            mManage.setRotation(-45f);
+            mManage.setRotation(45f);
             mContainer.setBackgroundColor(getResources().getColor(R.color.windowBackground));
             mIsInManagePage = true;
         } else {
             mColorAppear.start();
+            mRotateOpen.start();
             mGuide.startAnimation(mAlphaAppear);
             mManagedAlbumList.startAnimation(mAlphaAppear);
-            mManage.startAnimation(mRotateOpen);
         }
     }
 
     @Override
     public void dismissManagePage() {
         mColorDisappear.start();
+        mRotateClose.start();
         mGuide.startAnimation(mAlphaDisappear);
         mManagedAlbumList.startAnimation(mAlphaDisappear);
-        mManage.startAnimation(mRotateClose);
         mGuide.clearAnimation();
         mGuide.setVisibility(View.GONE);
         mManagedAlbumList.clearAnimation();
         mManagedAlbumList.setVisibility(View.GONE);
 
         int currentPos = mPresenter.getCurrentPage();
-        if (mPresenter.hasDataSetChanged()) mPageAdapter.notifyDataSetChanged();
+//        if (mPresenter.hasDataSetChanged()) mPageAdapter.notifyDataSetChanged();
         if (mViewPager.getCurrentItem() != currentPos) {
             mViewPager.setCurrentItem(mPresenter.getCurrentPage());   //变更到新的位置
-        } else {
-            //当位置不变时不会回调onPageSelected，需要手动更新FAB状态
-            mFab.setVisibility(isCurrentAlbumAccessible(currentPos) ? View.VISIBLE : View.GONE);
         }
+        mFab.setVisibility(isCurrentAlbumAccessible(currentPos) ? View.VISIBLE : View.GONE);
+        initFabAndDialog(currentPos);
         mTabLayout.setVisibility(View.VISIBLE);
         preLoad();
     }
@@ -394,6 +397,11 @@ public class GalleryActivity extends BaseActivity<GalleryPresenter> implements G
     @Override
     public ManagedAlbumAdapter getAlbumAdapter() {
         return mManagedAlbumAdapter;
+    }
+
+    @Override
+    public AlbumPagerAdapter getPagerAdapter() {
+        return mPageAdapter;
     }
 
     private boolean isCurrentAlbumAccessible(int position) {
