@@ -1,6 +1,5 @@
 package com.example.zhaolexi.imageloader.adapter;
 
-import android.annotation.SuppressLint;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.LayoutInflater;
@@ -41,7 +40,6 @@ public class ManagedAlbumAdapter extends RecyclerView.Adapter implements AlbumIt
     private boolean mIsEditable;
     private OnItemClickListener mClickListener;
     private OnItemAddListener mAddListener;
-    private OnEditStateChangeListener mEditStateChangeListener;
 
     public ManagedAlbumAdapter(GalleryActivity activity, List<Album> local, List<Album> random) {
         mPresenter = activity.getPresenter();
@@ -72,9 +70,11 @@ public class ManagedAlbumAdapter extends RecyclerView.Adapter implements AlbumIt
     }
 
     public void addAlbumToLocal(Album album) {
+        boolean isEmptyBefore = mLocalAlbum.isEmpty();
         mLocalAlbum.add(album);
         notifyItemInserted(mLocalAlbum.size());
         mHintIndex++;
+        if (isEmptyBefore) mPresenter.getView().onAlbumListStateChanged(false, mIsEditable);
     }
 
     public Album removeAlbum(int position) {
@@ -85,6 +85,8 @@ public class ManagedAlbumAdapter extends RecyclerView.Adapter implements AlbumIt
         if (viewType == TYPE_LOCAL_ALBUM) {
             removed = mLocalAlbum.remove(realPos);
             mHintIndex--;
+            if (mLocalAlbum.isEmpty())
+                mPresenter.getView().onAlbumListStateChanged(true, mIsEditable);
         } else if (viewType == TYPE_RANDOM_ALBUM) {
             removed = mRandomAlbum.remove(realPos);
         }
@@ -100,15 +102,11 @@ public class ManagedAlbumAdapter extends RecyclerView.Adapter implements AlbumIt
     public void setEditable(boolean editable) {
         mIsEditable = editable;
         notifyDataSetChanged();
-        mEditStateChangeListener.onEditStateChange(editable);
+        mPresenter.getView().onAlbumListStateChanged(mLocalAlbum.isEmpty(), editable);
     }
 
     public void setItemTouchHelper(ItemTouchHelper helper) {
         mItemTouchHelper = helper;
-    }
-
-    public void setOnEditStateChangeListener(OnEditStateChangeListener listener) {
-        mEditStateChangeListener = listener;
     }
 
     public void setOnItemClickListener(OnItemClickListener listener) {
@@ -148,27 +146,15 @@ public class ManagedAlbumAdapter extends RecyclerView.Adapter implements AlbumIt
     public void onBindViewHolder(final RecyclerView.ViewHolder holder, int position) {
         if (holder.getItemViewType() != TYPE_ADD && holder.getItemViewType() != TYPE_HINT) {
             List<Album> data;
-            final boolean isFromRandom;
             AlbumViewHolder viewHolder = (AlbumViewHolder) holder;
             if (viewHolder.getItemViewType() == TYPE_LOCAL_ALBUM) {
                 data = mLocalAlbum;
-                isFromRandom = false;
                 viewHolder.iv_close.setVisibility(mIsEditable ? View.VISIBLE : View.GONE);
                 viewHolder.rl_album.setSelected(getPositionInData(position) == mPresenter.getCurrentPage());
             } else {
                 data = mRandomAlbum;
-                isFromRandom = true;
             }
             viewHolder.tv_aname.setText(data.get(getPositionInData(position)).getTitle());
-            viewHolder.itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    //这里遇到过一个问题，当时用final position作为其position参数，position值的更新依赖于onBindViewHolder的调用
-                    //当调用notifyItemRemoved时由于不会调用onBindViewHolder方法，position值没有及时更新，导致出现IndexOutOfBoundsException
-                    //使用holder.getLayoutPosition由于是动态获取position，所以不会出现这种问题
-                    mClickListener.onItemClick(isFromRandom, holder.getAdapterPosition(), mIsEditable);
-                }
-            });
         }
     }
 
@@ -209,7 +195,7 @@ public class ManagedAlbumAdapter extends RecyclerView.Adapter implements AlbumIt
         }
     }
 
-    class AlbumViewHolder extends RecyclerView.ViewHolder implements View.OnLongClickListener, View.OnTouchListener {
+    class AlbumViewHolder extends RecyclerView.ViewHolder implements View.OnLongClickListener, View.OnTouchListener, View.OnClickListener {
         long startTime;
         RelativeLayout rl_album;
         TextView tv_aname;
@@ -222,18 +208,18 @@ public class ManagedAlbumAdapter extends RecyclerView.Adapter implements AlbumIt
             iv_close = (ImageView) itemView.findViewById(R.id.iv_close);
             itemView.setOnLongClickListener(this);
             itemView.setOnTouchListener(this);
+            itemView.setOnClickListener(this);
         }
 
         @Override
         public boolean onLongClick(View v) {
-            if (!mIsEditable) {
+            if (!mIsEditable && getItemViewType() == TYPE_LOCAL_ALBUM) {
                 setEditable(true);
                 return true;
             }
             return false;
         }
 
-        @SuppressLint("ClickableViewAccessibility")
         @Override
         public boolean onTouch(View v, MotionEvent event) {
             switch (event.getAction()) {
@@ -251,6 +237,14 @@ public class ManagedAlbumAdapter extends RecyclerView.Adapter implements AlbumIt
                     break;
             }
             return false;
+        }
+
+        @Override
+        public void onClick(View v) {
+            //这里遇到过一个问题，当时用final position作为其position参数，position值的更新依赖于onBindViewHolder的调用
+            //当调用notifyItemRemoved时由于不会调用onBindViewHolder方法，position值没有及时更新，导致出现IndexOutOfBoundsException
+            //使用holder.getLayoutPosition由于是动态获取position，所以不会出现这种问题
+            mClickListener.onItemClick(getItemViewType() == TYPE_RANDOM_ALBUM, getAdapterPosition(), mIsEditable);
         }
     }
 
@@ -287,10 +281,6 @@ public class ManagedAlbumAdapter extends RecyclerView.Adapter implements AlbumIt
 
     public interface OnItemClickListener {
         void onItemClick(boolean isFromRandom, int position, boolean editable);
-    }
-
-    public interface OnEditStateChangeListener {
-        void onEditStateChange(boolean editable);
     }
 
     public interface OnItemAddListener {

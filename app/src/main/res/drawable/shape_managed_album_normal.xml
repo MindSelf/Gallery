@@ -2,7 +2,7 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
        android:shape="rectangle">
 
-    <solid android:color="@color/selected_album"/>
+    <solid android:color="@color/managed_album"/>
 
     <corners android:radius="5dp"/>
 

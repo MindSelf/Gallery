@@ -45,7 +45,7 @@ import com.example.zhaolexi.imageloader.utils.Uri;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GalleryActivity extends BaseActivity<GalleryPresenter> implements GalleryViewInterface, View.OnClickListener, ManagedAlbumAdapter.OnItemClickListener, ManagedAlbumAdapter.OnEditStateChangeListener, ManagedAlbumAdapter.OnItemAddListener, PasswordDialog.OnResponseListener<AlbumPasswordDialog.AlbumResult> {
+public class GalleryActivity extends BaseActivity<GalleryPresenter> implements GalleryViewInterface, View.OnClickListener, ManagedAlbumAdapter.OnItemClickListener, ManagedAlbumAdapter.OnItemAddListener, PasswordDialog.OnResponseListener<AlbumPasswordDialog.AlbumResult> {
 
     private LinearLayout mContainer;
     private TabLayout mTabLayout;
@@ -62,11 +62,11 @@ public class GalleryActivity extends BaseActivity<GalleryPresenter> implements G
     private List<Album> mAlbumList;
     private List<Album> mRandomList;
     private AlphaAnimation mAlphaAppear, mAlphaDisappear;
-    private ValueAnimator mColorAppear, mColorDisappear,mRotateOpen,mRotateClose;
+    private ValueAnimator mColorAppear, mColorDisappear, mRotateOpen, mRotateClose;
 
     public RecyclerView.RecycledViewPool mRecycledViewPool;
-    public boolean mCanLoadWithoutWifi, mIsAnimating, mIsInManagePage;
-    public final int DURATION = 150;
+    public boolean mCanLoadWithoutWifi, mIsManagePageAnimating, mIsInManagePage;
+    public final long DURATION = 150L;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,14 +86,14 @@ public class GalleryActivity extends BaseActivity<GalleryPresenter> implements G
     }
 
     private void initAnimation() {
-        Interpolator interpolator = new LinearInterpolator();
+        Interpolator linear = new LinearInterpolator();
         ValueAnimator.AnimatorUpdateListener colorListener = new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 mContainer.setBackgroundColor((int) animation.getAnimatedValue());
             }
         };
-        ValueAnimator.AnimatorUpdateListener rotateListener=new ValueAnimator.AnimatorUpdateListener() {
+        ValueAnimator.AnimatorUpdateListener rotateListener = new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 mManage.setRotation((float) animation.getAnimatedValue());
@@ -102,12 +102,12 @@ public class GalleryActivity extends BaseActivity<GalleryPresenter> implements G
         Animation.AnimationListener appearAnimationListener = new Animation.AnimationListener() {
             @Override
             public void onAnimationStart(Animation animation) {
-                mIsAnimating = true;
+                mIsManagePageAnimating = true;
             }
 
             @Override
             public void onAnimationEnd(Animation animation) {
-                mIsAnimating = false;
+                mIsManagePageAnimating = false;
                 mIsInManagePage = true;
             }
 
@@ -119,12 +119,12 @@ public class GalleryActivity extends BaseActivity<GalleryPresenter> implements G
         Animation.AnimationListener disappearAnimationListener = new Animation.AnimationListener() {
             @Override
             public void onAnimationStart(Animation animation) {
-                mIsAnimating = true;
+                mIsManagePageAnimating = true;
             }
 
             @Override
             public void onAnimationEnd(Animation animation) {
-                mIsAnimating = false;
+                mIsManagePageAnimating = false;
                 mIsInManagePage = false;
             }
 
@@ -137,72 +137,72 @@ public class GalleryActivity extends BaseActivity<GalleryPresenter> implements G
         mAlphaAppear = new AlphaAnimation(0, 1);
         mAlphaAppear.setDuration(DURATION);
         mAlphaAppear.setFillAfter(true);
-        mAlphaAppear.setInterpolator(interpolator);
+        mAlphaAppear.setInterpolator(linear);
         mAlphaAppear.setAnimationListener(appearAnimationListener);
 
         mAlphaDisappear = new AlphaAnimation(1, 0);
         mAlphaDisappear.setDuration(DURATION);
         mAlphaDisappear.setFillAfter(true);
-        mAlphaDisappear.setInterpolator(interpolator);
+        mAlphaDisappear.setInterpolator(linear);
         mAlphaDisappear.setAnimationListener(disappearAnimationListener);
 
         mRotateOpen = ValueAnimator.ofFloat(0, 45f);
         mRotateOpen.setDuration(DURATION);
-        mRotateOpen.setInterpolator(interpolator);
+        mRotateOpen.setInterpolator(linear);
         mRotateOpen.addUpdateListener(rotateListener);
 
         mRotateClose = ValueAnimator.ofFloat(45f, 0);
         mRotateClose.setDuration(DURATION);
-        mRotateClose.setInterpolator(interpolator);
+        mRotateClose.setInterpolator(linear);
         mRotateClose.addUpdateListener(rotateListener);
 
         mColorAppear = ValueAnimator.ofInt(getResources().getColor(R.color.colorPrimary), getResources().getColor(R.color.windowBackground));
         mColorAppear.setEvaluator(ArgbEvaluator.getInstance());
-        mColorAppear.setInterpolator(interpolator);
+        mColorAppear.setInterpolator(linear);
         mColorAppear.setDuration(DURATION);
         mColorAppear.addUpdateListener(colorListener);
         mColorAppear.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationCancel(Animator animation) {
-                mIsAnimating = false;
+                mIsManagePageAnimating = false;
                 mIsInManagePage = true;
                 mContainer.setBackgroundColor(getResources().getColor(R.color.windowBackground));
             }
 
             @Override
             public void onAnimationEnd(Animator animation) {
-                mIsAnimating = false;
+                mIsManagePageAnimating = false;
                 mIsInManagePage = true;
             }
 
             @Override
             public void onAnimationStart(Animator animation) {
-                mIsAnimating = true;
+                mIsManagePageAnimating = true;
             }
         });
 
         mColorDisappear = ValueAnimator.ofInt(getResources().getColor(R.color.windowBackground), getResources().getColor(R.color.colorPrimary));
         mColorDisappear.setEvaluator(ArgbEvaluator.getInstance());
-        mColorDisappear.setInterpolator(interpolator);
+        mColorDisappear.setInterpolator(linear);
         mColorDisappear.setDuration(DURATION);
         mColorDisappear.addUpdateListener(colorListener);
         mColorDisappear.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationCancel(Animator animation) {
-                mIsAnimating = false;
+                mIsManagePageAnimating = false;
                 mIsInManagePage = false;
                 mContainer.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
             }
 
             @Override
             public void onAnimationEnd(Animator animation) {
-                mIsAnimating = false;
+                mIsManagePageAnimating = false;
                 mIsInManagePage = false;
             }
 
             @Override
             public void onAnimationStart(Animator animation) {
-                mIsAnimating = true;
+                mIsManagePageAnimating = true;
             }
         });
     }
@@ -317,9 +317,9 @@ public class GalleryActivity extends BaseActivity<GalleryPresenter> implements G
 
     @Override
     public void onBackPressed() {
-        if (mManagedAlbumAdapter != null && mManagedAlbumAdapter.isEditable()) {
+        if (mManagedAlbumAdapter != null && mManagedAlbumAdapter.isEditable() && !mAlbumList.isEmpty()) {
             mManagedAlbumAdapter.setEditable(false);
-        } else if (mIsInManagePage) {
+        } else if (mIsInManagePage && !mAlbumList.isEmpty()) {
             dismissManagePage();
         } else {
             super.onBackPressed();
@@ -395,6 +395,27 @@ public class GalleryActivity extends BaseActivity<GalleryPresenter> implements G
     }
 
     @Override
+    public void onAlbumListStateChanged(boolean isEmpty, boolean editable) {
+        if (mFinish == null) {
+            mFinish = (TextView) mStubFinish.inflate();
+            mFinish.setOnClickListener(this);
+        }
+
+        if (isEmpty) {
+            mGuide.setText(R.string.manage_guide_empty);
+            mFinish.setVisibility(View.GONE);
+            mManage.setVisibility(View.GONE);
+        } else if (editable) {
+            mGuide.setText(R.string.manage_guide_editable);
+            mFinish.setVisibility(View.VISIBLE);
+        } else {
+            mGuide.setText(R.string.manage_guide_uneditable);
+            mFinish.setVisibility(View.GONE);
+            mManage.setVisibility(View.VISIBLE);
+        }
+    }
+
+    @Override
     public ManagedAlbumAdapter getAlbumAdapter() {
         return mManagedAlbumAdapter;
     }
@@ -426,7 +447,6 @@ public class GalleryActivity extends BaseActivity<GalleryPresenter> implements G
             mManagedAlbumList = (RecyclerView) mStubManagedAlbum.inflate();
             mManagedAlbumAdapter = new ManagedAlbumAdapter(this, mAlbumList, mRandomList);
             mManagedAlbumAdapter.setOnItemClickListener(this);
-            mManagedAlbumAdapter.setOnEditStateChangeListener(this);
             mManagedAlbumAdapter.setOnItemAddListener(this);
             mManagedAlbumList.setAdapter(mManagedAlbumAdapter);
             GridLayoutManager manager = new GridLayoutManager(this, 3);
@@ -447,13 +467,17 @@ public class GalleryActivity extends BaseActivity<GalleryPresenter> implements G
         }
         mGuide.setVisibility(View.VISIBLE);
         mManagedAlbumList.setVisibility(View.VISIBLE);
+        if (mAlbumList.isEmpty()) {
+            mGuide.setText(R.string.manage_guide_empty);
+            mManage.setVisibility(View.GONE);
+        }
     }
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.iv_manager:
-                if (!mIsAnimating) {
+                if (!mIsManagePageAnimating) {
                     if (!mIsInManagePage) {
                         showManagePage(true);
                     } else {
@@ -481,22 +505,6 @@ public class GalleryActivity extends BaseActivity<GalleryPresenter> implements G
         } else {
             //编辑状态下点击随机相册则添加到本地相册中（可增加移动动画）
             mPresenter.addAlbum(mManagedAlbumAdapter.removeAlbum(position));
-        }
-    }
-
-
-    @Override
-    public void onEditStateChange(boolean editable) {
-        if (mFinish == null) {
-            mFinish = (TextView) mStubFinish.inflate();
-            mFinish.setOnClickListener(this);
-        }
-        if (editable) {
-            mFinish.setVisibility(View.VISIBLE);
-            mGuide.setText(R.string.manage_guide_drag);
-        } else {
-            mFinish.setVisibility(View.GONE);
-            mGuide.setText(R.string.manage_guide_press);
         }
     }
 

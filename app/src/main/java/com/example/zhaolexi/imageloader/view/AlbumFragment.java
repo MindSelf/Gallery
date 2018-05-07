@@ -8,17 +8,15 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
-import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.View;
 
 import com.example.zhaolexi.imageloader.R;
 import com.example.zhaolexi.imageloader.adapter.ImageAdapter;
-import com.example.zhaolexi.imageloader.callback.OnItemClickListener;
 import com.example.zhaolexi.imageloader.base.BaseFragment;
 import com.example.zhaolexi.imageloader.bean.Album;
 import com.example.zhaolexi.imageloader.bean.Image;
+import com.example.zhaolexi.imageloader.callback.OnItemClickListener;
 import com.example.zhaolexi.imageloader.presenter.AlbumPresenter;
-import com.example.zhaolexi.imageloader.ui.ImageItemTouchHelperCallback;
 import com.example.zhaolexi.imageloader.ui.SpacesItemDecoration;
 import com.example.zhaolexi.imageloader.utils.MyUtils;
 
@@ -117,10 +115,6 @@ public class AlbumFragment extends BaseFragment<AlbumPresenter> implements Album
         mAdapter = new ImageAdapter(this);
         mAdapter.setOnItemClickListener(this);
         mImageList.setAdapter(mAdapter);
-
-        ImageItemTouchHelperCallback callback = new ImageItemTouchHelperCallback(mAdapter);
-        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(callback);
-        itemTouchHelper.attachToRecyclerView(mImageList);
     }
 
     @Override

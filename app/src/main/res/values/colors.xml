@@ -9,5 +9,6 @@
     <color name="block">#60000000</color> <!--遮罩层，前两位表示透明度-->
     <color name="line">#9e9999</color>
     <color name="grey">#e6e6e6</color>
-    <color name="selected_album">#f2fffc</color>
+    <color name="managed_album">#f2fffc</color>
+    <color name="light_black">#484646</color>
 </resources>

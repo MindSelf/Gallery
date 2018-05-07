@@ -24,7 +24,7 @@ public abstract class BasePresenter<V,M> {
         mModel = newModel();
     }
 
-    protected V getView() {
+    public V getView() {
         return mViewRef.get();
     }
 

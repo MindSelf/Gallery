@@ -4,6 +4,6 @@
 
     <corners android:radius="5dp" />
 
-    <solid android:color="@color/selected_album" />
+    <solid android:color="@color/managed_album" />
 
 </shape>

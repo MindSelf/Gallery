@@ -6,6 +6,6 @@
     android:paddingLeft="13dp"
     android:layout_gravity="center"
     android:gravity="center_vertical|start"
-    android:text="@string/manage_guide_press"
+    android:text="@string/manage_guide_uneditable"
     android:textSize="16sp"
     tools:ignore="RtlHardcoded,RtlSymmetry" />

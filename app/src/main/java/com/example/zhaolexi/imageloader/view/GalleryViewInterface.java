@@ -22,6 +22,8 @@ public interface GalleryViewInterface {
 
     void showError(String reason);
 
+    void onAlbumListStateChanged(boolean isEmpty, boolean editable);
+
     ManagedAlbumAdapter getAlbumAdapter();
 
     AlbumPagerAdapter getPagerAdapter();

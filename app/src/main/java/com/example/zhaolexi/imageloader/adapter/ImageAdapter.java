@@ -139,19 +139,19 @@ public class ImageAdapter extends RecyclerView.Adapter implements ImageItemTouch
     public void onBindViewHolder(final RecyclerView.ViewHolder holder, final int position) {
         if (getItemViewType(position) == TYPE_NORMAL) {
             ItemViewHolder viewHolder = (ItemViewHolder) holder;
-            ImageView imageView = viewHolder.imageView;
-            TextView textView = viewHolder.description;
-            textView.setText(mImageList.get(position).getDescription());
+            ImageView image = viewHolder.image;
+            TextView description = viewHolder.description;
+            description.setText(mImageList.get(position).getDescription());
 
             //加载和显示图片
-            final String tag = (String) imageView.getTag();
+            final String tag = (String) image.getTag();
             final String uri = mImageList.get(position).getThumbUrl();
 
             if (!uri.equals(tag)) {
                 //为了避免View复用导致显示旧的bitmap，这里会先显示内存中缓存的图片，没有再显示占位图
                 Bitmap bitmap = mImageLoader.loadBitmapFromMemCache(uri);
                 if (bitmap != null) {
-                    imageView.setImageBitmap(bitmap);
+                    image.setImageBitmap(bitmap);
                 }
 //                else if (mHeightsArray.get(position) != 0) {
 //                    //如果是之前显示过的图片，就更改占位图的大小
@@ -159,16 +159,16 @@ public class ImageAdapter extends RecyclerView.Adapter implements ImageItemTouch
 //                    Canvas canvas = new Canvas(tBitmap);
 //                    mDefaultBitmapDrawable.setBounds(0, 0, mImageWidth, mHeightsArray.get(position));
 //                    mDefaultBitmapDrawable.draw(canvas);
-//                    imageView.setImageBitmap(tBitmap);
+//                    iv_image.setImageBitmap(tBitmap);
 //                }
                 else {
-                    imageView.setImageDrawable(mDefaultBitmapDrawable);
+                    image.setImageDrawable(mDefaultBitmapDrawable);
                 }
             }
             //优化列表卡顿，为了避免频繁的加载图片，只在列表停下来的时候才加载图片
             if (mIsIdle) {
-                imageView.setTag(uri);
-                ImageLoader.TaskOptions options = new ImageLoader.TaskOptions(mImageWidth, 0);
+                image.setTag(uri);
+                ImageLoader.TaskOptions options = new ImageLoader.TaskOptions(mImageWidth, mImageWidth);
 //                options.onLoadBitmapListener = new ImageLoader.TaskOptions.OnLoadBitmapListener() {
 //                    @Override
 //                    public void onFinish(Bitmap bitmap) {
@@ -178,7 +178,7 @@ public class ImageAdapter extends RecyclerView.Adapter implements ImageItemTouch
 //                        }
 //                    }
 //                };
-                mImageLoader.bindBitmap(uri, imageView, options);
+                mImageLoader.bindBitmap(uri, image, options);
             }
 
         } else {
@@ -240,14 +240,14 @@ public class ImageAdapter extends RecyclerView.Adapter implements ImageItemTouch
 
     public class ItemViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
-        ImageView imageView;
+        ImageView image;
         TextView description;
 
         ItemViewHolder(View itemView) {
             super(itemView);
-            imageView = (ImageView) itemView.findViewById(R.id.iv_image);
+            image = (ImageView) itemView.findViewById(R.id.iv_image);
             description = (TextView) itemView.findViewById(R.id.description);
-            imageView.setOnClickListener(this);
+            image.setOnClickListener(this);
         }
 
         @Override
