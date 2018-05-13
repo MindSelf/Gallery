@@ -1,7 +1,7 @@
 package com.example.zhaolexi.imageloader.model;
 
-import com.example.zhaolexi.imageloader.bean.Image;
-import com.example.zhaolexi.imageloader.presenter.AlbumPresenter;
+import com.example.zhaolexi.imageloader.bean.Photo;
+import com.example.zhaolexi.imageloader.callback.OnLoadFinishListener;
 import com.google.gson.Gson;
 
 import org.json.JSONArray;
@@ -11,7 +11,6 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -29,9 +28,7 @@ public class AlbumModelImpl implements AlbumModel {
     private String mUrl;
 
     public AlbumModelImpl() {
-        mClient = new OkHttpClient.Builder()
-                .connectTimeout(10, TimeUnit.SECONDS)
-                .build();
+        mClient = new OkHttpClient.Builder().build();
     }
 
     @Override
@@ -40,13 +37,18 @@ public class AlbumModelImpl implements AlbumModel {
     }
 
     @Override
-    public void loadImage(int currentPage, final AlbumPresenter.OnLoadFinishListener listener) {
+    public String getUrl() {
+        return mUrl;
+    }
+
+    @Override
+    public void loadImage(int currentPage, final OnLoadFinishListener<Photo> listener) {
         Request request=new Request.Builder().url(mUrl +currentPage).build();
         Call call= mClient.newCall(request);
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                listener.onLoadFail();
+                listener.onFail(e.getMessage());
             }
 
             @Override
@@ -56,17 +58,17 @@ public class AlbumModelImpl implements AlbumModel {
                     JSONObject jsonObject = new JSONObject(response.body().string());
                     if (!jsonObject.getBoolean("error")) {
                         JSONArray result = jsonObject.getJSONArray("results");
-                        List<Image> newData = new ArrayList<>();
+                        List<Photo> newData = new ArrayList<>();
                         Gson gson = new Gson();
                         for (int i = 0; i < result.length(); i++) {
-                            newData.add(gson.fromJson(result.getJSONObject(i).toString(), Image.class));
+                            newData.add(gson.fromJson(result.getJSONObject(i).toString(), Photo.class));
                         }
-                        listener.onLoadSuccess(result.length() >= 10, newData);
+                        listener.onSuccess(newData);
                     } else {
-                        listener.onLoadFail();
+                        listener.onFail("获取数据失败");
                     }
                 } catch (JSONException e) {
-                    listener.onLoadFail();
+                    listener.onFail(e.getMessage());
                 }
             }
         });

@@ -10,15 +10,17 @@ import android.provider.MediaStore.Images.Thumbnails;
 import android.util.Log;
 import android.util.SparseArray;
 
-import com.example.zhaolexi.imageloader.base.MyApplication;
-import com.example.zhaolexi.imageloader.bean.Photo;
+import com.example.imageloader.imageloader.ImageLoader;
+import com.example.imageloader.imageloader.TaskOption;
+import com.example.imageloader.resizer.DecodeOption;
+import com.example.imageloader.resizer.ImageResizer;
+import com.example.zhaolexi.imageloader.base.BaseApplication;
+import com.example.zhaolexi.imageloader.bean.LocalPhoto;
 import com.example.zhaolexi.imageloader.bean.PhotoBucket;
 import com.example.zhaolexi.imageloader.callback.OnUploadFinishListener;
-import com.example.zhaolexi.imageloader.utils.MyUtils;
+import com.example.zhaolexi.imageloader.utils.DisplayUtils;
 import com.example.zhaolexi.imageloader.utils.SharePreferencesUtils;
 import com.example.zhaolexi.imageloader.utils.Uri;
-import com.example.zhaolexi.imageloader.utils.loader.ImageLoader;
-import com.example.zhaolexi.imageloader.utils.loader.ImageResizer;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -33,7 +35,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -51,7 +52,6 @@ import okhttp3.Response;
 public class UploadPhotoModelImpl implements UploadPhotoModel {
 
     private static final String TAG = "UploadPhotoModelImpl";
-    private AtomicInteger totalsize = new AtomicInteger(0);
 
     private static final MediaType MEDIA_TYPE_PNG = MediaType.parse("image/png");
     private static final int SUCCESS = 1;
@@ -68,8 +68,8 @@ public class UploadPhotoModelImpl implements UploadPhotoModel {
     private String mUploadAid;
 
     public UploadPhotoModelImpl() {
-        mContentResolver = MyApplication.getContext().getContentResolver();
-        mImageLoader = new ImageLoader.Builder(MyApplication.getContext()).build();
+        mContentResolver = BaseApplication.getContext().getContentResolver();
+        mImageLoader = ImageLoader.getInstance(BaseApplication.getContext());
         mThumbnails = new SparseArray<>();
         mBuckets = new SparseArray<>();
         mClient = new OkHttpClient.Builder()
@@ -77,7 +77,7 @@ public class UploadPhotoModelImpl implements UploadPhotoModel {
                 .writeTimeout(0, TimeUnit.SECONDS)
                 .readTimeout(0, TimeUnit.SECONDS)
                 .build();
-        mEdge = MyUtils.dp2px(MyApplication.getContext(), 80);
+        mEdge = DisplayUtils.dp2px(BaseApplication.getContext(), 80);
     }
 
     @Override
@@ -101,7 +101,7 @@ public class UploadPhotoModelImpl implements UploadPhotoModel {
 
             String[] projection = {Media._ID, Media.BUCKET_ID, Media.DATA, Media.BUCKET_DISPLAY_NAME};
             Cursor cursor = mContentResolver.query(Media.EXTERNAL_CONTENT_URI, projection, null, null, null);
-            if (cursor!=null) {
+            if (cursor != null) {
                 int column_id = cursor.getColumnIndex(Media._ID);
                 int column_bucket_id = cursor.getColumnIndex(Media.BUCKET_ID);
                 int column_path = cursor.getColumnIndex(Media.DATA);
@@ -121,7 +121,7 @@ public class UploadPhotoModelImpl implements UploadPhotoModel {
                         bucket.setName(name);
                         mBuckets.put(bucket_id, bucket);
                     }
-                    Photo photo = new Photo();
+                    LocalPhoto photo = new LocalPhoto();
                     photo.setPath(path);
                     photo.setThumbnailPath(mThumbnails.get(id));
                     bucket.getPhotoSet().add(photo);
@@ -143,23 +143,18 @@ public class UploadPhotoModelImpl implements UploadPhotoModel {
                     @Override
                     public void run() {
                         Bitmap cover = null;
-                        try {
-                            Iterator<Photo> iterator = bucket.getPhotoSet().iterator();
-                            Photo mFirst = null;
-                            if (iterator.hasNext()) mFirst = iterator.next();
-                            if (mFirst != null) {
-                                cover = mImageLoader.loadBitmapFromDisk(mFirst.getThumbnailPath(), new ImageLoader.TaskOptions(mEdge, mEdge));
-                                if (cover == null) {
-                                    //Unable to decode stream or ThumbnailPath is null
-                                    cover = mImageLoader.loadBitmapFromDisk(mFirst.getPath(), new ImageLoader.TaskOptions(mEdge, mEdge));
-                                }
+                        Iterator<LocalPhoto> iterator = bucket.getPhotoSet().iterator();
+                        LocalPhoto mFirst = null;
+                        if (iterator.hasNext()) mFirst = iterator.next();
+                        TaskOption option = new TaskOption(new DecodeOption(mEdge, mEdge));
+                        if (mFirst != null) {
+                            cover = mImageLoader.loadBitmap(mFirst.getThumbnailPath(), option);
+                            if (cover == null) {
+                                //Unable to decode stream or ThumbnailPath is null
+                                cover = mImageLoader.loadBitmap(mFirst.getPath(), option);
                             }
-                        } catch (IOException e) {
-                            e.printStackTrace();
                         }
                         bucket.setCover(cover);
-                        Log.d(TAG, "cover: " + cover.getByteCount() / 1024);
-                        totalsize.addAndGet(cover.getByteCount());
                     }
                 }).start();
 
@@ -176,29 +171,23 @@ public class UploadPhotoModelImpl implements UploadPhotoModel {
                     @Override
                     public void run() {
                         Bitmap cover = null;
-                        try {
-                            Iterator<Photo> iterator = totalBucket.getPhotoSet().iterator();
-                            Photo mFirst = null;
-                            if (iterator.hasNext()) mFirst = iterator.next();
-                            if (mFirst != null) {
-                                cover = mImageLoader.loadBitmapFromDisk(mFirst.getThumbnailPath(), new ImageLoader.TaskOptions(mEdge, mEdge));
-                                if (cover == null) {
-                                    //Unable to decode stream or ThumbnailPath is null
-                                    cover = mImageLoader.loadBitmapFromDisk(mFirst.getPath(), new ImageLoader.TaskOptions(mEdge, mEdge));
-                                }
+                        Iterator<LocalPhoto> iterator = totalBucket.getPhotoSet().iterator();
+                        LocalPhoto mFirst = null;
+                        if (iterator.hasNext()) mFirst = iterator.next();
+                        TaskOption option = new TaskOption(new DecodeOption(mEdge, mEdge));
+                        if (mFirst != null) {
+                            cover = mImageLoader.loadBitmap(mFirst.getThumbnailPath(), option);
+                            if (cover == null) {
+                                //Unable to decode stream or ThumbnailPath is null
+                                cover = mImageLoader.loadBitmap(mFirst.getPath(), option);
                             }
-                        } catch (IOException e) {
-                            e.printStackTrace();
                         }
                         totalBucket.setCover(cover);
-                        Log.d(TAG, "cover: " + cover.getByteCount() / 1024);
-                        totalsize.addAndGet(cover.getByteCount());
                     }
                 }).start();
             }
 
         }
-        Log.d(TAG, "totalsize: " + totalsize.get() / 1024);
         return mBucketList;
     }
 
@@ -291,7 +280,7 @@ public class UploadPhotoModelImpl implements UploadPhotoModel {
     private void getThumbnails() {
         String[] projection = {Thumbnails.IMAGE_ID, Thumbnails.DATA};
         Cursor cursor = mContentResolver.query(Thumbnails.EXTERNAL_CONTENT_URI, projection, null, null, null);
-        if (cursor!=null) {
+        if (cursor != null) {
             int column_id = cursor.getColumnIndex(Thumbnails.IMAGE_ID);
             int column_data = cursor.getColumnIndex(Thumbnails.DATA);
             while (cursor.moveToNext()) {

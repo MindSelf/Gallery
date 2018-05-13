@@ -9,5 +9,9 @@
     <string name="manage_guide_empty">点击添加相册</string>
     <string name="negative">取消</string>
     <string name="positive">确定</string>
+    <string name="delete_photo">删除</string>
+    <string name="comment">评论...</string>
+    <string name="collection_album">收藏相册</string>
+    <string name="photo_overselected">最多只能选择%d张照片</string>
 
 </resources>

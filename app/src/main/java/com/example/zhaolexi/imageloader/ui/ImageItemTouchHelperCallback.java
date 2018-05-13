@@ -4,7 +4,7 @@ import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
 
-import com.example.zhaolexi.imageloader.adapter.ImageAdapter;
+import com.example.zhaolexi.imageloader.adapter.PhotoAdapter;
 
 /**
  * Created by ZHAOLEXI on 2017/10/15.
@@ -21,7 +21,7 @@ public class ImageItemTouchHelperCallback extends ItemTouchHelper.Callback {
     @Override
     public int getMovementFlags(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder) {
         int dragFlags=0;
-        if(viewHolder.getItemViewType()!= ImageAdapter.TYPE_FOOTER) {
+        if(viewHolder.getItemViewType()!= PhotoAdapter.TYPE_FOOTER) {
             dragFlags = ItemTouchHelper.UP | ItemTouchHelper.DOWN |
                     ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT;
         }

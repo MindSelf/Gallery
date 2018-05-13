@@ -7,8 +7,7 @@
     <com.example.zhaolexi.imageloader.ui.SquareImageView
         android:id="@+id/iv_image"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:scaleType="centerCrop" />
+        android:layout_height="wrap_content" />
 
     <com.example.zhaolexi.imageloader.ui.SquareImageView
         android:id="@+id/photo_block"

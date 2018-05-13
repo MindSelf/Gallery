@@ -1,10 +1,10 @@
 package com.example.zhaolexi.imageloader.view;
 
-import com.example.zhaolexi.imageloader.bean.Photo;
+import com.example.zhaolexi.imageloader.bean.LocalPhoto;
 import com.example.zhaolexi.imageloader.bean.PhotoBucket;
 
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Created by ZHAOLEXI on 2017/11/16.
@@ -12,7 +12,7 @@ import java.util.Set;
 
 public interface UploadPhotoViewInterface {
 
-    void showPhotos(Set<Photo> set);
+    void showPhotos(Collection<LocalPhoto> set);
 
     void openBucketList(List<PhotoBucket> list);
 

@@ -60,7 +60,7 @@ public class GalleryPresenter extends BasePresenter<GalleryViewInterface, Galler
     }
 
     public void getRandom() {
-        mModel.getRandom(new OnLoadFinishListener<List<Album>>() {
+        mModel.getRandom(new OnLoadFinishListener<Album>() {
             @Override
             public void onSuccess(List<Album> data) {
                 Message.obtain(mHandler, MSG_SUCCESS, data).sendToTarget();

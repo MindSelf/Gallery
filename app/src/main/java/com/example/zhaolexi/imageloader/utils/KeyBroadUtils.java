@@ -13,10 +13,10 @@ public class KeyBroadUtils {
     /**
      * 打卡软键盘
      *
-     * @param mEditText 输入框
      * @param mContext  上下文
+     * @param mEditText 输入框
      */
-    public static void openKeybord(EditText mEditText, Context mContext) {
+    public static void openKeybord(Context mContext, EditText mEditText) {
         InputMethodManager imm = (InputMethodManager) mContext
                 .getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.showSoftInput(mEditText, InputMethodManager.RESULT_SHOWN);
@@ -27,10 +27,10 @@ public class KeyBroadUtils {
     /**
      * 关闭软键盘
      *
-     * @param mEditText 输入框
      * @param mContext  上下文
+     * @param mEditText 输入框
      */
-    public static void closeKeybord(EditText mEditText, Context mContext) {
+    public static void closeKeybord(Context mContext, EditText mEditText) {
         InputMethodManager imm = (InputMethodManager) mContext.getSystemService(Context.INPUT_METHOD_SERVICE);
 
         imm.hideSoftInputFromWindow(mEditText.getWindowToken(), 0);

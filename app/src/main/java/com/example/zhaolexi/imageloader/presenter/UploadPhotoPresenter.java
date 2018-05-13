@@ -1,19 +1,22 @@
 package com.example.zhaolexi.imageloader.presenter;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Message;
 
 import com.example.zhaolexi.imageloader.base.BasePresenter;
-import com.example.zhaolexi.imageloader.bean.Photo;
+import com.example.zhaolexi.imageloader.bean.LocalPhoto;
 import com.example.zhaolexi.imageloader.bean.PhotoBucket;
 import com.example.zhaolexi.imageloader.callback.OnUploadFinishListener;
 import com.example.zhaolexi.imageloader.model.UploadPhotoModel;
 import com.example.zhaolexi.imageloader.model.UploadPhotoModelImpl;
-import com.example.zhaolexi.imageloader.view.ImageDetailActivity;
+import com.example.zhaolexi.imageloader.view.DetailActivity;
+import com.example.zhaolexi.imageloader.view.LocalDetailActivity;
+import com.example.zhaolexi.imageloader.view.UploadPhotoActivity;
 import com.example.zhaolexi.imageloader.view.UploadPhotoViewInterface;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -22,6 +25,8 @@ import java.util.Set;
  */
 
 public class UploadPhotoPresenter extends BasePresenter<UploadPhotoViewInterface, UploadPhotoModel> {
+
+    public static final int OPEN_LOCAL_PHOTO_DETAIL = 1;
 
     private boolean mIsListOpen;
 
@@ -75,17 +80,19 @@ public class UploadPhotoPresenter extends BasePresenter<UploadPhotoViewInterface
     public void displayAllPhotos() {
         if (isViewAttached()) {
             UploadPhotoViewInterface mView = getView();
-            Set<Photo> set = mModel.getBuckets().get(0).getPhotoSet();
+            Set<LocalPhoto> set = mModel.getBuckets().get(0).getPhotoSet();
             mView.showPhotos(set);
         }
     }
 
-    public void openDetail(String path) {
+    public void openDetail(ArrayList<LocalPhoto> details, HashSet<Integer> selects, int index) {
         if (isViewAttached()) {
-            Activity activity = (Activity) getView();
-            Intent intent = new Intent(activity, ImageDetailActivity.class);
-            intent.putExtra("url", path);
-            activity.startActivity(intent);
+            UploadPhotoActivity activity = (UploadPhotoActivity) getView();
+            Intent intent = new Intent(activity, LocalDetailActivity.class);
+            intent.putExtra(DetailActivity.DETAILS_KEY, details);
+            intent.putExtra(DetailActivity.CURRENT_INDEX, index);
+            intent.putExtra(LocalDetailActivity.SELECT_SET, selects);
+            activity.startActivityForResult(intent, OPEN_LOCAL_PHOTO_DETAIL);
         }
     }
 

@@ -13,7 +13,7 @@ public class PhotoBucket {
 
     private int count;
     private String name;
-    private Set<Photo> photoSet;
+    private Set<LocalPhoto> photoSet;
     private Bitmap cover;
 
     public int getCount() {
@@ -40,14 +40,14 @@ public class PhotoBucket {
         this.name = name;
     }
 
-    public Set<Photo> getPhotoSet() {
+    public Set<LocalPhoto> getPhotoSet() {
         if (photoSet == null) {
             photoSet = new TreeSet<>();
         }
         return photoSet;
     }
 
-    public void setPhotoSet(Set<Photo> photoSet) {
+    public void setPhotoSet(Set<LocalPhoto> photoSet) {
         this.photoSet = photoSet;
     }
 }

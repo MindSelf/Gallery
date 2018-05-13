@@ -1,8 +1,11 @@
 package com.example.zhaolexi.imageloader.bean;
 
+import com.google.gson.annotations.SerializedName;
+
 import org.litepal.crud.DataSupport;
 
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * Created by ZHAOLEXI on 2018/1/27.
@@ -19,14 +22,19 @@ public class Album extends DataSupport implements Serializable{
     */
     private String url;
 
-    //用于后续对图片和相册的增、删、改进行操作
-    private String aid;
-
-    //相册名
-    private String title;
-
-    //相册的访问权限
-    private boolean accessible;
+    private String aid;	//相册id
+    private String title;	//相册名
+    @SerializedName("isAccessible")
+    private boolean accessible;	//权限标志
+    private boolean isFavorite;		//收藏标志
+    private Date createTime;	//创建时间
+    private String adesc;	//相册描述
+    private String who;	//创建者
+    private String share;	//分享url
+    private int total;	//相片总数
+    private String coverUrl;	//封面url
+    @SerializedName("number")
+    private int account;  //相册号
 
     public String getUrl() {
         return url;
@@ -58,6 +66,70 @@ public class Album extends DataSupport implements Serializable{
 
     public void setAccessible(boolean accessible) {
         this.accessible = accessible;
+    }
+
+    public boolean isFavorite() {
+        return isFavorite;
+    }
+
+    public void setFavorite(boolean favorite) {
+        isFavorite = favorite;
+    }
+
+    public Date getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
+    }
+
+    public String getAdesc() {
+        return adesc;
+    }
+
+    public void setAdesc(String adesc) {
+        this.adesc = adesc;
+    }
+
+    public String getWho() {
+        return who;
+    }
+
+    public void setWho(String who) {
+        this.who = who;
+    }
+
+    public String getShare() {
+        return share;
+    }
+
+    public void setShare(String share) {
+        this.share = share;
+    }
+
+    public int getTotal() {
+        return total;
+    }
+
+    public void setTotal(int total) {
+        this.total = total;
+    }
+
+    public String getCoverUrl() {
+        return coverUrl;
+    }
+
+    public void setCoverUrl(String coverUrl) {
+        this.coverUrl = coverUrl;
+    }
+
+    public int getAccount() {
+        return account;
+    }
+
+    public void setAccount(int account) {
+        this.account = account;
     }
 
     @Override

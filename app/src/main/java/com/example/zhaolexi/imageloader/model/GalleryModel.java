@@ -13,7 +13,7 @@ public interface GalleryModel {
 
     List<Album> loadLocalHistory();
 
-    void getRandom(OnLoadFinishListener<List<Album>> listener);
+    void getRandom(OnLoadFinishListener<Album> listener);
 
     void addAlbumToDB(Album album);
 

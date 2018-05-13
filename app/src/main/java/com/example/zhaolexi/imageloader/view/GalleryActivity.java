@@ -44,6 +44,7 @@ import com.example.zhaolexi.imageloader.utils.Uri;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class GalleryActivity extends BaseActivity<GalleryPresenter> implements GalleryViewInterface, View.OnClickListener, ManagedAlbumAdapter.OnItemClickListener, ManagedAlbumAdapter.OnItemAddListener, PasswordDialog.OnResponseListener<AlbumPasswordDialog.AlbumResult> {
 
@@ -213,6 +214,7 @@ public class GalleryActivity extends BaseActivity<GalleryPresenter> implements G
 
         Toolbar mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
+        Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(false);
 
         mContainer = (LinearLayout) findViewById(R.id.ll_container);
         mManage = (ImageView) findViewById(R.id.iv_manager);
@@ -276,7 +278,9 @@ public class GalleryActivity extends BaseActivity<GalleryPresenter> implements G
             @Override
             public void onClick(View v) {
                 AlbumFragment fragment = mPageAdapter.getAlbumFragmentAt(position);
-                fragment.getPresenter().addPhoto();
+                if (fragment != null) {
+                    fragment.getPresenter().addPhoto();
+                }
             }
         });
 
@@ -286,7 +290,9 @@ public class GalleryActivity extends BaseActivity<GalleryPresenter> implements G
             public void onClick(DialogInterface dialog, int which) {
                 mCanLoadWithoutWifi = true;
                 AlbumFragment fragment = mPageAdapter.getAlbumFragmentAt(position);
-                fragment.getPresenter().refresh();
+                if (fragment != null) {
+                    fragment.getPresenter().refresh();
+                }
             }
         });
     }

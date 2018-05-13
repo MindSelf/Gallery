@@ -69,6 +69,9 @@ public class AlbumPagerAdapter extends FragmentStatePagerAdapter {
     }
 
     public AlbumFragment getAlbumFragmentAt(int position) {
-        return mFragmentList.get(position);
+        if(position<mFragmentList.size()) {
+            return mFragmentList.get(position);
+        }
+        return null;
     }
 }

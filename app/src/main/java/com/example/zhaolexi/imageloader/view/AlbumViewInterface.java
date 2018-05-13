@@ -1,8 +1,8 @@
 package com.example.zhaolexi.imageloader.view;
 
-import com.example.zhaolexi.imageloader.adapter.ImageAdapter;
+import com.example.zhaolexi.imageloader.adapter.PhotoAdapter;
 import com.example.zhaolexi.imageloader.bean.Album;
-import com.example.zhaolexi.imageloader.bean.Image;
+import com.example.zhaolexi.imageloader.bean.Photo;
 
 import java.util.List;
 
@@ -12,7 +12,7 @@ import java.util.List;
 
 public interface AlbumViewInterface {
 
-    void showNewData(boolean hasMore, List<Image> newData);
+    void showNewData(boolean hasMore, List<Photo> newData);
 
     void showError();
 
@@ -22,7 +22,7 @@ public interface AlbumViewInterface {
 
     void showAlertDialog();
 
-    ImageAdapter getAdapter();
+    PhotoAdapter getAdapter();
 
     Album getAlbumInfo();
 }

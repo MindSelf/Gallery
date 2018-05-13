@@ -22,7 +22,7 @@ public class GalleryModelImpl implements GalleryModel {
     }
 
     @Override
-    public void getRandom(final OnLoadFinishListener<List<Album>> listener) {
+    public void getRandom(final OnLoadFinishListener<Album> listener) {
         final ArrayList<Album> albums = new ArrayList<>();
         new Thread(new Runnable() {
             @Override
@@ -33,7 +33,7 @@ public class GalleryModelImpl implements GalleryModel {
                     e.printStackTrace();
                     listener.onFail(e.getMessage());
                 }
-                Album album=new Album();
+                Album album = new Album();
                 album.setUrl(Uri.Girls);
                 album.setTitle("福利");
                 album.setAccessible(false);

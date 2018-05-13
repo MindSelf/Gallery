@@ -10,16 +10,20 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.view.View;
 
+import com.example.imageloader.imageloader.ImageLoader;
+import com.example.imageloader.imageloader.ImageLoaderConfig;
 import com.example.zhaolexi.imageloader.R;
-import com.example.zhaolexi.imageloader.adapter.ImageAdapter;
+import com.example.zhaolexi.imageloader.adapter.PhotoAdapter;
+import com.example.zhaolexi.imageloader.base.BaseApplication;
 import com.example.zhaolexi.imageloader.base.BaseFragment;
 import com.example.zhaolexi.imageloader.bean.Album;
-import com.example.zhaolexi.imageloader.bean.Image;
+import com.example.zhaolexi.imageloader.bean.Photo;
 import com.example.zhaolexi.imageloader.callback.OnItemClickListener;
 import com.example.zhaolexi.imageloader.presenter.AlbumPresenter;
 import com.example.zhaolexi.imageloader.ui.SpacesItemDecoration;
-import com.example.zhaolexi.imageloader.utils.MyUtils;
+import com.example.zhaolexi.imageloader.utils.DisplayUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -29,12 +33,11 @@ import java.util.List;
 public class AlbumFragment extends BaseFragment<AlbumPresenter> implements AlbumViewInterface, OnItemClickListener {
 
     public static final String KEY_ALBUM = "album";
-    public static final String KEY_AID = "aid";
 
     private RecyclerView mImageList;
     private SwipeRefreshLayout mSwipeRefresh;
     private Album mAlbumInfo;
-    private ImageAdapter mAdapter;
+    private PhotoAdapter mAdapter;
 
     private boolean mIsFirstLoad = true;
 
@@ -60,11 +63,12 @@ public class AlbumFragment extends BaseFragment<AlbumPresenter> implements Album
     @Override
     protected void initData() {
         mAlbumInfo = (Album) getArguments().getSerializable(KEY_ALBUM);
+        mPresenter.setUrl(mAlbumInfo.getUrl());
     }
 
     @Override
     protected void initView(View contentView) {
-        GalleryActivity activity=(GalleryActivity)getActivity();
+        GalleryActivity activity = (GalleryActivity) getActivity();
 
         mSwipeRefresh = (SwipeRefreshLayout) contentView.findViewById(R.id.swipe_refresh);
         mSwipeRefresh.setColorSchemeResources(R.color.colorPrimary);
@@ -76,7 +80,7 @@ public class AlbumFragment extends BaseFragment<AlbumPresenter> implements Album
         });
 
         mImageList = (RecyclerView) contentView.findViewById(R.id.recyclerview);
-        mImageList.addItemDecoration(new SpacesItemDecoration(MyUtils.dp2px(getContext(), 4)));
+        mImageList.addItemDecoration(new SpacesItemDecoration(DisplayUtils.dp2px(getContext(), 4)));
         mImageList.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
@@ -95,7 +99,7 @@ public class AlbumFragment extends BaseFragment<AlbumPresenter> implements Album
                 //当item都显示在屏幕中时，onScrolled不会触发，所以在footer中添加点击重试的链接
                 //当然也可以给RecyclerView设置OnTouchListener
                 //getItemCount-1表示footer的位置
-                if (mAdapter.getFooterState()==ImageAdapter.FOOTER_NEWDATA && lastVisiblePosition + 1 == mAdapter.getItemCount() && dy > 0) {
+                if (mAdapter.getFooterState() == PhotoAdapter.FOOTER_NEWDATA && lastVisiblePosition + 1 == mAdapter.getItemCount() && dy > 0) {
                     mPresenter.loadMore();
                 }
             }
@@ -107,36 +111,37 @@ public class AlbumFragment extends BaseFragment<AlbumPresenter> implements Album
             activity.mRecycledViewPool = mImageList.getRecycledViewPool();
         }
 
-        StaggeredGridLayoutManager manager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
-        //解决瀑布流item跳动的问题
-        manager.setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_NONE);
+//        StaggeredGridLayoutManager manager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
+//        //解决瀑布流item跳动的问题
+//        manager.setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_NONE);
+        GridLayoutManager manager = new GridLayoutManager(getContext(), 2);
         mImageList.setLayoutManager(manager);
 
-        mAdapter = new ImageAdapter(this);
+        mAdapter = new PhotoAdapter(this);
         mAdapter.setOnItemClickListener(this);
         mImageList.setAdapter(mAdapter);
     }
 
     @Override
-    public void showNewData(boolean hasMore, List<Image> newData) {
+    public void showNewData(boolean hasMore, List<Photo> newData) {
         mAdapter.addImages(newData);
         if (hasMore) {
-            mAdapter.setFooterState(ImageAdapter.FOOTER_NEWDATA);
+            mAdapter.setFooterState(PhotoAdapter.FOOTER_NEWDATA);
         } else {
-            mAdapter.setFooterState(ImageAdapter.FOOTER_NODATA);
+            mAdapter.setFooterState(PhotoAdapter.FOOTER_NODATA);
         }
         mAdapter.notifyDataSetChanged();
     }
 
     @Override
     public void showError() {
-        mAdapter.setFooterState(ImageAdapter.FOOTER_ERROR);
+        mAdapter.setFooterState(PhotoAdapter.FOOTER_ERROR);
         mAdapter.notifyDataSetChanged();
     }
 
     @Override
     public void showLoading() {
-        mAdapter.setFooterState(ImageAdapter.FOOTER_LOADING);
+        mAdapter.setFooterState(PhotoAdapter.FOOTER_LOADING);
         mAdapter.notifyDataSetChanged();
     }
 
@@ -147,12 +152,12 @@ public class AlbumFragment extends BaseFragment<AlbumPresenter> implements Album
 
     @Override
     public void showAlertDialog() {
-        GalleryActivity activity=(GalleryActivity)getActivity();
+        GalleryActivity activity = (GalleryActivity) getActivity();
         activity.showAlertDialog();
     }
 
     @Override
-    public ImageAdapter getAdapter() {
+    public PhotoAdapter getAdapter() {
         return mAdapter;
     }
 
@@ -163,12 +168,7 @@ public class AlbumFragment extends BaseFragment<AlbumPresenter> implements Album
 
     @Override
     public void onItemClick(View view, int position) {
-        Image image = mAdapter.getItem(position);
-        if (image.getFullUrl() != null) {
-            mPresenter.openDetail(true, image.getFullUrl());
-        } else {
-            mPresenter.openDetail(false, image.getThumbUrl());
-        }
+        mPresenter.openDetail((ArrayList<Photo>) mAdapter.getImages(), position, mAlbumInfo.isAccessible());
     }
 
     @Override
@@ -179,9 +179,29 @@ public class AlbumFragment extends BaseFragment<AlbumPresenter> implements Album
                 if (resultCode == Activity.RESULT_OK) {
                     mPresenter.refresh();
                 }
+                ImageLoaderConfig config = new ImageLoaderConfig.Builder(getContext()).setDefaultImage(R.color.windowBackground).build();
+                ImageLoader.getInstance(BaseApplication.getContext()).init(config);
+                break;
+            case AlbumPresenter.OPEN_PHOTO_DETAIL:
+                if (resultCode == Activity.RESULT_OK) {
+                    int index = data.getIntExtra(DetailActivity.CURRENT_INDEX, 0);
+                    int currentPage = data.getIntExtra(DetailActivity.CURRENT_PAGE, 0);
+                    ArrayList list = (ArrayList) data.getSerializableExtra(DetailActivity.DETAILS_KEY);
+                    refreshFromDetail(list, index, currentPage);
+                }
                 break;
             default:
         }
+    }
+
+    private void refreshFromDetail(ArrayList list, int index, int currentPage) {
+        mAdapter.cleanImages();
+        mAdapter.addImages(list);
+        mAdapter.notifyDataSetChanged();
+
+        mImageList.scrollToPosition(index);
+
+        mPresenter.setCurrentPage(currentPage);
     }
 
     public static AlbumFragment newInstance(Album album) {

@@ -1,55 +1,93 @@
 package com.example.zhaolexi.imageloader.bean;
 
-import android.support.annotation.NonNull;
+import com.google.gson.annotations.SerializedName;
 
-import java.io.File;
+import java.io.Serializable;
 
 /**
- * Created by ZHAOLEXI on 2017/11/3.
+ * Created by ZHAOLEXI on 2017/10/14.
  */
 
-public class Photo implements Comparable<Photo> {
+public class Photo implements Detail, Serializable {
 
-    private String thumbnailPath;
+    /**
+     * _id : 59dd6a91421aa90fef20346c
+     * createdAt : 2017-10-11T08:49:21.485Z
+     * description : 10-11
+     * publishedAt : 2017-10-11T12:40:42.545Z
+     * source : chrome
+     * type : 福利
+     * thumbUrl : http://7xi8d6.com1.z0.glb.clouddn.com/20171011084856_0YQ0jN_joanne_722_11_10_2017_8_39_5_505.jpeg
+     * used : true
+     * who : 代码家
+     */
 
-    private String path;
+    //private String id;
+    @SerializedName(value = "pdesc", alternate = "desc")
+    private String description;
+    @SerializedName(value = "thumbUrl", alternate = "url")
+    private String thumbUrl;
+    private String fullUrl;
+    private String who;
 
-    public long getLastModified() {
-        return new File(path).lastModified();
+    private String publishAt;
+    private int thumbUp;
+
+    public String getPublishAt() {
+        return publishAt;
     }
 
-    public String getThumbnailPath() {
-        return thumbnailPath;
+    public void setPublishAt(String publishAt) {
+        this.publishAt = publishAt;
     }
 
-    public void setThumbnailPath(String thumbnailPath) {
-        this.thumbnailPath = thumbnailPath;
+    public int getThumbUp() {
+        return thumbUp;
     }
 
-    public String getPath() {
-        return path;
+    public void setThumbUp(int thumbUp) {
+        this.thumbUp = thumbUp;
     }
 
-    public void setPath(String path) {
-        this.path = path;
+    public String getFullUrl() {
+        return fullUrl;
+    }
+
+    public void setFullUrl(String fullUrl) {
+        this.fullUrl = fullUrl;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getThumbUrl() {
+        return thumbUrl;
+    }
+
+    public void setThumbUrl(String thumbUrl) {
+        this.thumbUrl = thumbUrl;
+    }
+
+    public String getWho() {
+        return who;
+    }
+
+    public void setWho(String who) {
+        this.who = who;
     }
 
     @Override
-    public int compareTo(@NonNull Photo o) {
-        //最新修改的排在前面
-        long src = getLastModified();
-        long target = o.getLastModified();
-        return src > target ? -1 : src < target ? 1 : 0;
+    public String getDetailUrl() {
+        return fullUrl == null ? thumbUrl : fullUrl;
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj != null && obj instanceof Photo) {
-            if (path.equals(((Photo) obj).getPath())) {
-                return true;
-            }
-        }
-        return false;
+    public boolean shouldResized() {
+        return fullUrl == null;
     }
 }

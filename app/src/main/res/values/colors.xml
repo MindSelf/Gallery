@@ -11,4 +11,8 @@
     <color name="grey">#e6e6e6</color>
     <color name="managed_album">#f2fffc</color>
     <color name="light_black">#484646</color>
+    <color name="image_detail">#28000000</color>
+    <color name="detail_action">#a2a2a2</color>
+    <color name="detail_description">#e2e2e2</color>
+    <color name="communication_count">#e69600</color>
 </resources>

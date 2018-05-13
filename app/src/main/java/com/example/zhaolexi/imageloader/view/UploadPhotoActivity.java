@@ -4,6 +4,8 @@ import android.Manifest;
 import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -27,22 +29,27 @@ import android.widget.Toast;
 
 import com.example.zhaolexi.imageloader.R;
 import com.example.zhaolexi.imageloader.adapter.BucketAdapter;
-import com.example.zhaolexi.imageloader.adapter.PhotoAdapter;
+import com.example.zhaolexi.imageloader.adapter.SelectPhotoAdapter;
 import com.example.zhaolexi.imageloader.base.BaseActivity;
-import com.example.zhaolexi.imageloader.bean.Photo;
+import com.example.zhaolexi.imageloader.bean.LocalPhoto;
 import com.example.zhaolexi.imageloader.bean.PhotoBucket;
 import com.example.zhaolexi.imageloader.callback.OnItemClickListener;
 import com.example.zhaolexi.imageloader.presenter.UploadPhotoPresenter;
 import com.example.zhaolexi.imageloader.ui.SpacesItemDecoration;
-import com.example.zhaolexi.imageloader.utils.MyUtils;
+import com.example.zhaolexi.imageloader.utils.DisplayUtils;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Objects;
 
 
-public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> implements UploadPhotoViewInterface, View.OnClickListener, View.OnTouchListener, AdapterView.OnItemClickListener, OnItemClickListener, PhotoAdapter.OnSelectCountChangeListener, PhotoAdapter.OnDateChangedListener {
+public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> implements UploadPhotoViewInterface, View.OnClickListener, View.OnTouchListener, AdapterView.OnItemClickListener, OnItemClickListener, SelectPhotoAdapter.OnSelectCountChangeListener, SelectPhotoAdapter.OnDateChangedListener {
 
+    public static final String KEY_AID = "aid";
     private static final int READ_EXTERNAL_STORAGE = 1;
+    private static final long DATA_DURATION = 300;
 
     private TextView mSubmit, mSelectBucket, mDate;
     private RecyclerView mPhotoList;
@@ -51,7 +58,7 @@ public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> impl
     private ViewStub mViewStub;
 
     private BucketAdapter mBucketAdapter;
-    private PhotoAdapter mPhotoAdapter;
+    private SelectPhotoAdapter mSelectPhotoAdapter;
     private AlphaAnimation mAppearAnimation;
     private AlphaAnimation mDisappearAnimation;
     private ValueAnimator mOpenListAnimator;
@@ -87,12 +94,12 @@ public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> impl
 
     @Override
     protected void initData() {
-        mUploadAid = getIntent().getStringExtra(AlbumFragment.KEY_AID);
-        mBucketListHeight = MyUtils.dp2px(this, 450);
-        mPhotoAdapter = new PhotoAdapter(this);
-        mPhotoAdapter.setOnItemClickListener(this);
-        mPhotoAdapter.setSelectCountChangeListener(this);
-        mPhotoAdapter.setOnDateChangedListener(this);
+        mUploadAid = getIntent().getStringExtra(KEY_AID);
+        mBucketListHeight = DisplayUtils.dp2px(this, 450);
+        mSelectPhotoAdapter = new SelectPhotoAdapter(this);
+        mSelectPhotoAdapter.setOnItemClickListener(this);
+        mSelectPhotoAdapter.setSelectCountChangeListener(this);
+        mSelectPhotoAdapter.setOnDateChangedListener(this);
         initAnimator();
     }
 
@@ -109,6 +116,10 @@ public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> impl
         mNavigate = (ImageView) findViewById(R.id.iv_navigate);
         mViewStub = (ViewStub) findViewById(R.id.stub);
 
+        //需要在setNavigationOnClickListener之前设置
+        setSupportActionBar(mToolbar);
+        Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(false);
+
         mToolbar.setNavigationIcon(getResources().getDrawable(R.mipmap.ic_arrow_back));
         mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
@@ -118,19 +129,19 @@ public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> impl
             }
         });
 
-        mPhotoList.setAdapter(mPhotoAdapter);
+        mPhotoList.setAdapter(mSelectPhotoAdapter);
         mPhotoList.setLayoutManager(new GridLayoutManager(this, 4));
-        mPhotoList.addItemDecoration(new SpacesItemDecoration(MyUtils.dp2px(this, 1)));
+        mPhotoList.addItemDecoration(new SpacesItemDecoration(DisplayUtils.dp2px(this, 1)));
         mPhotoList.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                    mPhotoAdapter.setIsIdle(true);
+                    mSelectPhotoAdapter.setIsIdle(true);
                     //滑动时onBindViewHolder先于回调方法，所以静止时要提醒Adapter更新数据
-                    mPhotoAdapter.notifyDataSetChanged();
+                    mSelectPhotoAdapter.notifyDataSetChanged();
                     if (mIsDateVisible) mDate.startAnimation(mDisappearAnimation);
                 } else {
-                    mPhotoAdapter.setIsIdle(false);
+                    mSelectPhotoAdapter.setIsIdle(false);
                     if (!mIsDateVisible) mDate.startAnimation(mAppearAnimation);
                 }
             }
@@ -174,7 +185,7 @@ public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> impl
             }
         });
 
-        mCloseListAnimator = ValueAnimator.ofInt(mBucketListHeight, 0).setDuration(500);
+        mCloseListAnimator = ValueAnimator.ofInt(mBucketListHeight, 0).setDuration(200);
         mCloseListAnimator.setTarget(mBucketList);
         mCloseListAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
@@ -202,7 +213,8 @@ public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> impl
             }
 
             @Override
-            public void onAnimationRepeat(Animator animation) {}
+            public void onAnimationRepeat(Animator animation) {
+            }
         });
 
         mAppearAnimation = new AlphaAnimation(0, 1f);
@@ -216,14 +228,16 @@ public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> impl
             }
 
             @Override
-            public void onAnimationEnd(Animation animation) {}
+            public void onAnimationEnd(Animation animation) {
+            }
 
             @Override
-            public void onAnimationRepeat(Animation animation) {}
+            public void onAnimationRepeat(Animation animation) {
+            }
         });
 
         mDisappearAnimation = new AlphaAnimation(1f, 0);
-        mDisappearAnimation.setDuration(100);
+        mDisappearAnimation.setDuration(DATA_DURATION);
         mDisappearAnimation.setFillAfter(true);
         mDisappearAnimation.setAnimationListener(new Animation.AnimationListener() {
             @Override
@@ -234,10 +248,12 @@ public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> impl
             @Override
             public void onAnimationEnd(Animation animation) {
                 mDate.clearAnimation();
-                mDate.setVisibility(View.GONE);}
+                mDate.setVisibility(View.GONE);
+            }
 
             @Override
-            public void onAnimationRepeat(Animation animation) {}
+            public void onAnimationRepeat(Animation animation) {
+            }
         });
     }
 
@@ -247,14 +263,13 @@ public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> impl
     }
 
     @Override
-    public void showPhotos(Set<Photo> set) {
+    public void showPhotos(Collection<LocalPhoto> set) {
         mSubmit.setText("完成");
         mSubmit.setSelected(false);
         mSubmit.setEnabled(false);
         mPhotoList.scrollToPosition(0);     //定位到列表顶部，这个方法由LayoutManager负责实现
-        mPhotoAdapter.clearSelectedSet();
-        mPhotoAdapter.setData(set);
-        mPhotoAdapter.notifyDataSetChanged();
+        mSelectPhotoAdapter.clearSelectedSet();
+        mSelectPhotoAdapter.setData(set);
     }
 
     @Override
@@ -297,7 +312,22 @@ public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> impl
     @SuppressLint("DefaultLocale")
     @Override
     public void onOverSelect() {
-        Toast.makeText(this, String.format("最多只能选择%d张照片", PhotoAdapter.MAX_SIZE), Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, String.format(getString(R.string.photo_overselected), SelectPhotoAdapter.MAX_SIZE), Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == Activity.RESULT_OK && requestCode == UploadPhotoPresenter.OPEN_LOCAL_PHOTO_DETAIL) {
+            int index = data.getIntExtra(DetailActivity.CURRENT_INDEX, 0);
+            HashSet select = (HashSet) data.getSerializableExtra(LocalDetailActivity.SELECT_SET);
+            refreshFromDetail(index, select);
+        }
+    }
+
+    private void refreshFromDetail(int index, Collection<Integer> select) {
+        mPhotoList.scrollToPosition(index);
+        mSelectPhotoAdapter.setSelected(select);
     }
 
     @SuppressLint("DefaultLocale")
@@ -307,12 +337,12 @@ public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> impl
             setResult(RESULT_OK);
             finish();
         } else {
-            mSubmit.setText(String.format("完成(%d/%d)", mPhotoAdapter.getSelectedCount(), PhotoAdapter.MAX_SIZE));
+            mSubmit.setText(String.format("完成(%d/%d)", mSelectPhotoAdapter.getSelectedCount(), SelectPhotoAdapter.MAX_SIZE));
             mSubmit.setSelected(true);
         }
         mSubmit.setEnabled(true);
-        mPhotoAdapter.setIsUploading(false);
-        mPhotoAdapter.notifyDataSetChanged();
+        mSelectPhotoAdapter.setIsUploading(false);
+        mSelectPhotoAdapter.notifyDataSetChanged();
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
@@ -327,7 +357,7 @@ public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> impl
     public void onSelectedCountChange(int size) {
         if (size > 0) {
             mSubmit.setEnabled(true);
-            mSubmit.setText(String.format("完成(%d/%d)", size, PhotoAdapter.MAX_SIZE));
+            mSubmit.setText(String.format("完成(%d/%d)", size, SelectPhotoAdapter.MAX_SIZE));
             mSubmit.setSelected(true);
         } else {
             mSubmit.setText("完成");
@@ -344,7 +374,7 @@ public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> impl
 
     @Override
     public void onItemClick(View view, int position) {
-        mPresenter.openDetail(mPhotoAdapter.getItem(position).getPath());
+        mPresenter.openDetail((ArrayList<LocalPhoto>) mSelectPhotoAdapter.getList(), (HashSet<Integer>) mSelectPhotoAdapter.getSelected(), position);
     }
 
     @Override
@@ -359,9 +389,9 @@ public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> impl
                 mSubmit.setSelected(false);
                 mSubmit.setEnabled(false);
                 mSubmit.setText("上传中...");
-                mPresenter.upLoadImage(mPhotoAdapter.getSelectedPhotos());
-                mPhotoAdapter.setIsUploading(true);
-                mPhotoAdapter.notifyDataSetChanged();
+                mPresenter.upLoadImage(mSelectPhotoAdapter.getSelectedPhotos());
+                mSelectPhotoAdapter.setIsUploading(true);
+                mSelectPhotoAdapter.notifyDataSetChanged();
                 break;
             default:
                 break;
@@ -400,11 +430,11 @@ public class UploadPhotoActivity extends BaseActivity<UploadPhotoPresenter> impl
                 if (mPresenter.onBackPressed())
                     return true;
                 if (mPresenter.cancelTask()) {
-                    mSubmit.setText(String.format("完成(%d/%d)", mPhotoAdapter.getSelectedCount(), PhotoAdapter.MAX_SIZE));
+                    mSubmit.setText(String.format("完成(%d/%d)", mSelectPhotoAdapter.getSelectedCount(), SelectPhotoAdapter.MAX_SIZE));
                     mSubmit.setEnabled(true);
                     mSubmit.setSelected(true);
-                    mPhotoAdapter.setIsUploading(false);
-                    mPhotoAdapter.notifyDataSetChanged();
+                    mSelectPhotoAdapter.setIsUploading(false);
+                    mSelectPhotoAdapter.notifyDataSetChanged();
                     return true;
                 }
                 break;

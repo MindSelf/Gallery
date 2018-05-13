@@ -12,6 +12,6 @@
         android:layout_margin="8dp"
         android:padding="5dp"
         android:background="@drawable/bg_add_album"
-        android:src="@mipmap/ic_add_grey_600" />
+        android:src="@mipmap/ic_add_grey" />
 
 </RelativeLayout>
