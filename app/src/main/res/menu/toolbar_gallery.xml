@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/add_album"
+        android:id="@+id/collect_album"
         android:icon="@mipmap/ic_unstar"
         android:title="@string/collection_album"
         app:showAsAction="always" />

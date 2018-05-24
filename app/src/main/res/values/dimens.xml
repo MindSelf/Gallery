@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="tabLayout_height">42dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
+    <dimen name="login_item_width">280dp</dimen>
+    <dimen name="login_item_height">60dp</dimen>
+    <dimen name="login_edit_height">35dp</dimen>
 </resources>

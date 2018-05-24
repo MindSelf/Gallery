@@ -5,7 +5,7 @@
     <version value="1"/>
 
     <list>
-        <mapping class="com.example.zhaolexi.imageloader.bean.Album"/>
+        <mapping class="com.example.zhaolexi.imageloader.home.manager.Album"/>
     </list>
 
 </litepal>

@@ -4,12 +4,12 @@
     android:layout_height="wrap_content"
     android:orientation="vertical">
 
-    <com.example.zhaolexi.imageloader.ui.SquareImageView
+    <com.example.zhaolexi.imageloader.common.ui.SquareImageView
         android:id="@+id/iv_image"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
-    <com.example.zhaolexi.imageloader.ui.SquareImageView
+    <com.example.zhaolexi.imageloader.common.ui.SquareImageView
         android:id="@+id/photo_block"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

@@ -13,5 +13,22 @@
     <string name="comment">评论...</string>
     <string name="collection_album">收藏相册</string>
     <string name="photo_overselected">最多只能选择%d张照片</string>
+    <string name="title_activity_login">LoginActivity</string>
+    <string name="sign_up">没有账号？<u>点击注册</u></string>
+    <string name="sign_in">已有账号？<u>点击登录</u></string>
+    <string name="login_in">登录</string>
+    <string name="register">注册</string>
+    <string name="mobile_hint">请输入您的手机号</string>
+    <string name="password_hint">请输入密码</string>
+    <string name="name_hint">请输入您的用户名</string>
+    <string name="password_repeat_hint">请确认密码</string>
+    <string name="mobile">手机号</string>
+    <string name="user_name">用户名</string>
+    <string name="password">密码</string>
+    <string name="repeat_password">重复密码</string>
+    <string name="reaccess_album">权限已失效，请重新登录相册</string>
+    <string name="add_album">添加相册</string>
+    <string name="json_error">数据异常</string>
+    <string name="server_error">服务器异常</string>
 
 </resources>

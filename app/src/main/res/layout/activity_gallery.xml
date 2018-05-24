@@ -99,5 +99,5 @@
         app:elevation="6dp"
         app:layout_anchor="@id/vp_album"
         app:layout_anchorGravity="right|bottom"
-        app:layout_behavior="com.example.zhaolexi.imageloader.ui.FabBehavior" />
+        app:layout_behavior="com.example.zhaolexi.imageloader.home.gallery.FabBehavior" />
 </android.support.design.widget.CoordinatorLayout>
