@@ -26,7 +26,7 @@ public class LocalDetailActivity extends DetailActivity {
 
     @Override
     protected BasePresenter createPresenter() {
-        return new DetailPresenter();
+        return new LocalDetailPresenter();
     }
 
     @Override

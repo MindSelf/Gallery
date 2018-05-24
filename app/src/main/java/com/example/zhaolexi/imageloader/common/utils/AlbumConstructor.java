@@ -18,6 +18,10 @@ public class AlbumConstructor {
         }
     }
 
+    public boolean isThird(Album album) {
+        return album.getAccount() == 888888;
+    }
+
     /**
      * 构建第三方Album字段
      * @param album
@@ -34,10 +38,6 @@ public class AlbumConstructor {
      */
     private void constructGalleryAlbum(Album album) {
         album.setUrl(Uri.LOAD_IMG + "&album.aid=" + album.getAid() + "&currPage=");
-    }
-
-    private boolean isThird(Album album) {
-        return album.getAccount() == 888888;
     }
 
     private boolean isGalleryAlbumNeedConstructed(Album album) {

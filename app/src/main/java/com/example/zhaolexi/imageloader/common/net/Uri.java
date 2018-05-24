@@ -21,6 +21,12 @@ public class Uri {
     public static final String UPLOAD_IMG = SERVER + "Photo!batchUpload.action";
     //获取图片
     public static final String LOAD_IMG = SERVER + "Photo!photoData.action?pageSize=10";
+    //编辑图片信息
+    public static final String UPDATE_DESC = SERVER + "Photo!update.action?album.aid=%s&pid=%s&pdesc=%s";
+    //删除图片
+    public static final String DELETE_IMG = SERVER + "Photo!delete.action?album.aid=%s&pid=%s";
+    //点赞
+    public static final String TOGGLE_THUMB_UP = SERVER + "Photo!thumbUp.action?album.aid=%s&pid=%s";
 
     /*
     Album
@@ -33,7 +39,7 @@ public class Uri {
     public static final String GET_RANDOM = SERVER + "Album!randomData.action";
 
     /*
-
+    User
      */
     //手机号存在检测
     public static final String CHECK_MOBILE = SERVER + "User!existUser.action?uid=";

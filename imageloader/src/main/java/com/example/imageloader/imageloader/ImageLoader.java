@@ -114,7 +114,7 @@ public class ImageLoader {
 
     public Bitmap loadBitmap(String url, TaskOption taskOption) {
 
-        Bitmap bitmap;
+        Bitmap bitmap = null;
         InputStream is = null;
         try {
             bitmap = mImageCache.get(url, taskOption.decodeOption);
@@ -134,7 +134,9 @@ public class ImageLoader {
             Log.d(TAG, "loadBitmap: " + bitmap);
         } catch (IOException e) {
             Log.e(TAG, "loadBitmap: ", e);
-            return BitmapFactory.decodeResource(mCtx.getResources(), mFailResId);
+            if (mFailResId > 0) {
+                bitmap = BitmapFactory.decodeResource(mCtx.getResources(), mFailResId);
+            }
         }
 
 
@@ -147,13 +149,13 @@ public class ImageLoader {
         if (mImageCache instanceof HasMemoryCache) {
             HasMemoryCache memoryCache = (HasMemoryCache) mImageCache;
             Bitmap bitmap = memoryCache.getInMemory(url, option.decodeOption);
-            if (bitmap == null) {
+            if (bitmap != null) {
+                imageView.setImageBitmap(bitmap);
+                Log.d(TAG, "bindDefaultImage：bind mem-cached bitmap");
+            } else if (mDefaultResId > 0) {
                 Drawable def = mCtx.getResources().getDrawable(mDefaultResId);
                 imageView.setImageDrawable(def);
                 Log.d(TAG, "bindDefaultImage: bind default drawable");
-            } else {
-                imageView.setImageBitmap(bitmap);
-                Log.d(TAG, "bindDefaultImage：bind mem-cached bitmap");
             }
         }
     }

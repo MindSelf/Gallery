@@ -21,11 +21,11 @@ public class DetailPagerAdapter<V extends Detail> extends PagerAdapter {
     private static final int REQ_WIDTH = 380;
     private static final int MIN_WIDTH = 380;
     private static final int MIN_HEIGHT = 650;
-    private int reqWidth = 380;
+    private int reqWidth = REQ_WIDTH;
 
     public DetailPagerAdapter(List<V> originList) {
         mDetailList = originList;
-        reqWidth = DisplayUtils.getScreenMetrics(BaseApplication.getContext()).widthPixels - DisplayUtils.dp2px(BaseApplication.getContext(), 60);
+        int reqWidth = DisplayUtils.getScreenMetrics(BaseApplication.getContext()).widthPixels - DisplayUtils.dp2px(BaseApplication.getContext(), 60);
     }
 
     @Override
@@ -58,8 +58,7 @@ public class DetailPagerAdapter<V extends Detail> extends PagerAdapter {
         Detail detail = mDetailList.get(position);
         DecodeOption decodeOption = new DecodeOption(DisplayUtils.dp2px(BaseApplication.getContext(), REQ_WIDTH), 0);
         decodeOption.shouldResized = detail.shouldResized();
-        TaskOption option = new TaskOption(decodeOption);
-        option.priority = 1;
+        TaskOption option = new TaskOption(decodeOption, TaskOption.PRIORITY_MIDDLE);
         ImageLoader.getInstance(container.getContext()).bindBitmap(detail.getDetailUrl(), imageView, option);
         return imageView;
     }

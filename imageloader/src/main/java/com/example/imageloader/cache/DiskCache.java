@@ -116,7 +116,7 @@ public class DiskCache implements ImageCache {
                 if (putFromInputStream(inputStream, outputStream)) {
                     editor.commit();
                     Log.d(TAG, "put: cache success");
-                }else{
+                } else {
                     editor.abort();
                     Log.d(TAG, "put: cache fail");
                 }
@@ -143,7 +143,7 @@ public class DiskCache implements ImageCache {
         }
     }
 
-    private boolean putFromInputStream(InputStream inputStream,OutputStream outputStream) {
+    private boolean putFromInputStream(InputStream inputStream, OutputStream outputStream) {
 
         BufferedInputStream bis = null;
         BufferedOutputStream bos = null;
@@ -158,7 +158,7 @@ public class DiskCache implements ImageCache {
             return true;
         } catch (IOException e) {
             e.printStackTrace();
-        }finally {
+        } finally {
             Utils.close(bis);
             Utils.close(bos);
         }

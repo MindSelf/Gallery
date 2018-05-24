@@ -8,7 +8,10 @@ import android.graphics.Matrix;
 import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileDescriptor;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 
 /**
@@ -263,6 +266,18 @@ public class ImageResizer {
             Log.d(TAG, "compressImage: size= " + baos.toByteArray().length / 1024 + "kb");
         }
         return baos.toByteArray();
+    }
+
+    public static void saveBitmapToFile(Bitmap bitmap, File file) throws FileNotFoundException {
+        if (bitmap == null || file == null) {
+            Log.e(TAG, "saveBitmapToFile: bitmap of file can't be null");
+            return;
+        }
+        if (file.exists()) {
+            file.delete();
+        }
+        FileOutputStream fos = new FileOutputStream(file);
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
     }
 
 }

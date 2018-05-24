@@ -21,7 +21,7 @@ public abstract class DetailActivity<T extends DetailPresenter, V extends Detail
     public static final String CURRENT_PAGE = "page";
     public static final String ALBUM_URL = "url";
 
-    private ArrayList<V> mlist;
+    protected ArrayList<V> mlist;
     protected int mCurIndex;
 
     protected ViewPager mViewPager;

@@ -10,13 +10,14 @@ import com.example.zhaolexi.imageloader.common.net.OnRequestFinishListener;
 
 import java.util.List;
 
-public class DetailPresenter<V extends DetailViewInterface> extends BasePresenter<V, DetailModel> {
+public abstract class DetailPresenter<V extends DetailViewInterface, M extends DetailModel> extends BasePresenter<V, M> {
 
     private static final String TAG = "DetailPresenter";
     private static final int IS_RETRY = 1;
 
     private boolean hasMoreData = true;
     private int currentPage;
+
 
     @Override
     protected void onMessageSuccess(Message msg) {
@@ -83,11 +84,6 @@ public class DetailPresenter<V extends DetailViewInterface> extends BasePresente
         } else {
             loadMoreData(true);
         }
-    }
-
-    @Override
-    protected DetailModel newModel() {
-        return new DetailModelImpl();
     }
 
     public void setCurrentPage(int currentPage) {

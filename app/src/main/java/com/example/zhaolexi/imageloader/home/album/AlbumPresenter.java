@@ -15,6 +15,7 @@ import com.example.zhaolexi.imageloader.detail.DetailActivity;
 import com.example.zhaolexi.imageloader.detail.PhotoDetailActivity;
 import com.example.zhaolexi.imageloader.home.gallery.GalleryActivity;
 import com.example.zhaolexi.imageloader.home.manager.Album;
+import com.example.zhaolexi.imageloader.redirect.router.RedirectCallback;
 import com.example.zhaolexi.imageloader.redirect.router.Router;
 import com.example.zhaolexi.imageloader.upload.UpLoadPhotoActivity;
 
@@ -141,6 +142,14 @@ public class AlbumPresenter extends BasePresenter<AlbumViewInterface, AlbumModel
                         final Activity activity = getView().getContactActivity();
                         new Router.Builder(activity)
                                 .setOriginAlbum(getView().getAlbumInfo())
+                                .setLoginCallback(new RedirectCallback() {
+                                    @Override
+                                    protected void onCallback(boolean success) {
+                                        if (success) {
+                                            refresh();
+                                        }
+                                    }
+                                })
                                 .build().route(result);
                     }
                 }
@@ -148,7 +157,7 @@ public class AlbumPresenter extends BasePresenter<AlbumViewInterface, AlbumModel
         }
     }
 
-    public void openDetail(ArrayList<Photo> details, int index, boolean isAccessible) {
+    public void openDetail(ArrayList<Photo> details, int index, Album album) {
         if (isViewAttached()) {
             AlbumFragment fragment = (AlbumFragment) getView();
             Intent intent = new Intent(fragment.getContext(), PhotoDetailActivity.class);
@@ -156,7 +165,7 @@ public class AlbumPresenter extends BasePresenter<AlbumViewInterface, AlbumModel
             intent.putExtra(DetailActivity.ALBUM_URL, mModel.getUrl());
             intent.putExtra(DetailActivity.CURRENT_PAGE, currentPage);
             intent.putExtra(DetailActivity.CURRENT_INDEX, index);
-            intent.putExtra(PhotoDetailActivity.ACCESSIBLE, isAccessible);
+            intent.putExtra(PhotoDetailActivity.ALBUM, album);
             fragment.startActivityForResult(intent, OPEN_PHOTO_DETAIL);
             fragment.getActivity().overridePendingTransition(R.anim.enter_anim, R.anim.exit_anim);
         }

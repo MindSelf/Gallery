@@ -11,11 +11,8 @@ import java.util.List;
 
 public class DetailModelImpl<V extends Detail> implements DetailModel<V> {
 
-    protected String mUrl;
-
     @Override
     public void setUrl(String url) {
-        this.mUrl = url;
     }
 
     @Override

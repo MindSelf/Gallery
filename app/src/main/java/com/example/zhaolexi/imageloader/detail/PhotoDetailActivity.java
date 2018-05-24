@@ -22,28 +22,32 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
+import android.widget.Toast;
 
 import com.example.zhaolexi.imageloader.R;
-import com.example.zhaolexi.imageloader.home.album.Photo;
+import com.example.zhaolexi.imageloader.common.utils.AlbumConstructor;
 import com.example.zhaolexi.imageloader.common.utils.DisplayUtils;
 import com.example.zhaolexi.imageloader.common.utils.KeyBroadUtils;
+import com.example.zhaolexi.imageloader.home.album.Photo;
+import com.example.zhaolexi.imageloader.home.manager.Album;
 
 
 public class PhotoDetailActivity extends DetailActivity<PhotoDetailPresenter, Photo> implements PhotoDetailViewInterface<Photo>, View.OnClickListener {
 
-    private RelativeLayout mDetailContainer;
+    public static final String ALBUM = "album";
+
+    private RelativeLayout mDetailContainer, mLikeLayout;
     private LinearLayout mDescriptionContainer;
-    private ImageView mEdit;
+    private ImageView mEdit, mLike, mDownload;
     private EditText mDescription;
     private AlphaAnimation mAlphaAppear, mAlphaDisappear;
     private ValueAnimator mDescriptionOpen, mDescriptionClose;
 
-    private boolean mIsAccessible;
+    private Album mAlbumInfo;
+    private boolean mHasThumbUp;
     private boolean mIsAnimating;
     private boolean mIsDescriptionShown = true;
     private boolean mIsInEditMode;
-
-    public static final String ACCESSIBLE = "accessible";
 
     private int mDescriptionHeight = DESCRIPTION_HEIGHT;
     private static final int DESCRIPTION_HEIGHT = 107;
@@ -58,6 +62,20 @@ public class PhotoDetailActivity extends DetailActivity<PhotoDetailPresenter, Ph
     private static final long HIDE_THRESHOLD = 2000;
     private long mLastTouchScrollViewTime;
 
+    @Override
+    public void onStop() {
+        Photo photo = mPagerAdapter.getDetailInfo(mViewPager.getCurrentItem());
+        toggleThumbUp(photo);
+        super.onStop();
+    }
+
+    public void toggleThumbUp(Photo photo) {
+        if (photo.hasThumbUp() != mHasThumbUp) {
+            mPresenter.toggleThumbUp(photo.getPid());
+            photo.setHasThumbUp(mHasThumbUp);
+            mlist.set(mViewPager.getCurrentItem(), photo);
+        }
+    }
 
     @Override
     protected void initView() {
@@ -76,8 +94,15 @@ public class PhotoDetailActivity extends DetailActivity<PhotoDetailPresenter, Ph
         mDescription = (EditText) findViewById(R.id.et_description);
         mDescription.setText(mPagerAdapter.getDetailInfo(mCurIndex).getDescription());
         mEdit = (ImageView) findViewById(R.id.iv_edit);
-        mEdit.setVisibility(mIsAccessible ? View.VISIBLE : View.GONE);
+        mEdit.setVisibility(mAlbumInfo.isAccessible() ? View.VISIBLE : View.GONE);
         mEdit.setOnClickListener(this);
+        mLike = (ImageView) findViewById(R.id.iv_like);
+        mLike.setImageResource(mHasThumbUp ? R.mipmap.ic_thumb_up_red : R.mipmap.ic_thumb_up_grey);
+        mLikeLayout = (RelativeLayout) findViewById(R.id.rl_like);
+        mLikeLayout.setVisibility(new AlbumConstructor().isThird(mAlbumInfo) ? View.GONE : View.VISIBLE);
+        mLikeLayout.setOnClickListener(this);
+        mDownload = (ImageView) findViewById(R.id.iv_download);
+        mDownload.setOnClickListener(this);
         mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
@@ -86,9 +111,15 @@ public class PhotoDetailActivity extends DetailActivity<PhotoDetailPresenter, Ph
 
             @Override
             public void onPageSelected(int position) {
-                mDescription.setText(mPagerAdapter.getDetailInfo(position).getDescription());
+                Photo photo = mPagerAdapter.getDetailInfo(position);
+                mDescription.setText(photo.getDescription());
                 exitEditMode();
-                showDescription();
+                if (!mIsDescriptionShown) {
+                    showDescription();
+                }
+                toggleThumbUp(photo);
+                mHasThumbUp = mPagerAdapter.getDetailInfo(position).hasThumbUp();
+                mLike.setImageResource(mHasThumbUp ? R.mipmap.ic_thumb_up_red : R.mipmap.ic_thumb_up_grey);
             }
 
             @Override
@@ -110,10 +141,12 @@ public class PhotoDetailActivity extends DetailActivity<PhotoDetailPresenter, Ph
     @Override
     protected void initData() {
         super.initData();
-        mIsAccessible = getIntent().getBooleanExtra(ACCESSIBLE, false);
-        if (!mIsAccessible) {
+        mAlbumInfo = (Album) getIntent().getSerializableExtra(ALBUM);
+        mPresenter.setAid(mAlbumInfo.getAid());
+        if (!mAlbumInfo.isAccessible()) {
             mDescriptionHeight = DESCRIPTION_HEIGHT - DESCRIPTION_EDIT;
         }
+        mHasThumbUp = mPagerAdapter.getDetailInfo(mCurIndex).hasThumbUp();
         mHandler = new Handler(getMainLooper());
     }
 
@@ -125,7 +158,7 @@ public class PhotoDetailActivity extends DetailActivity<PhotoDetailPresenter, Ph
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.toolbar_detail, menu);
-        if (!mIsAccessible) {
+        if (!mAlbumInfo.isAccessible()) {
             menu.getItem(0).setVisible(false);
         }
         return true;
@@ -135,10 +168,24 @@ public class PhotoDetailActivity extends DetailActivity<PhotoDetailPresenter, Ph
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.delete_photo:
-                mPresenter.deletePhoto(mViewPager.getCurrentItem());
-                mPagerAdapter.removeDetail(mViewPager.getCurrentItem());
+                mPresenter.deletePhoto(mPagerAdapter.getDetailInfo(mViewPager.getCurrentItem()).getPid());
         }
         return true;
+    }
+
+    @Override
+    public void deletePhoto() {
+        mPagerAdapter.removeDetail(mViewPager.getCurrentItem());
+    }
+
+    @Override
+    public Album getAlbumInfo() {
+        return mAlbumInfo;
+    }
+
+    @Override
+    public void showHint(String hint) {
+        Toast.makeText(this, hint, Toast.LENGTH_SHORT).show();
     }
 
     private void initAnimation() {
@@ -322,8 +369,12 @@ public class PhotoDetailActivity extends DetailActivity<PhotoDetailPresenter, Ph
                 if (!mIsInEditMode) {
                     enterEditMode();
                 } else {
-                    exitEditMode();
-                    mPresenter.modifyDescription(mDescription.getText().toString());
+                    Photo photo = mPagerAdapter.getDetailInfo(mViewPager.getCurrentItem());
+                    if (mDescription.getText().toString().equals(photo.getDescription())) {
+                        exitEditMode();
+                    } else {
+                        mPresenter.modifyDescription(photo.getPid(), mDescription.getText().toString());
+                    }
                 }
                 break;
             case R.id.vp_detail:
@@ -334,6 +385,14 @@ public class PhotoDetailActivity extends DetailActivity<PhotoDetailPresenter, Ph
                 } else {
                     showDescription();
                 }
+                break;
+            case R.id.rl_like:
+                mHasThumbUp = !mHasThumbUp;
+                mLike.setImageResource(mHasThumbUp ? R.mipmap.ic_thumb_up_red : R.mipmap.ic_thumb_up_grey);
+                break;
+            case R.id.iv_download:
+                Photo photo = mPagerAdapter.getDetailInfo(mViewPager.getCurrentItem());
+                mPresenter.downloadToLocal(photo.getDetailUrl(), mAlbumInfo.getTitle() + "_" + System.currentTimeMillis());
                 break;
             default:
                 break;

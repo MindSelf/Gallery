@@ -166,18 +166,19 @@ public class AlbumFragment extends BaseFragment<AlbumPresenter> implements Album
 
     @Override
     public void onItemClick(View view, int position) {
-        mPresenter.openDetail((ArrayList<Photo>) mAdapter.getImages(), position, mAlbumInfo.isAccessible());
+        mPresenter.openDetail((ArrayList<Photo>) mAdapter.getImages(), position, mAlbumInfo);
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        ImageLoaderConfig config;
         switch (requestCode) {
             case AlbumPresenter.SELECT_PHOTO:
                 //上传照片成功，刷新相册
                 if (resultCode == Activity.RESULT_OK) {
                     mPresenter.refresh();
                 }
-                ImageLoaderConfig config = new ImageLoaderConfig.Builder(getContext()).setDefaultImage(R.color.windowBackground).build();
+                config = new ImageLoaderConfig.Builder(getContext()).setDefaultImage(R.color.windowBackground).build();
                 ImageLoader.getInstance(BaseApplication.getContext()).init(config);
                 break;
             case AlbumPresenter.OPEN_PHOTO_DETAIL:
@@ -187,6 +188,10 @@ public class AlbumFragment extends BaseFragment<AlbumPresenter> implements Album
                     ArrayList list = (ArrayList) data.getSerializableExtra(DetailActivity.DETAILS_KEY);
                     refreshFromDetail(list, index, currentPage);
                 }
+                config = new ImageLoaderConfig.Builder(getContext())
+                        .setDefaultImage(R.color.windowBackground)
+                        .setFailImage(R.mipmap.image_fail).build();
+                ImageLoader.getInstance(BaseApplication.getContext()).init(config);
                 break;
             default:
         }

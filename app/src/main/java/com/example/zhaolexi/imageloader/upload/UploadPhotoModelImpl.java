@@ -7,28 +7,23 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.provider.MediaStore.Images.Media;
 import android.provider.MediaStore.Images.Thumbnails;
-import android.util.Log;
 import android.util.SparseArray;
 
 import com.example.imageloader.imageloader.ImageLoader;
 import com.example.imageloader.imageloader.TaskOption;
 import com.example.imageloader.resizer.DecodeOption;
 import com.example.imageloader.resizer.ImageResizer;
-import com.example.zhaolexi.imageloader.R;
 import com.example.zhaolexi.imageloader.common.base.BaseApplication;
-import com.example.zhaolexi.imageloader.common.global.Result;
 import com.example.zhaolexi.imageloader.common.net.DefaultCookieJar;
+import com.example.zhaolexi.imageloader.common.net.SendCallback;
 import com.example.zhaolexi.imageloader.common.net.OnRequestFinishListener;
 import com.example.zhaolexi.imageloader.common.net.Uri;
 import com.example.zhaolexi.imageloader.common.utils.DisplayUtils;
 import com.example.zhaolexi.imageloader.common.utils.SharePreferencesUtils;
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -37,13 +32,11 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
-import okhttp3.Callback;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
-import okhttp3.Response;
 
 /**
  * Created by ZHAOLEXI on 2017/11/14.
@@ -231,30 +224,7 @@ public class UploadPhotoModelImpl implements UploadPhotoModel {
                 .build();
         mCall = mClient.newCall(request);
 
-        mCall.enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                Log.d("Upload", "onFailure: " + e);
-                if (!call.isCanceled()) {
-                    listener.onFail(BaseApplication.getContext().getString(R.string.server_error), null);
-                }
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) {
-                Log.d("Upload", "onResponse: " + response.toString());
-                try {
-                    Result result = new Gson().fromJson(response.body().string(), Result.class);
-                    if(result.isSuccess()){
-                        listener.onSuccess(null);
-                    }else{
-                        listener.onFail(result.getMsg(), result);
-                    }
-                } catch (JsonSyntaxException | IOException e) {
-                    listener.onFail(BaseApplication.getContext().getString(R.string.json_error), null);
-                }
-            }
-        });
+        mCall.enqueue(new SendCallback(listener));
     }
 
     /**

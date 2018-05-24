@@ -103,7 +103,7 @@ public class Photo implements Detail, Serializable {
         return fullUrl == null;
     }
 
-    public boolean isHasThumbUp() {
+    public boolean hasThumbUp() {
         return hasThumbUp;
     }
 

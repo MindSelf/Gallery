@@ -114,7 +114,7 @@ public class Router {
         }
 
         /*
-        only GET_RANDOM and ADD_ALBUM will redirect to login
+        only LOAD_IMG、GET_RANDOM and ADD_ALBUM will redirect to login
          */
         public Builder setLoginCallback(RedirectCallback loginCallback) {
             this.loginCallback = loginCallback;
@@ -122,7 +122,7 @@ public class Router {
         }
 
         /*
-        only LOAD_IMG、UPLOAD_IMG、DELETE_IMG and UPDATE_IMG should reaccess album
+        only IMAGE operation will reaccess album
          */
         public Builder setOriginAlbum(Album originAlbum) {
             this.originAlbum = originAlbum;
