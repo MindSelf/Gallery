@@ -16,4 +16,5 @@ public interface AlbumModel {
 
     void loadImage(int page, OnRequestFinishListener<List<Photo>> listener);
 
+    void collectAlbum(String aid, OnRequestFinishListener listener);
 }

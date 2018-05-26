@@ -8,7 +8,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.example.zhaolexi.imageloader.R;
-import com.example.zhaolexi.imageloader.common.global.Result;
+import com.example.zhaolexi.imageloader.redirect.router.Result;
 import com.example.zhaolexi.imageloader.common.net.Uri;
 import com.example.zhaolexi.imageloader.common.utils.AlbumConstructor;
 import com.example.zhaolexi.imageloader.home.manager.Album;

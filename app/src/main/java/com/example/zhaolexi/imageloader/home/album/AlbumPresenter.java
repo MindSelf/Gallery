@@ -1,21 +1,24 @@
 package com.example.zhaolexi.imageloader.home.album;
 
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
+import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
 
 import com.example.zhaolexi.imageloader.R;
+import com.example.zhaolexi.imageloader.common.base.BaseApplication;
 import com.example.zhaolexi.imageloader.common.base.BasePresenter;
-import com.example.zhaolexi.imageloader.common.global.Result;
 import com.example.zhaolexi.imageloader.common.net.OnRequestFinishListener;
 import com.example.zhaolexi.imageloader.common.utils.NetUtils;
 import com.example.zhaolexi.imageloader.detail.DetailActivity;
 import com.example.zhaolexi.imageloader.detail.PhotoDetailActivity;
-import com.example.zhaolexi.imageloader.home.gallery.GalleryActivity;
+import com.example.zhaolexi.imageloader.home.InteractInterface;
 import com.example.zhaolexi.imageloader.home.manager.Album;
 import com.example.zhaolexi.imageloader.redirect.router.RedirectCallback;
+import com.example.zhaolexi.imageloader.redirect.router.Result;
 import com.example.zhaolexi.imageloader.redirect.router.Router;
 import com.example.zhaolexi.imageloader.upload.UpLoadPhotoActivity;
 
@@ -34,6 +37,25 @@ public class AlbumPresenter extends BasePresenter<AlbumViewInterface, AlbumModel
     private static final int REFRESH_FINISH = 1;
     public static final int SELECT_PHOTO = 2;
     public static final int OPEN_PHOTO_DETAIL = 3;
+
+    @SuppressLint("HandlerLeak")
+    private Handler mCollectHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case MSG_SUCCESS:
+                    if (isViewAttached()) {
+                        getView().collectSuccess((String) msg.obj);
+                    }
+                    break;
+                case MSG_FAIL:
+                    if (isViewAttached()) {
+                        getView().collectFail((String) msg.obj);
+                    }
+                    break;
+            }
+        }
+    };
 
     @Override
     protected AlbumModel newModel() {
@@ -112,9 +134,9 @@ public class AlbumPresenter extends BasePresenter<AlbumViewInterface, AlbumModel
         if (isViewAttached()) {
 
             AlbumFragment fragment = (AlbumFragment) getView();
-            GalleryActivity activity = (GalleryActivity) fragment.getActivity();
+            InteractInterface interact = (InteractInterface) fragment.getActivity();
             //如果wifi可用或者已同意使用流量，更新图片，否则将会弹出警告
-            if (!activity.mCanLoadWithoutWifi && !NetUtils.isWifiAvailable(activity)) {
+            if (!interact.canLoadWithoutWifi() && !NetUtils.isWifiAvailable(BaseApplication.getContext())) {
                 getView().showAlertDialog();
                 return;
             }
@@ -157,6 +179,42 @@ public class AlbumPresenter extends BasePresenter<AlbumViewInterface, AlbumModel
         }
     }
 
+    public void collectionAlbum(final Album album) {
+        mModel.collectAlbum(album.getAid(), new OnRequestFinishListener() {
+            @Override
+            public void onSuccess(Object data) {
+                if (!album.isFavorite()) {
+                    Message.obtain(mCollectHandler, MSG_SUCCESS, "收藏成功").sendToTarget();
+                } else {
+                    Message.obtain(mCollectHandler, MSG_SUCCESS, "取消收藏").sendToTarget();
+                }
+            }
+
+            @Override
+            public void onFail(String reason, Result result) {
+                if (result != null && isViewAttached()) {
+                    final Activity activity = getView().getContactActivity();
+                    Router router = new Router.Builder(activity)
+                            .setOriginAlbum(getView().getAlbumInfo())
+                            .setLoginCallback(new RedirectCallback() {
+                                @Override
+                                protected void onCallback(boolean success) {
+                                    if (success) {
+                                        collectionAlbum(album);
+                                    }
+                                }
+                            })
+                            .build();
+                    if (router.route(result)) {
+                        Message.obtain(mCollectHandler, MSG_FAIL, reason).sendToTarget();
+                    }
+                } else {
+                    Message.obtain(mCollectHandler, MSG_FAIL, reason).sendToTarget();
+                }
+            }
+        });
+    }
+
     public void openDetail(ArrayList<Photo> details, int index, Album album) {
         if (isViewAttached()) {
             AlbumFragment fragment = (AlbumFragment) getView();
@@ -171,7 +229,7 @@ public class AlbumPresenter extends BasePresenter<AlbumViewInterface, AlbumModel
         }
     }
 
-    public void uploadPhoto() {
+    public void openSelectPhotoPage() {
         if (isViewAttached()) {
             AlbumFragment fragment = (AlbumFragment) getView();
             Album albumInfo = fragment.getAlbumInfo();

@@ -44,6 +44,7 @@ public class PhotoDetailActivity extends DetailActivity<PhotoDetailPresenter, Ph
     private ValueAnimator mDescriptionOpen, mDescriptionClose;
 
     private Album mAlbumInfo;
+    private int mLastPos;
     private boolean mHasThumbUp;
     private boolean mIsAnimating;
     private boolean mIsDescriptionShown = true;
@@ -63,17 +64,16 @@ public class PhotoDetailActivity extends DetailActivity<PhotoDetailPresenter, Ph
     private long mLastTouchScrollViewTime;
 
     @Override
-    public void onStop() {
-        Photo photo = mPagerAdapter.getDetailInfo(mViewPager.getCurrentItem());
-        toggleThumbUp(photo);
-        super.onStop();
+    public void finish() {
+        toggleThumbUp(mLastPos);
+        super.finish();
     }
 
-    public void toggleThumbUp(Photo photo) {
-        if (photo.hasThumbUp() != mHasThumbUp) {
+    public void toggleThumbUp(int pos) {
+        Photo photo = mPagerAdapter.getDetailInfo(pos);
+        if (photo != null && photo.hasThumbUp() != mHasThumbUp) {
             mPresenter.toggleThumbUp(photo.getPid());
             photo.setHasThumbUp(mHasThumbUp);
-            mlist.set(mViewPager.getCurrentItem(), photo);
         }
     }
 
@@ -111,15 +111,16 @@ public class PhotoDetailActivity extends DetailActivity<PhotoDetailPresenter, Ph
 
             @Override
             public void onPageSelected(int position) {
+                toggleThumbUp(mLastPos);
                 Photo photo = mPagerAdapter.getDetailInfo(position);
+                mHasThumbUp = photo.hasThumbUp();
+                mLike.setImageResource(mHasThumbUp ? R.mipmap.ic_thumb_up_red : R.mipmap.ic_thumb_up_grey);
                 mDescription.setText(photo.getDescription());
-                exitEditMode();
                 if (!mIsDescriptionShown) {
                     showDescription();
                 }
-                toggleThumbUp(photo);
-                mHasThumbUp = mPagerAdapter.getDetailInfo(position).hasThumbUp();
-                mLike.setImageResource(mHasThumbUp ? R.mipmap.ic_thumb_up_red : R.mipmap.ic_thumb_up_grey);
+                exitEditMode();
+                mLastPos = position;
             }
 
             @Override
@@ -176,6 +177,9 @@ public class PhotoDetailActivity extends DetailActivity<PhotoDetailPresenter, Ph
     @Override
     public void deletePhoto() {
         mPagerAdapter.removeDetail(mViewPager.getCurrentItem());
+        if (mPagerAdapter.getCount() == 0) {
+            finish();
+        }
     }
 
     @Override

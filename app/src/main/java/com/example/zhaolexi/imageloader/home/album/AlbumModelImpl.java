@@ -2,7 +2,9 @@ package com.example.zhaolexi.imageloader.home.album;
 
 import com.example.zhaolexi.imageloader.R;
 import com.example.zhaolexi.imageloader.common.base.BaseApplication;
-import com.example.zhaolexi.imageloader.common.global.Result;
+import com.example.zhaolexi.imageloader.common.net.SendCallback;
+import com.example.zhaolexi.imageloader.common.net.Uri;
+import com.example.zhaolexi.imageloader.redirect.router.Result;
 import com.example.zhaolexi.imageloader.common.net.DefaultCookieJar;
 import com.example.zhaolexi.imageloader.common.net.OnRequestFinishListener;
 import com.google.gson.Gson;
@@ -91,6 +93,12 @@ public class AlbumModelImpl implements AlbumModel {
                 }
             }
         });
+    }
+
+    @Override
+    public void collectAlbum(String aid, OnRequestFinishListener listener) {
+        Request request = new Request.Builder().url(Uri.COLLECT_ALBUM + aid).build();
+        mClient.newCall(request).enqueue(new SendCallback(listener));
     }
 
 }

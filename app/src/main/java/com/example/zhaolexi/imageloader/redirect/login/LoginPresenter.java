@@ -8,7 +8,7 @@ import android.widget.Toast;
 import com.example.zhaolexi.imageloader.common.base.BasePresenter;
 import com.example.zhaolexi.imageloader.common.net.OnRequestFinishListener;
 import com.example.zhaolexi.imageloader.common.utils.EncryptUtil;
-import com.example.zhaolexi.imageloader.common.global.Result;
+import com.example.zhaolexi.imageloader.redirect.router.Result;
 
 public class LoginPresenter extends BasePresenter<LoginViewInterface, LoginModel> {
 

@@ -1,103 +1,118 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.design.widget.CoordinatorLayout
+<android.support.v4.widget.DrawerLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/drawer"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <android.support.design.widget.AppBarLayout
+    <android.support.design.widget.CoordinatorLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:elevation="0dp">
+        android:layout_height="match_parent">
 
-        <android.support.v7.widget.Toolbar
-            android:id="@+id/toolbar"
+        <android.support.design.widget.AppBarLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/colorPrimary"
-            app:theme="@style/Base.ThemeOverlay.AppCompat.Dark.ActionBar"
-            app:popupTheme="@style/PopupWindowTheme"
-            app:layout_scrollFlags="scroll|enterAlways|snap"/>
+            app:elevation="0dp">
 
-        <LinearLayout
-            android:id="@+id/ll_container"
-            android:baselineAligned="false"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/tabLayout_height">
+            <android.support.v7.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/colorPrimary"
+                app:theme="@style/Base.ThemeOverlay.AppCompat.Dark.ActionBar"
+                app:popupTheme="@style/PopupWindowTheme"
+                app:layout_scrollFlags="scroll|enterAlways|snap"/>
 
-            <FrameLayout
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="6">
+            <LinearLayout
+                android:id="@+id/ll_container"
+                android:baselineAligned="false"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/tabLayout_height">
 
-                <android.support.design.widget.TabLayout
-                    android:id="@+id/tabLayout"
-                    android:layout_width="match_parent"
+                <FrameLayout
+                    android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:theme="@style/Base.ThemeOverlay.AppCompat.Dark"
-                    app:tabMode="scrollable"/>
+                    android:layout_weight="6">
 
-                <ViewStub
-                    android:id="@+id/stub_guide"
-                    android:inflatedId="@+id/tv_guide"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent" 
-                    android:layout="@layout/stub_manage_guide"/>
+                    <android.support.design.widget.TabLayout
+                        android:id="@+id/tabLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:theme="@style/Base.ThemeOverlay.AppCompat.Dark"
+                        app:tabMode="scrollable"/>
 
-            </FrameLayout>
+                    <ViewStub
+                        android:id="@+id/stub_guide"
+                        android:inflatedId="@+id/tv_guide"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout="@layout/stub_manage_guide"/>
 
-            <FrameLayout
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1">
-                
-                <ImageView
-                    android:id="@+id/iv_manager"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:padding="5dp"
-                    android:layout_gravity="center"
-                    android:src="@mipmap/ic_add"/>
+                </FrameLayout>
 
-                <ViewStub
-                    android:id="@+id/stub_finish"
-                    android:inflatedId="@+id/tv_finish"
-                    android:layout_width="match_parent"
+                <FrameLayout
+                    android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout="@layout/stub_manage_finish"/>
-            </FrameLayout>
+                    android:layout_weight="1">
 
-        </LinearLayout>
+                    <ImageView
+                        android:id="@+id/iv_manager"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:padding="5dp"
+                        android:layout_gravity="center"
+                        android:src="@mipmap/ic_add"/>
 
-    </android.support.design.widget.AppBarLayout>
+                    <ViewStub
+                        android:id="@+id/stub_finish"
+                        android:inflatedId="@+id/tv_finish"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout="@layout/stub_manage_finish"/>
+                </FrameLayout>
 
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+            </LinearLayout>
 
-        <android.support.v4.view.ViewPager
-            android:id="@+id/vp_album"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+        </android.support.design.widget.AppBarLayout>
 
-        <ViewStub
-            android:id="@+id/stub_managed_album"
-            android:inflatedId="@+id/album_list"
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout="@layout/stub_manage_album"/>
-    </FrameLayout>
+            app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/add_photos"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="14dp"
-        android:layout_marginEnd="14dp"
-        android:src="@mipmap/ic_add_a_photo"
-        app:elevation="6dp"
-        app:layout_anchor="@id/vp_album"
-        app:layout_anchorGravity="right|bottom"
-        app:layout_behavior="com.example.zhaolexi.imageloader.home.gallery.FabBehavior" />
-</android.support.design.widget.CoordinatorLayout>
+            <android.support.v4.view.ViewPager
+                android:id="@+id/vp_album"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <ViewStub
+                android:id="@+id/stub_managed_album"
+                android:inflatedId="@+id/album_list"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout="@layout/stub_manage_album"/>
+        </FrameLayout>
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/add_photos"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="14dp"
+            android:layout_marginEnd="14dp"
+            android:src="@mipmap/ic_add_a_photo"
+            app:elevation="6dp"
+            app:layout_anchor="@id/vp_album"
+            app:layout_anchorGravity="right|bottom"
+            app:layout_behavior="com.example.zhaolexi.imageloader.home.gallery.FabBehavior" />
+    </android.support.design.widget.CoordinatorLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:text="this is menu"
+        android:textSize="30sp"
+        android:background="#fff"/>
+
+</android.support.v4.widget.DrawerLayout>

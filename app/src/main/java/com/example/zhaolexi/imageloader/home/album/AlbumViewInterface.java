@@ -17,9 +17,13 @@ public interface AlbumViewInterface extends BaseViewInterface{
 
     void showLoading();
 
-    void setRefreshing(boolean isRefreshing);
+    void collectSuccess(String msg);
+
+    void collectFail(String msg);
 
     void showAlertDialog();
+
+    void setRefreshing(boolean isRefreshing);
 
     PhotoAdapter getAdapter();
 

@@ -1,4 +1,4 @@
-package com.example.zhaolexi.imageloader.common.global;
+package com.example.zhaolexi.imageloader.redirect.router;
 
 public class Result<T> {
 
@@ -41,4 +41,8 @@ public class Result<T> {
         return code >= SUCCESS;
     }
 
+    @Override
+    public String toString() {
+        return "[code：" + code + "，msg：" + msg + "]";
+    }
 }

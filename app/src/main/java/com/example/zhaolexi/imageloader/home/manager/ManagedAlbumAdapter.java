@@ -12,8 +12,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.example.zhaolexi.imageloader.R;
-import com.example.zhaolexi.imageloader.home.gallery.GalleryPresenter;
-import com.example.zhaolexi.imageloader.home.gallery.GalleryActivity;
 
 import java.util.Collections;
 import java.util.List;
@@ -33,14 +31,14 @@ public class ManagedAlbumAdapter extends RecyclerView.Adapter implements AlbumIt
     private List<Album> mLocalAlbum;
     private List<Album> mRandomAlbum;
     private ItemTouchHelper mItemTouchHelper;
-    private GalleryPresenter mPresenter;
+    private AlbumManageViewInterface mAlbumManager;
     private int mHintIndex;
     private boolean mIsEditable;
     private OnItemClickListener mClickListener;
     private OnItemAddListener mAddListener;
 
-    public ManagedAlbumAdapter(GalleryActivity activity, List<Album> local, List<Album> random) {
-        mPresenter = activity.getPresenter();
+    public ManagedAlbumAdapter(AlbumManageViewInterface albumManager, List<Album> local, List<Album> random) {
+        mAlbumManager = albumManager;
         mLocalAlbum = local;
         mRandomAlbum = random;
         mHintIndex = mLocalAlbum.size() + 1;
@@ -64,7 +62,7 @@ public class ManagedAlbumAdapter extends RecyclerView.Adapter implements AlbumIt
         mLocalAlbum.add(album);
         notifyItemInserted(mLocalAlbum.size());
         mHintIndex++;
-        if (isEmptyBefore) mPresenter.getView().onAlbumListStateChanged(false, mIsEditable);
+        if (isEmptyBefore) mAlbumManager.onAlbumListStateChanged(false, mIsEditable);
     }
 
     public Album getAlbum(int position) {
@@ -88,7 +86,7 @@ public class ManagedAlbumAdapter extends RecyclerView.Adapter implements AlbumIt
             removed = mLocalAlbum.remove(realPos);
             mHintIndex--;
             if (mLocalAlbum.isEmpty())
-                mPresenter.getView().onAlbumListStateChanged(true, mIsEditable);
+                mAlbumManager.onAlbumListStateChanged(true, mIsEditable);
         } else if (viewType == TYPE_RANDOM_ALBUM) {
             removed = mRandomAlbum.remove(realPos);
         }
@@ -105,7 +103,7 @@ public class ManagedAlbumAdapter extends RecyclerView.Adapter implements AlbumIt
         mIsEditable = editable;
         notifyDataSetChanged();
         if (performChangeState) {
-            mPresenter.getView().onAlbumListStateChanged(mLocalAlbum.isEmpty(), editable);
+            mAlbumManager.onAlbumListStateChanged(mLocalAlbum.isEmpty(), editable);
         }
     }
 
@@ -154,7 +152,7 @@ public class ManagedAlbumAdapter extends RecyclerView.Adapter implements AlbumIt
             if (viewHolder.getItemViewType() == TYPE_LOCAL_ALBUM) {
                 data = mLocalAlbum;
                 viewHolder.iv_close.setVisibility(mIsEditable ? View.VISIBLE : View.GONE);
-                viewHolder.rl_album.setSelected(getPositionInData(position) == mPresenter.getCurrentPage());
+                viewHolder.rl_album.setSelected(getPositionInData(position) == mAlbumManager.getPresenter().getCurrentPage());
             } else {
                 data = mRandomAlbum;
             }
@@ -184,7 +182,7 @@ public class ManagedAlbumAdapter extends RecyclerView.Adapter implements AlbumIt
     public void onItemMove(int fromPosition, int toPosition) {
         Collections.swap(mLocalAlbum, fromPosition, toPosition);
         notifyItemMoved(fromPosition, toPosition);
-        mPresenter.onAlbumMove(fromPosition, toPosition);
+        mAlbumManager.getPresenter().onAlbumMove(fromPosition, toPosition);
     }
 
 
@@ -263,7 +261,7 @@ public class ManagedAlbumAdapter extends RecyclerView.Adapter implements AlbumIt
 
         @Override
         public void onClick(View v) {
-            mPresenter.getRandom();
+            mAlbumManager.getPresenter().getRandom();
         }
     }
 

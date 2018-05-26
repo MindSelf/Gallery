@@ -10,7 +10,7 @@ import com.example.imageloader.resizer.DecodeOption;
 import com.example.imageloader.resizer.ImageResizer;
 import com.example.zhaolexi.imageloader.R;
 import com.example.zhaolexi.imageloader.common.base.BaseApplication;
-import com.example.zhaolexi.imageloader.common.global.Result;
+import com.example.zhaolexi.imageloader.redirect.router.Result;
 import com.example.zhaolexi.imageloader.common.net.DefaultCallback;
 import com.example.zhaolexi.imageloader.common.net.DefaultCookieJar;
 import com.example.zhaolexi.imageloader.common.net.OnRequestFinishListener;

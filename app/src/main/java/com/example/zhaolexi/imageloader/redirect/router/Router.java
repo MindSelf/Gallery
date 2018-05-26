@@ -12,7 +12,6 @@ import android.widget.Toast;
 
 import com.example.zhaolexi.imageloader.R;
 import com.example.zhaolexi.imageloader.common.base.BaseApplication;
-import com.example.zhaolexi.imageloader.common.global.Result;
 import com.example.zhaolexi.imageloader.home.gallery.GalleryActivity;
 import com.example.zhaolexi.imageloader.home.manager.Album;
 
@@ -83,10 +82,14 @@ public class Router {
                     public void onClick(DialogInterface dialog, int which) {
                         Intent intent = new Intent(mContext, GalleryActivity.class);
                         intent.putExtra(GalleryActivity.ORIGIN_ALBUM, origin);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                         if (mContext instanceof Application) {
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         }
                         mContext.startActivity(intent);
+                        if (mContext instanceof Activity) {
+                            ((Activity) mContext).overridePendingTransition(R.anim.enter_anim, R.anim.exit_anim);
+                        }
                     }
                 }).show();
     }

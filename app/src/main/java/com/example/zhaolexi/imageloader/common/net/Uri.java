@@ -34,7 +34,11 @@ public class Uri {
     //创建相册
 
     //添加相册
-    public static final String ADD_ALBUM = SERVER + "Album!access.action" + "?number=%s&readPassword=%s";
+    public static final String ADD_ALBUM = SERVER + "Album!access.action?number=%s&readPassword=%s";
+    //收藏相册
+    public static final String COLLECT_ALBUM = SERVER + "Album!favorite.action?aid=";
+    //获取收藏
+    public static final String GET_COLLECT = SERVER + "Album!favoriteData.action?pageSize=10";
     //随便看看
     public static final String GET_RANDOM = SERVER + "Album!randomData.action";
 

@@ -1,45 +1,21 @@
-package com.example.zhaolexi.imageloader.home.gallery;
+package com.example.zhaolexi.imageloader.home.manager;
 
 import android.app.Activity;
 import android.os.Message;
 
 import com.example.zhaolexi.imageloader.common.base.BasePresenter;
-import com.example.zhaolexi.imageloader.common.global.Result;
 import com.example.zhaolexi.imageloader.common.net.OnRequestFinishListener;
 import com.example.zhaolexi.imageloader.common.utils.AlbumConstructor;
-import com.example.zhaolexi.imageloader.home.manager.Album;
-import com.example.zhaolexi.imageloader.home.manager.ManagedAlbumAdapter;
+import com.example.zhaolexi.imageloader.home.gallery.AlbumPagerAdapter;
 import com.example.zhaolexi.imageloader.redirect.router.RedirectCallback;
+import com.example.zhaolexi.imageloader.redirect.router.Result;
 import com.example.zhaolexi.imageloader.redirect.router.Router;
 
 import java.util.List;
 
-/**
- * Created by ZHAOLEXI on 2018/2/5.
- */
-
-public class GalleryPresenter extends BasePresenter<GalleryViewInterface, GalleryModel> {
+public class AlbumManagePresenter extends BasePresenter<AlbumManageViewInterface,AlbumManageModel> {
 
     private int mCurrentPage;
-    private boolean mShouldUpdateState;
-
-    @Override
-    protected GalleryModel newModel() {
-        return new GalleryModelImpl();
-    }
-
-    @Override
-    protected void onMessageSuccess(Message msg) {
-        GalleryViewInterface mView = getView();
-        mView.showRandom((List<Album>) msg.obj);
-    }
-
-    @Override
-    protected void onMessageFail(Message msg) {
-        GalleryViewInterface mView = getView();
-        mView.showError((String) msg.obj);
-    }
-
 
     public int getCurrentPage() {
         return mCurrentPage;
@@ -49,6 +25,7 @@ public class GalleryPresenter extends BasePresenter<GalleryViewInterface, Galler
         this.mCurrentPage = currentPage;
     }
 
+    private boolean mShouldUpdateState;
 
     public boolean shouldUpdateState() {
         return mShouldUpdateState;
@@ -58,10 +35,24 @@ public class GalleryPresenter extends BasePresenter<GalleryViewInterface, Galler
         mShouldUpdateState = false;
     }
 
-
-    public List<Album> getLocalHistory() {
-        return mModel.loadLocalHistory();
+    @Override
+    protected AlbumManageModel newModel() {
+        return new AlbumManageModelImpl();
     }
+
+    @Override
+    protected void onMessageSuccess(Message msg) {
+        AlbumManageViewInterface mView = getView();
+        mView.showRandom((List<Album>) msg.obj);
+    }
+
+    @Override
+    protected void onMessageFail(Message msg) {
+        AlbumManageViewInterface mView = getView();
+        mView.showError((String) msg.obj);
+    }
+
+
 
     public void getRandom() {
         mModel.getRandom(new OnRequestFinishListener<List<Album>>() {
@@ -95,7 +86,7 @@ public class GalleryPresenter extends BasePresenter<GalleryViewInterface, Galler
     //The application's PagerAdapter changed the adapter's contents should call PagerAdapter#notifyDataSetChanged!
     public void addAlbum(Album album) {
         if (isViewAttached()) {
-            GalleryViewInterface mView = getView();
+            AlbumManageViewInterface mView = getView();
             ManagedAlbumAdapter albumAdapter = mView.getAlbumAdapter();
             AlbumPagerAdapter pagerAdapter = mView.getPagerAdapter();
             //construct album
@@ -131,7 +122,7 @@ public class GalleryPresenter extends BasePresenter<GalleryViewInterface, Galler
 
     public void removeAlbum(int position) {
         if (isViewAttached()) {
-            GalleryViewInterface mView = getView();
+            AlbumManageViewInterface mView = getView();
             ManagedAlbumAdapter albumAdapter = mView.getAlbumAdapter();
             AlbumPagerAdapter pagerAdapter = mView.getPagerAdapter();
             mModel.removeAlbumFromDB(albumAdapter.getAlbum(position));

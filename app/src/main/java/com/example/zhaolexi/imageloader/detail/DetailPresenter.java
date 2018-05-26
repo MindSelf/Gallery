@@ -5,7 +5,7 @@ import android.os.Message;
 import android.util.Log;
 
 import com.example.zhaolexi.imageloader.common.base.BasePresenter;
-import com.example.zhaolexi.imageloader.common.global.Result;
+import com.example.zhaolexi.imageloader.redirect.router.Result;
 import com.example.zhaolexi.imageloader.common.net.OnRequestFinishListener;
 
 import java.util.List;

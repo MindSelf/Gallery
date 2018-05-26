@@ -30,5 +30,9 @@
     <string name="add_album">添加相册</string>
     <string name="json_error">数据异常</string>
     <string name="server_error">服务器异常</string>
+    <string name="open_drawer">打开抽屉菜单</string>
+    <string name="close_drawer">关闭抽屉菜单</string>
+    <string name="collect_fail">收藏失败</string>
+    <string name="collect_success">收藏成功</string>
 
 </resources>

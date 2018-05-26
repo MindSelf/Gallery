@@ -1,6 +1,6 @@
 package com.example.zhaolexi.imageloader.common.net;
 
-import com.example.zhaolexi.imageloader.common.global.Result;
+import com.example.zhaolexi.imageloader.redirect.router.Result;
 
 /**
  * Created by ZHAOLEXI on 2018/2/7.

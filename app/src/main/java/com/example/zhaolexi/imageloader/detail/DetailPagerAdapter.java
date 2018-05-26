@@ -69,7 +69,10 @@ public class DetailPagerAdapter<V extends Detail> extends PagerAdapter {
     }
 
     public V getDetailInfo(int position) {
-        return mDetailList.get(position);
+        if (position < mDetailList.size()) {
+            return mDetailList.get(position);
+        }
+        return null;
     }
 
     public void addDetailInfos(List<V> newDatas) {

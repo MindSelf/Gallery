@@ -1,25 +1,28 @@
 package com.example.zhaolexi.imageloader.home.album;
 
 import android.app.Activity;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.view.View;
+import android.widget.Toast;
 
 import com.example.imageloader.imageloader.ImageLoader;
 import com.example.imageloader.imageloader.ImageLoaderConfig;
 import com.example.zhaolexi.imageloader.R;
 import com.example.zhaolexi.imageloader.common.base.BaseApplication;
 import com.example.zhaolexi.imageloader.common.base.BaseFragment;
-import com.example.zhaolexi.imageloader.home.manager.Album;
 import com.example.zhaolexi.imageloader.common.ui.OnItemClickListener;
-import com.example.zhaolexi.imageloader.detail.DetailActivity;
-import com.example.zhaolexi.imageloader.home.gallery.GalleryActivity;
 import com.example.zhaolexi.imageloader.common.utils.DisplayUtils;
+import com.example.zhaolexi.imageloader.detail.DetailActivity;
+import com.example.zhaolexi.imageloader.home.InteractInterface;
+import com.example.zhaolexi.imageloader.home.manager.Album;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,9 +35,11 @@ public class AlbumFragment extends BaseFragment<AlbumPresenter> implements Album
 
     public static final String KEY_ALBUM = "album";
 
+    private AlertDialog.Builder mAlertBuilder;
     private RecyclerView mImageList;
     private SwipeRefreshLayout mSwipeRefresh;
     private Album mAlbumInfo;
+
     private PhotoAdapter mAdapter;
 
     private boolean mIsFirstLoad = true;
@@ -66,7 +71,6 @@ public class AlbumFragment extends BaseFragment<AlbumPresenter> implements Album
 
     @Override
     protected void initView(View contentView) {
-        GalleryActivity activity = (GalleryActivity) getActivity();
 
         mSwipeRefresh = (SwipeRefreshLayout) contentView.findViewById(R.id.swipe_refresh);
         mSwipeRefresh.setColorSchemeResources(R.color.colorPrimary);
@@ -103,10 +107,11 @@ public class AlbumFragment extends BaseFragment<AlbumPresenter> implements Album
             }
         });
 
-        if (activity.mRecycledViewPool != null) {
-            mImageList.setRecycledViewPool(activity.mRecycledViewPool);
+        final InteractInterface interact = (InteractInterface) getActivity();
+        if (interact.getRecycledViewPool() != null) {
+            mImageList.setRecycledViewPool(interact.getRecycledViewPool());
         } else {
-            activity.mRecycledViewPool = mImageList.getRecycledViewPool();
+            interact.setRecycledViewPool(mImageList.getRecycledViewPool());
         }
 
 //        StaggeredGridLayoutManager manager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
@@ -114,6 +119,19 @@ public class AlbumFragment extends BaseFragment<AlbumPresenter> implements Album
 //        manager.setGapStrategy(StaggeredGridLayoutManager.GAP_HANDLING_NONE);
         GridLayoutManager manager = new GridLayoutManager(getContext(), 2);
         mImageList.setLayoutManager(manager);
+
+        mAlertBuilder = new AlertDialog.Builder(getContext())
+                .setCancelable(false)
+                .setMessage("您当前为非Wifi环境，是否继续加载图片")
+                .setTitle("注意")
+                .setNegativeButton("否", null)
+                .setPositiveButton("是", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        interact.setCanLoadWithoutWifi(true);
+                        mPresenter.refresh();
+                    }
+                });
 
         mAdapter = new PhotoAdapter(this);
         mAdapter.setOnItemClickListener(this);
@@ -144,14 +162,26 @@ public class AlbumFragment extends BaseFragment<AlbumPresenter> implements Album
     }
 
     @Override
+    public void collectSuccess(String msg) {
+        mAlbumInfo.setFavorite(!mAlbumInfo.isFavorite());
+        InteractInterface interact = (InteractInterface) getActivity();
+        interact.changeCollectState(mAlbumInfo.isFavorite());
+        Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void collectFail(String msg) {
+        Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
     public void setRefreshing(boolean isRefreshing) {
         mSwipeRefresh.setRefreshing(isRefreshing);
     }
 
     @Override
     public void showAlertDialog() {
-        GalleryActivity activity = (GalleryActivity) getActivity();
-        activity.showAlertDialog();
+        mAlertBuilder.show();
     }
 
     @Override

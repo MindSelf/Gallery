@@ -34,6 +34,7 @@ public abstract class DetailActivity<T extends DetailPresenter, V extends Detail
 
     @Override
     public void finish() {
+        //setResult必须在活动在前台时调用
         Intent intent = new Intent();
         intent.putExtra(CURRENT_INDEX, mViewPager.getCurrentItem());
         intent.putExtra(DETAILS_KEY, mlist);
@@ -41,6 +42,7 @@ public abstract class DetailActivity<T extends DetailPresenter, V extends Detail
         setResultIntent(intent);
         setResult(RESULT_OK, intent);
         super.finish();
+        //overridePendingTransition必须在finish后调用
         overridePendingTransition(R.anim.enter_anim, R.anim.exit_anim);
     }
 
@@ -83,7 +85,7 @@ public abstract class DetailActivity<T extends DetailPresenter, V extends Detail
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
                 //由于onPageScrolled在action_move过程中会不断回调，所以只处理action_up的事件
-                if (position == 0 && mDirection > 0 && mHasLastEventActionUp && state == ViewPager.SCROLL_STATE_DRAGGING) {
+                if (position == 0 && positionOffset == 0 && mDirection > 0 && mHasLastEventActionUp && state == ViewPager.SCROLL_STATE_DRAGGING) {
                     mHasLastEventActionUp = false;
                     showNoMoreData("已经是第一张图片了");
                 } else if (position == getIndex(mPagerAdapter.getCount()) && mDirection < 0 && mHasLastEventActionUp && state == ViewPager.SCROLL_STATE_DRAGGING) {

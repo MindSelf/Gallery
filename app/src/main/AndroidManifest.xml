@@ -17,8 +17,7 @@
         <activity
             android:name=".home.gallery.GalleryActivity"
             android:hardwareAccelerated="true"
-            android:screenOrientation="portrait"
-            android:launchMode="singleTask">
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

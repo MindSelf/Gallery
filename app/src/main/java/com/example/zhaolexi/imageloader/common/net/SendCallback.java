@@ -1,8 +1,10 @@
 package com.example.zhaolexi.imageloader.common.net;
 
+import android.util.Log;
+
 import com.example.zhaolexi.imageloader.R;
 import com.example.zhaolexi.imageloader.common.base.BaseApplication;
-import com.example.zhaolexi.imageloader.common.global.Result;
+import com.example.zhaolexi.imageloader.redirect.router.Result;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
@@ -16,6 +18,8 @@ import okhttp3.Response;
  * 该回调不从Response中获取Data
  */
 public class SendCallback implements Callback {
+
+    private static final String TAG = "SendCallback";
 
     private OnRequestFinishListener listener;
 
@@ -32,6 +36,7 @@ public class SendCallback implements Callback {
     public void onResponse(Call call, Response response) {
         try {
             Result result = new Gson().fromJson(response.body().string(), Result.class);
+            Log.d(TAG, "onResponse: " + result);
             if (result.isSuccess()) {
                 listener.onSuccess(null);
             } else {
