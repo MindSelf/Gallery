@@ -25,7 +25,7 @@ public class Album extends DataSupport implements Serializable{
     private String title;	//相册名
     @SerializedName("isAccessible")
     private boolean accessible;	//权限标志
-    private boolean isFavorite;		//收藏标志
+    private boolean favorite;   //收藏标志
     private String createTime;	//创建时间
     private String adesc;	//相册描述
     private String who;	//创建者
@@ -68,11 +68,11 @@ public class Album extends DataSupport implements Serializable{
     }
 
     public boolean isFavorite() {
-        return isFavorite;
+        return favorite;
     }
 
     public void setFavorite(boolean favorite) {
-        isFavorite = favorite;
+        this.favorite = favorite;
     }
 
     public String getCreateTime() {

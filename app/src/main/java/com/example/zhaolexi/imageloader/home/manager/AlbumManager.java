@@ -217,6 +217,7 @@ public class AlbumManager implements AlbumManageViewInterface, ManagedAlbumAdapt
             mManagedAlbumAdapter.notifyDataSetChanged();
         }
 
+        //视图懒加载
         initManagePage();
         if (!animated) {
             mManage.setRotation(45f);
@@ -316,6 +317,14 @@ public class AlbumManager implements AlbumManageViewInterface, ManagedAlbumAdapt
             mFinish.setVisibility(View.GONE);
             mManage.setVisibility(View.VISIBLE);
         }
+    }
+
+    @Override
+    public void onAlbumClear() {
+        if (mManagedAlbumAdapter != null) {
+            mManagedAlbumAdapter.clearAlbum();
+        }
+        mRandomList.clear();
     }
 
     @Override

@@ -34,10 +34,9 @@
         <activity android:name=".detail.LocalDetailActivity" />
         <activity
             android:name=".redirect.login.LoginActivity"
-            android:screenOrientation="portrait"
-            android:launchMode="singleTop"/>
+            android:screenOrientation="portrait"/>
         <activity android:name=".redirect.router.RouterActivity"/>
-
+        <activity android:name=".me.info.UserInfoActivity" />
     </application>
 
 </manifest>

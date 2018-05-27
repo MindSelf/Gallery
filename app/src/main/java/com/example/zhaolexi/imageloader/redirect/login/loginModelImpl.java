@@ -2,7 +2,6 @@ package com.example.zhaolexi.imageloader.redirect.login;
 
 import com.example.zhaolexi.imageloader.R;
 import com.example.zhaolexi.imageloader.common.base.BaseApplication;
-import com.example.zhaolexi.imageloader.common.net.DefaultCookieJar;
 import com.example.zhaolexi.imageloader.redirect.router.Result;
 import com.example.zhaolexi.imageloader.common.net.OnRequestFinishListener;
 import com.example.zhaolexi.imageloader.common.utils.SharePreferencesUtils;
@@ -88,6 +87,7 @@ public class loginModelImpl implements LoginModel {
                     if (result.isSuccess()) {
                         User user = result.getData();
                         SharePreferencesUtils.putString(SharePreferencesUtils.USER_NAME, user.getUname());
+                        SharePreferencesUtils.putString(SharePreferencesUtils.MOBILE, user.getUid());
                         listener.onSuccess(user);
                     } else {
                         listener.onFail(result.getMsg(), null);

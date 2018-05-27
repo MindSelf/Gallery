@@ -14,6 +14,7 @@ public class SharePreferencesUtils {
     private static SharedPreferences sPreference = PreferenceManager.getDefaultSharedPreferences(BaseApplication.getContext());
 
     public static final String USER_NAME = "uname";
+    public static final String MOBILE = "mobile";
     public static final String TOKEN = "token-gallery";
 
 

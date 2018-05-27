@@ -164,6 +164,8 @@ public class AlbumFragment extends BaseFragment<AlbumPresenter> implements Album
     @Override
     public void collectSuccess(String msg) {
         mAlbumInfo.setFavorite(!mAlbumInfo.isFavorite());
+        //将isFavorite更新保存到数据库
+        mAlbumInfo.save();
         InteractInterface interact = (InteractInterface) getActivity();
         interact.changeCollectState(mAlbumInfo.isFavorite());
         Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();

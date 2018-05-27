@@ -51,4 +51,6 @@ public class Uri {
     public static final String REGISTER = SERVER + "User!regist.action?uid=%s&uname=%s&upassword=%s";
     //用户登录
     public static final String LOGIN = SERVER + "User!login.action?uid=%s&upassword=%s";
+    //修改密码
+    public static final String MODIFY_PASSWORD = SERVER + "User!password.action?oldPassword=%s&newPassword=%s";
 }

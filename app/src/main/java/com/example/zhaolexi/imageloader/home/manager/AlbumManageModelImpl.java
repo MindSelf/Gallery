@@ -2,7 +2,7 @@ package com.example.zhaolexi.imageloader.home.manager;
 
 import com.example.zhaolexi.imageloader.R;
 import com.example.zhaolexi.imageloader.common.base.BaseApplication;
-import com.example.zhaolexi.imageloader.common.net.DefaultCookieJar;
+import com.example.zhaolexi.imageloader.redirect.login.DefaultCookieJar;
 import com.example.zhaolexi.imageloader.common.net.OnRequestFinishListener;
 import com.example.zhaolexi.imageloader.common.net.Uri;
 import com.example.zhaolexi.imageloader.redirect.router.Result;

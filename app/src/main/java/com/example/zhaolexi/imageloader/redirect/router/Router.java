@@ -21,6 +21,7 @@ public class Router {
     private Context mContext;
     private RedirectCallback mCallback;
     private Album mOrigin;
+    public static volatile boolean isRouting;
 
     private Router(Activity activity) {
         mContext = activity == null ? BaseApplication.getContext() : activity;
@@ -36,7 +37,9 @@ public class Router {
         if (isTokenError(result)) {
             startRouterActivity(mCallback);
             return false;
-        } else if (isPermissionDenied(result)) {
+        }
+
+        if (isPermissionDenied(result)) {
             Activity activity;
             if (mContext instanceof Activity) {
                 activity = (Activity) mContext;
@@ -73,37 +76,44 @@ public class Router {
     }
 
     private void accessAlbum(final Album origin) {
-        Context context = mContext == null ? BaseApplication.getContext() : mContext;
-        new AlertDialog.Builder(context)
-                .setMessage(context.getString(R.string.reaccess_album))
-                .setCancelable(false)
-                .setPositiveButton(context.getString(R.string.positive), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Intent intent = new Intent(mContext, GalleryActivity.class);
-                        intent.putExtra(GalleryActivity.ORIGIN_ALBUM, origin);
-                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                        if (mContext instanceof Application) {
-                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (!isRouting) {
+            isRouting = true;
+            Context context = mContext == null ? BaseApplication.getContext() : mContext;
+            new AlertDialog.Builder(context)
+                    .setMessage(context.getString(R.string.reaccess_album))
+                    .setCancelable(false)
+                    .setPositiveButton(context.getString(R.string.positive), new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            Intent intent = new Intent(mContext, GalleryActivity.class);
+                            intent.putExtra(GalleryActivity.ORIGIN_ALBUM, origin);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                            if (mContext instanceof Application) {
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            }
+                            mContext.startActivity(intent);
+                            if (mContext instanceof Activity) {
+                                ((Activity) mContext).overridePendingTransition(R.anim.enter_anim, R.anim.exit_anim);
+                            }
+                            isRouting = false;
                         }
-                        mContext.startActivity(intent);
-                        if (mContext instanceof Activity) {
-                            ((Activity) mContext).overridePendingTransition(R.anim.enter_anim, R.anim.exit_anim);
-                        }
-                    }
-                }).show();
+                    }).show();
+        }
     }
 
     private void startRouterActivity(RedirectCallback callback) {
-        Intent intent = new Intent(mContext, RouterActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        Bundle bundle = new Bundle();
-        bundle.putBinder(RouterActivity.EXTRA_CALLBACK, callback);
-        intent.putExtra(RouterActivity.EXTRA_BUNDLE, bundle);
-        if (mContext instanceof Application) {
+        if (!isRouting) {
+            isRouting = true;
+            Intent intent = new Intent(mContext, RouterActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            Bundle bundle = new Bundle();
+            bundle.putBinder(RouterActivity.EXTRA_CALLBACK, callback);
+            intent.putExtra(RouterActivity.EXTRA_BUNDLE, bundle);
+            if (mContext instanceof Application) {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            }
+            mContext.startActivity(intent);
         }
-        mContext.startActivity(intent);
     }
 
     public static class Builder {

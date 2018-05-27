@@ -1,4 +1,4 @@
-package com.example.zhaolexi.imageloader.redirect.access;
+package com.example.zhaolexi.imageloader.common.ui;
 
 import android.app.Dialog;
 import android.content.Context;
@@ -14,7 +14,7 @@ import android.widget.Toast;
 
 import com.example.zhaolexi.imageloader.R;
 import com.example.zhaolexi.imageloader.redirect.router.Result;
-import com.example.zhaolexi.imageloader.common.net.DefaultCookieJar;
+import com.example.zhaolexi.imageloader.redirect.login.DefaultCookieJar;
 import com.example.zhaolexi.imageloader.common.net.OnRequestFinishListener;
 import com.example.zhaolexi.imageloader.common.utils.EncryptUtil;
 import com.google.gson.Gson;
@@ -36,7 +36,7 @@ import okhttp3.Response;
 public class PasswordDialog<T> extends Dialog implements View.OnClickListener {
 
     protected static final String TAG = "PasswordDialog";
-    static final int SUCCESS = 1;
+    public static final int SUCCESS = 1;
     protected static final int FAIL = -1;
 
     protected String mVerifyUrl;
@@ -47,7 +47,7 @@ public class PasswordDialog<T> extends Dialog implements View.OnClickListener {
     protected PasswordDialogHandler<T> mHandler;
     private OkHttpClient mClient;
 
-    PasswordDialog(@NonNull Context context) {
+    public PasswordDialog(@NonNull Context context) {
         super(context);
         initDialog();
     }
@@ -79,12 +79,17 @@ public class PasswordDialog<T> extends Dialog implements View.OnClickListener {
             case R.id.tv_positive:
                 if (checkBeforeRequest()) {
                     String account = et_account.getText().toString();
+                    account = onHandleAccount(account);
                     String password = et_password.getText().toString();
                     String url = String.format(mVerifyUrl, account, EncryptUtil.digest(password));
                     verify(url);
                 }
                 break;
         }
+    }
+
+    protected String onHandleAccount(String account) {
+        return account;
     }
 
     protected boolean checkBeforeRequest() {
@@ -163,12 +168,12 @@ public class PasswordDialog<T> extends Dialog implements View.OnClickListener {
 
     public static abstract class Builder<V extends PasswordDialog, T> {
 
-        Context mCtx;
-        String mVerifyUrl;
-        String mTitle;
-        String mAccountName, mAccountHint, mAccountDef;
-        String mPasswordName, mPasswordHint, mPasswordDef;
-        OnRequestFinishListener<T> mCallback;
+        protected Context mCtx;
+        private String mVerifyUrl;
+        private String mTitle;
+        private String mAccountName, mAccountHint, mAccountDef;
+        private String mPasswordName, mPasswordHint, mPasswordDef;
+        private OnRequestFinishListener<T> mCallback;
 
         private static final class DefaultCallback<T> implements OnRequestFinishListener<T> {
 
@@ -213,7 +218,7 @@ public class PasswordDialog<T> extends Dialog implements View.OnClickListener {
         /**
          * 为dialog设置验证的url
          *
-         * @param url 验证账号密码是否正确的url。注意：该url必须包含name和password参数，参数值用占位符%s代替
+         * @param url 验证账号密码是否正确的url。注意：该url应包含两个query string，参数值用占位符%s代替
          * @return AlbumPasswordDialog
          */
         public Builder setVerifyUrl(String url) {

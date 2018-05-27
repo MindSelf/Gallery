@@ -107,12 +107,12 @@
             app:layout_behavior="com.example.zhaolexi.imageloader.home.gallery.FabBehavior" />
     </android.support.design.widget.CoordinatorLayout>
 
-    <TextView
-        android:layout_width="match_parent"
+    <android.support.design.widget.NavigationView
+        android:id="@+id/navigation_view"
+        android:layout_width="260dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        android:text="this is menu"
-        android:textSize="30sp"
-        android:background="#fff"/>
+        app:menu="@menu/navigation_list"
+        app:headerLayout="@layout/navigation_header"/>
 
 </android.support.v4.widget.DrawerLayout>

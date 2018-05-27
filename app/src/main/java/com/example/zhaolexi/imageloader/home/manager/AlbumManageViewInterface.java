@@ -21,6 +21,8 @@ public interface AlbumManageViewInterface extends BaseViewInterface<AlbumManageP
 
     void onAlbumListStateChanged(boolean isEmpty, boolean editable);
 
+    void onAlbumClear();
+
     /**
      *
      * @return is consumed

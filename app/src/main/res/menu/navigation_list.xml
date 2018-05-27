@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="none">
+        <item
+            android:id="@+id/my_album"
+            android:icon="@mipmap/ic_photo_album"
+            android:title="@string/my_album" />
+
+        <item
+            android:id="@+id/my_collection"
+            android:icon="@mipmap/ic_star_grey"
+            android:title="@string/my_favorite" />
+    </group>
+</menu>

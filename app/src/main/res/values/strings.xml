@@ -34,5 +34,8 @@
     <string name="close_drawer">关闭抽屉菜单</string>
     <string name="collect_fail">收藏失败</string>
     <string name="collect_success">收藏成功</string>
+    <string name="my_album">我的相册</string>
+    <string name="my_favorite">我的收藏</string>
+    <string name="log_out">退出登录</string>
 
 </resources>

@@ -6,6 +6,7 @@ package com.example.zhaolexi.imageloader.redirect.login;
  */
 public class User {
 
+    //手机号
     private String uid;
     private String uname;
     private String sessionId;

@@ -5,4 +5,5 @@
     <dimen name="login_item_width">280dp</dimen>
     <dimen name="login_item_height">60dp</dimen>
     <dimen name="login_edit_height">35dp</dimen>
+    <dimen name="figure_size">60dp</dimen>
 </resources>

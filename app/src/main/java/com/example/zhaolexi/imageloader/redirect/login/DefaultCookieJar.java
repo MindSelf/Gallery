@@ -1,4 +1,4 @@
-package com.example.zhaolexi.imageloader.common.net;
+package com.example.zhaolexi.imageloader.redirect.login;
 
 import com.example.zhaolexi.imageloader.common.utils.SharePreferencesUtils;
 
@@ -11,11 +11,17 @@ import okhttp3.HttpUrl;
 
 public class DefaultCookieJar implements CookieJar {
 
+    private TokenManager mTokenManager;
+
+    public DefaultCookieJar() {
+        mTokenManager = new TokenManager();
+    }
+
     @Override
     public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
         for (Cookie cookie : cookies) {
             if (cookie.name().equals("token-gallery")) {
-                SharePreferencesUtils.putString(SharePreferencesUtils.TOKEN, cookie.value());
+                mTokenManager.signIn(cookie.value());
             }
         }
     }

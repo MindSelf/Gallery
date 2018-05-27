@@ -21,6 +21,7 @@ import android.widget.Toast;
 
 import com.example.zhaolexi.imageloader.R;
 import com.example.zhaolexi.imageloader.common.base.BaseActivity;
+import com.example.zhaolexi.imageloader.redirect.router.Router;
 
 public class LoginActivity extends BaseActivity<LoginPresenter> implements LoginViewInterface, View.OnClickListener, View.OnTouchListener, View.OnFocusChangeListener {
 
@@ -41,6 +42,11 @@ public class LoginActivity extends BaseActivity<LoginPresenter> implements Login
     private boolean mHasPhotoClearShown;
     private boolean mHasNameClearShown;
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Router.isRouting = false;
+    }
 
     @Override
     protected void initData() {

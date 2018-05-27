@@ -94,6 +94,10 @@ public class ManagedAlbumAdapter extends RecyclerView.Adapter implements AlbumIt
         return removed;
     }
 
+    public void clearAlbum() {
+        mHintIndex = mLocalAlbum.size() + 1;
+    }
+
 
     public boolean isEditable() {
         return mIsEditable;
