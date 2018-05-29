@@ -325,10 +325,11 @@ public class AlbumManager implements AlbumManageViewInterface, ManagedAlbumAdapt
 
     @Override
     public void onAlbumClear() {
+        mRandomList.clear();
         if (mManagedAlbumAdapter != null) {
             mManagedAlbumAdapter.clearAlbum();
+            mManagedAlbumAdapter.notifyDataSetChanged();
         }
-        mRandomList.clear();
     }
 
     @Override

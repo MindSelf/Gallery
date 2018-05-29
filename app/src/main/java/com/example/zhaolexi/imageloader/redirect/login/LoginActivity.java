@@ -2,11 +2,10 @@ package com.example.zhaolexi.imageloader.redirect.login;
 
 import android.app.Activity;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.text.Editable;
-import android.text.InputType;
 import android.text.SpannableString;
 import android.text.Spanned;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
@@ -21,6 +20,7 @@ import android.widget.Toast;
 
 import com.example.zhaolexi.imageloader.R;
 import com.example.zhaolexi.imageloader.common.base.BaseActivity;
+import com.example.zhaolexi.imageloader.common.utils.CompoundDrawableUtils;
 import com.example.zhaolexi.imageloader.redirect.router.Router;
 
 public class LoginActivity extends BaseActivity<LoginPresenter> implements LoginViewInterface, View.OnClickListener, View.OnTouchListener, View.OnFocusChangeListener {
@@ -38,8 +38,7 @@ public class LoginActivity extends BaseActivity<LoginPresenter> implements Login
     private boolean mHasMobileRegistered;
 
     private boolean mHasTouchDrawable;
-    private boolean mIsPasswordVisible;
-    private boolean mHasPhotoClearShown;
+    private boolean mHasPhoneClearShown;
     private boolean mHasNameClearShown;
 
     @Override
@@ -87,10 +86,10 @@ public class LoginActivity extends BaseActivity<LoginPresenter> implements Login
 
             @Override
             public void afterTextChanged(Editable s) {
-                if (s.length() > 0 && !mHasPhotoClearShown) {
-                    showPhotoClear();
-                } else if (s.length() <= 0 && mHasPhotoClearShown) {
-                    dismissPhotoClear();
+                if (!TextUtils.isEmpty(s) && !mHasPhoneClearShown) {
+                    showPhoneClear();
+                } else if (TextUtils.isEmpty(s) && mHasPhoneClearShown) {
+                    dismissPhoneClear();
                 }
                 if (s.length() == 11) {
                     mPresenter.hasMobileRegisted(s.toString(), mCallback);
@@ -114,9 +113,9 @@ public class LoginActivity extends BaseActivity<LoginPresenter> implements Login
 
             @Override
             public void afterTextChanged(Editable s) {
-                if (s.length() > 0 && !mHasNameClearShown) {
+                if (!TextUtils.isEmpty(s) && !mHasNameClearShown) {
                     showNameClear();
-                } else if (s.length() <= 0 && mHasNameClearShown) {
+                } else if (TextUtils.isEmpty(s) && mHasNameClearShown) {
                     dismissNameClear();
                 }
             }
@@ -126,11 +125,11 @@ public class LoginActivity extends BaseActivity<LoginPresenter> implements Login
 
         mPassword = (EditText) findViewById(R.id.et_password);
         mPassword.setOnTouchListener(this);
-        mPassword.setOnFocusChangeListener(this);
 
         mLogin = (Button) findViewById(R.id.btn_login_in);
         mLogin.setOnClickListener(this);
     }
+
 
     private void initSignUp() {
         SpannableString ss = new SpannableString(getString(R.string.sign_up));
@@ -170,7 +169,7 @@ public class LoginActivity extends BaseActivity<LoginPresenter> implements Login
         mMobile.setText("");
         mName.setText("");
         mPassword.setText("");
-        setPasswordInvisible();
+        CompoundDrawableUtils.setPasswordInvisible(mPassword, R.mipmap.ic_visibility_off);
         mHasQuerySuccess = false;
         mHasMobileRegistered = false;
         mHasTouchDrawable = false;
@@ -228,65 +227,40 @@ public class LoginActivity extends BaseActivity<LoginPresenter> implements Login
     public void onFocusChange(View v, boolean hasFocus) {
         switch (v.getId()) {
             case R.id.et_mobile:
-                if (!mHasPhotoClearShown && hasFocus && mMobile.getText().length() > 0) {
-                    showPhotoClear();
-                } else if (mHasPhotoClearShown && !hasFocus && mMobile.getText().length() <= 0) {
-                    dismissPhotoClear();
+                if (!mHasPhoneClearShown && hasFocus && !TextUtils.isEmpty(mMobile.getText())) {
+                    showPhoneClear();
+                } else if (mHasPhoneClearShown && !hasFocus) {
+                    dismissPhoneClear();
                 }
                 break;
             case R.id.et_name:
-                if (!mHasNameClearShown && hasFocus && mName.getText().length() > 0) {
+                if (!mHasNameClearShown && hasFocus && !TextUtils.isEmpty(mName.getText())) {
                     showNameClear();
-                } else if (mHasNameClearShown && !hasFocus && mName.getText().length() <= 0) {
+                } else if (mHasNameClearShown && !hasFocus) {
                     dismissNameClear();
                 }
                 break;
         }
     }
 
-    private void dismissNameClear() {
-        mName.setCompoundDrawables(null, null, null, null);
-        mHasNameClearShown = false;
-    }
-
-    private void showNameClear() {
-        Drawable clear = getResources().getDrawable(R.mipmap.ic_close_white);
-        clear.setBounds(0, 0, clear.getIntrinsicWidth(), clear.getIntrinsicHeight());
-        mName.setCompoundDrawables(null, null, clear, null);
-        mHasNameClearShown = true;
-    }
-
-    private void dismissPhotoClear() {
-        mMobile.setCompoundDrawables(null, null, null, null);
-        mHasPhotoClearShown = false;
-    }
-
-    private void showPhotoClear() {
-        Drawable clear = getResources().getDrawable(R.mipmap.ic_close_white);
-        //这一步必须要做,否则不会显示.
-        clear.setBounds(0, 0, clear.getIntrinsicWidth(), clear.getIntrinsicHeight());
-        mMobile.setCompoundDrawables(null, null, clear, null);
-        mHasPhotoClearShown = true;
-    }
-
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                mHasTouchDrawable = isTouchWithinDrawable(v, event);
+                mHasTouchDrawable = CompoundDrawableUtils.isTouchWithinDrawable(v, event);
                 break;
             case MotionEvent.ACTION_UP:
-                if (mHasTouchDrawable && isTouchWithinDrawable(v, event)) {
+                if (mHasTouchDrawable && CompoundDrawableUtils.isTouchWithinDrawable(v, event)) {
                     switch (v.getId()) {
                         case R.id.et_mobile:
                         case R.id.et_name:
                             ((EditText) v).setText("");
                             break;
                         case R.id.et_password:
-                            if (mIsPasswordVisible) {
-                                setPasswordInvisible();
+                            if (CompoundDrawableUtils.isPasswordVisible((EditText) v)) {
+                                CompoundDrawableUtils.setPasswordInvisible((EditText) v, R.mipmap.ic_visibility_off);
                             } else {
-                                setPasswordVisible();
+                                CompoundDrawableUtils.setPasswordVisible((EditText) v, R.mipmap.ic_visibility);
                             }
                             break;
                     }
@@ -296,36 +270,30 @@ public class LoginActivity extends BaseActivity<LoginPresenter> implements Login
         return false;
     }
 
-    private void setPasswordVisible() {
-        mPassword.setInputType(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
-        Drawable invisible = getResources().getDrawable(R.mipmap.ic_visibility);
-        invisible.setBounds(0, 0, invisible.getIntrinsicWidth(), invisible.getIntrinsicHeight());
-        mPassword.setCompoundDrawables(null, null, invisible, null);
-        mIsPasswordVisible = true;
+    private void showPhoneClear() {
+        CompoundDrawableUtils.showEditDrawable(mMobile, R.mipmap.ic_close_white);
+        mHasPhoneClearShown = true;
     }
 
-    private void setPasswordInvisible() {
-        mPassword.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        Drawable visible = getResources().getDrawable(R.mipmap.ic_visibility_off);
-        visible.setBounds(0, 0, visible.getIntrinsicWidth(), visible.getIntrinsicHeight());
-        mPassword.setCompoundDrawables(null, null, visible, null);
-        mIsPasswordVisible = false;
+    private void dismissPhoneClear() {
+        CompoundDrawableUtils.dismissEditDrawable(mMobile);
+        mHasPhoneClearShown = false;
     }
 
-    private boolean isTouchWithinDrawable(View v, MotionEvent event) {
-        EditText editText = (EditText) v;
-        Drawable drawable = editText.getCompoundDrawables()[2];
-        if (drawable != null && event.getX() >= v.getWidth() - v.getPaddingEnd() - drawable.getIntrinsicWidth()) {
-            return true;
-        }
-        return false;
+    private void showNameClear() {
+        CompoundDrawableUtils.showEditDrawable(mName, R.mipmap.ic_close_white);
+        mHasNameClearShown = true;
+    }
+
+    private void dismissNameClear() {
+        CompoundDrawableUtils.dismissEditDrawable(mName);
+        mHasNameClearShown = false;
     }
 
     @Override
     public Activity getContactActivity() {
         return this;
     }
-
 
     public interface QueryMobileCallback {
         void hasMobileRegistered(boolean hasRegistered);

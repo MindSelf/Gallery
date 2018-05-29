@@ -29,7 +29,7 @@
         android:background="@android:color/white">
 
         <RelativeLayout
-            android:id="@+id/rl_title"
+            android:id="@+id/ll_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingTop="10dp"
@@ -43,7 +43,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="start"
-                android:textSize="16sp"
+                android:textSize="15sp"
                 android:textColor="@android:color/black"
                 android:text="相册名："/>
 
@@ -54,7 +54,7 @@
                 android:layout_alignParentEnd="true"
                 android:layout_marginEnd="40dp"
                 android:gravity="end"
-                android:textSize="16sp"
+                android:textSize="15sp"
                 android:textColor="@android:color/black"
                 tools:text="安卓"/>
 
@@ -64,7 +64,7 @@
                 android:layout_below="@id/tv_title"
                 android:layout_marginTop="5dp"
                 android:gravity="start"
-                android:textSize="15sp"
+                android:textSize="14sp"
                 android:textColor="@android:color/black"
                 android:text="相册号：   "/>
 
@@ -77,7 +77,7 @@
                 android:layout_marginEnd="40dp"
                 android:layout_marginTop="5dp"
                 android:gravity="end"
-                android:textSize="14sp"
+                android:textSize="13sp"
                 tools:text="123456"/>
 
             <ImageView
@@ -94,7 +94,7 @@
             android:id="@+id/line_title"
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_below="@id/rl_title"
+            android:layout_below="@id/ll_title"
             android:layout_marginLeft="20dp"
             android:layout_marginRight="20dp"
             android:background="@color/line"/>
@@ -113,7 +113,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="start"
-                android:textSize="16sp"
+                android:textSize="15sp"
                 android:textColor="@android:color/black"
                 android:text="创建时间："/>
 
@@ -124,7 +124,7 @@
                 android:layout_alignParentEnd="true"
                 android:layout_marginEnd="42dp"
                 android:gravity="end"
-                android:textSize="14sp"
+                android:textSize="13sp"
                 tools:text="2018-5-28"/>
         </RelativeLayout>
 
@@ -151,7 +151,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="start"
-                android:textSize="16sp"
+                android:textSize="15sp"
                 android:textColor="@android:color/black"
                 android:text="创建者："/>
 
@@ -162,7 +162,7 @@
                 android:layout_alignParentEnd="true"
                 android:layout_marginEnd="42dp"
                 android:gravity="end"
-                android:textSize="14sp"
+                android:textSize="13sp"
                 tools:text="赵乐熹"/>
         </RelativeLayout>
 
@@ -192,7 +192,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="start"
-                android:textSize="16sp"
+                android:textSize="15sp"
                 android:textColor="@android:color/black"
                 android:text="相册描述："/>
 
@@ -212,7 +212,7 @@
                 android:layout_marginStart="2dp"
                 android:maxLines="4"
                 android:gravity="start"
-                android:textSize="14sp"
+                android:textSize="13sp"
                 tools:text="经分析我们发现这个列表项都是相同的重复布局，只是前面的图标和中间的文字是不同，那么我们可以考虑自定义一个布局，通过自定义属性设置它的图标和文字。然后放到一个LinearLayout布局中就可以实现这个列表界面。"/>
         </RelativeLayout>
 
@@ -237,7 +237,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="3dp"
             android:text="@string/album_hint_public"
-            android:textSize="14sp"/>
+            android:textSize="13sp"/>
 
         <TextView
             android:id="@+id/permission_guide"
@@ -247,7 +247,7 @@
             android:layout_marginTop="7dp"
             android:text="@string/album_permission_guide"
             android:textColor="@android:color/black"
-            android:textSize="16sp"/>
+            android:textSize="15sp"/>
 
         <RadioGroup
             android:id="@+id/rg_permission"
@@ -264,13 +264,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:checked="true"
-                android:text="公开"/>
+                android:text="@string/album_public"/>
 
             <RadioButton
                 android:id="@+id/rb_private"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="私密"/>
+                android:text="@string/album_private"/>
         </RadioGroup>
 
         <ImageView
@@ -290,7 +290,7 @@
         android:layout_alignParentBottom="true"
         android:gravity="center"
         android:text="@string/visit_album"
-        android:textSize="20sp"
+        android:textSize="19sp"
         android:textColor="@android:color/black"
         android:clickable="true"
         android:background="@drawable/bg_me_button"/>

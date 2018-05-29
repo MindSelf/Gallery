@@ -40,6 +40,7 @@
         <activity android:name=".me.album.info.AlbumInfoActivity" />
         <activity android:name=".me.album.info.modify.ModifyInfoActivity"/>
         <activity android:name=".me.album.list.AlbumListActivity" />
+        <activity android:name=".me.album.create.AlbumCreateActivity" />
     </application>
 
 </manifest>

@@ -2,9 +2,9 @@ package com.example.zhaolexi.imageloader.me.album.info.modify;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -16,6 +16,7 @@ import android.widget.Toast;
 
 import com.example.zhaolexi.imageloader.R;
 import com.example.zhaolexi.imageloader.common.base.BaseActivity;
+import com.example.zhaolexi.imageloader.common.utils.CompoundDrawableUtils;
 import com.example.zhaolexi.imageloader.home.manager.Album;
 import com.example.zhaolexi.imageloader.me.album.info.AlbumInfoException;
 
@@ -28,7 +29,7 @@ public class ModifyInfoActivity extends BaseActivity<ModifyInfoPresenter> implem
     public static final String KEY_ALBUM = "album";
     public static final String KEY_RETURN = "return";
 
-    public static final int CLOSE_ICON_SIZE = 50;
+    public static final int CLOSE_ICON_SIZE = 40;
 
     private int mType;
     private String mOrigin;
@@ -36,7 +37,6 @@ public class ModifyInfoActivity extends BaseActivity<ModifyInfoPresenter> implem
     private boolean mHasTouchDrawable;
     private boolean mHasClearShown;
 
-    private TextView mTitle;
     private EditText mEditText;
     private MenuItem mMenuItem;
 
@@ -54,7 +54,7 @@ public class ModifyInfoActivity extends BaseActivity<ModifyInfoPresenter> implem
             }
         });
 
-        mTitle = (TextView) findViewById(R.id.tv_title);
+        TextView mTitle = (TextView) findViewById(R.id.tv_title);
         mEditText = (EditText) findViewById(R.id.et_modify);
         if (mType == TYPE_TITLE) {
             mTitle.setText(R.string.modify_title);
@@ -92,9 +92,9 @@ public class ModifyInfoActivity extends BaseActivity<ModifyInfoPresenter> implem
                     mMenuItem.setEnabled(true);
                 }
 
-                if (s.length() > 0 && !mHasClearShown) {
+                if (!TextUtils.isEmpty(s) && !mHasClearShown) {
                     showClearDrawable();
-                } else if (s.length() == 0 && mHasClearShown) {
+                } else if (TextUtils.isEmpty(s) && mHasClearShown) {
                     dismissClearDrawable();
                 }
             }
@@ -102,10 +102,10 @@ public class ModifyInfoActivity extends BaseActivity<ModifyInfoPresenter> implem
     }
 
     private void showClearDrawable() {
-        Drawable clear = getResources().getDrawable(R.drawable.bg_close_icon);
-        clear.setBounds(0, 0, CLOSE_ICON_SIZE, CLOSE_ICON_SIZE);
-        mEditText.setCompoundDrawables(null, null, clear, null);
-        mHasClearShown = true;
+        if (mType == TYPE_TITLE) {
+            CompoundDrawableUtils.showEditDrawable(mEditText, R.drawable.bg_close_icon, CLOSE_ICON_SIZE, CLOSE_ICON_SIZE);
+            mHasClearShown = true;
+        }
     }
 
     private void dismissClearDrawable() {
@@ -160,26 +160,13 @@ public class ModifyInfoActivity extends BaseActivity<ModifyInfoPresenter> implem
     public boolean onTouch(View v, MotionEvent event) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                mHasTouchDrawable = isTouchWithinDrawable(v, event);
+                mHasTouchDrawable = CompoundDrawableUtils.isTouchWithinDrawable(v, event);
                 break;
             case MotionEvent.ACTION_UP:
-                if (mHasTouchDrawable && isTouchWithinDrawable(v, event)) {
-                    switch (v.getId()) {
-                        case R.id.et_modify:
-                            ((EditText) v).setText("");
-                            break;
-                    }
+                if (mHasTouchDrawable && CompoundDrawableUtils.isTouchWithinDrawable(v, event) && v.getId() == R.id.et_modify) {
+                    ((EditText) v).setText("");
                 }
                 break;
-        }
-        return false;
-    }
-
-    private boolean isTouchWithinDrawable(View v, MotionEvent event) {
-        EditText editText = (EditText) v;
-        Drawable drawable = editText.getCompoundDrawables()[2];
-        if (drawable != null && event.getX() >= v.getWidth() - v.getPaddingEnd() - drawable.getIntrinsicWidth()) {
-            return true;
         }
         return false;
     }

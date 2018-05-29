@@ -47,5 +47,12 @@
     <string name="visit_album">进入相册</string>
     <string name="modify_title">设置标题</string>
     <string name="modify_description">设置相册描述</string>
+    <string name="create_description_hint">选填</string>
+    <string name="create_description">相册描述：</string>
+    <string name="create_title">相册名：</string>
+    <string name="create_title_hint">相册标题</string>
+    <string name="create_album">创建相册</string>
+    <string name="album_public">公开</string>
+    <string name="album_private">私密</string>
 
 </resources>

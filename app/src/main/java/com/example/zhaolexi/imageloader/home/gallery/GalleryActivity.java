@@ -115,15 +115,16 @@ public class GalleryActivity extends AppCompatActivity implements InteractInterf
                             .build().show();
                     break;
                 case ACTION_NEW_ALBUM:
-                    int currentItem = 0;
+                    int currentItem;
                     if (mAlbumList.contains(album)) {
                         int pos = mAlbumList.indexOf(album);
                         mAlbumList.set(pos, album);
                         currentItem = pos;
                     } else {
-                        mAlbumList.add(album);
+                        mAlbumManager.getPresenter().addAlbum(album);
                         currentItem = mAlbumList.size() - 1;
                     }
+                    mAlbumManager.getPresenter().setCurrentPage(currentItem);
                     mPageAdapter.notifyDataSetChanged();
                     mViewPager.setCurrentItem(currentItem, false);
                     break;

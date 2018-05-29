@@ -20,6 +20,7 @@ import com.example.zhaolexi.imageloader.common.ui.OnItemLongClickListener;
 import com.example.zhaolexi.imageloader.common.ui.SpacesItemDecoration;
 import com.example.zhaolexi.imageloader.common.utils.DisplayUtils;
 import com.example.zhaolexi.imageloader.home.manager.Album;
+import com.example.zhaolexi.imageloader.me.album.create.AlbumCreateActivity;
 import com.example.zhaolexi.imageloader.me.album.info.AlbumInfoActivity;
 import com.example.zhaolexi.imageloader.me.album.list.favorite.FavoriteAlbumModelImpl;
 import com.example.zhaolexi.imageloader.me.album.list.my.MyAlbumModelImpl;
@@ -30,11 +31,12 @@ import java.util.List;
 public class AlbumListActivity extends BaseActivity<AlbumListPresenter> implements AlbumListViewInterface, OnItemClickListener, OnItemAddListener, AlbumAdapter.OnItemCloseListener, OnItemLongClickListener {
 
     public static final int REQUEST_INFO = 0;
+    public static final int REQUEST_CREATE = 1;
 
     public static final String KEY_TYPE = "type";
     public static final String KEY_ALBUM = "album";
-    public static final int TYPE_MY = 1;
-    public static final int TYPE_FAVORITE = 2;
+    public static final int TYPE_MY = 2;
+    public static final int TYPE_FAVORITE = 3;
     private int mType;
 
     private int mAlbumPos;
@@ -53,12 +55,11 @@ public class AlbumListActivity extends BaseActivity<AlbumListPresenter> implemen
         }
 
         mType = getIntent().getIntExtra(KEY_TYPE, -1);
+        mAdapter = new AlbumAdapter(this, mAlbumList, mType);
         if (mType == TYPE_MY) {
             mPresenter.setModel(new MyAlbumModelImpl());
-            mAdapter = new AlbumAdapter(this, mAlbumList, true);
         } else if (mType == TYPE_FAVORITE) {
             mPresenter.setModel(new FavoriteAlbumModelImpl());
-            mAdapter = new AlbumAdapter(this, mAlbumList, false);
         }
 
         if (mAlbumList.isEmpty()) {
@@ -169,13 +170,25 @@ public class AlbumListActivity extends BaseActivity<AlbumListPresenter> implemen
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_INFO && resultCode == RESULT_OK) {
-            Album album = (Album) data.getSerializableExtra(AlbumInfoActivity.RETURN);
-            if (album != null && mAlbumPos != -1) {
-                mAdapter.replaceAlbum(mAlbumPos, album);
-                mAlbumPos = -1;
+        if (resultCode == RESULT_OK) {
+            Album album;
+            switch (requestCode) {
+                case REQUEST_INFO:
+                    album = (Album) data.getSerializableExtra(AlbumInfoActivity.RETURN);
+                    if (album != null && mAlbumPos != -1) {
+                        mAdapter.replaceAlbum(mAlbumPos, album);
+                        mAlbumPos = -1;
+                    }
+                    break;
+                case REQUEST_CREATE:
+                    album = (Album) data.getSerializableExtra(AlbumInfoActivity.RETURN);
+                    if (album != null) {
+                        mAdapter.addAlbum(album);
+                    }
+                    break;
             }
         }
+        mAdapter.setEditable(false);
         super.onActivityResult(requestCode, resultCode, data);
     }
 
@@ -225,7 +238,8 @@ public class AlbumListActivity extends BaseActivity<AlbumListPresenter> implemen
 
     @Override
     public void onClickItemAdd() {
-
+        Intent intent = new Intent(this, AlbumCreateActivity.class);
+        startActivityForResult(intent, REQUEST_CREATE);
     }
 
     @Override

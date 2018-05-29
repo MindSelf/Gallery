@@ -13,16 +13,16 @@ import com.example.zhaolexi.imageloader.redirect.router.Router;
 
 import java.util.List;
 
-public class AlbumManagePresenter extends BasePresenter<AlbumManageViewInterface,AlbumManageModel> {
+public class AlbumManagePresenter extends BasePresenter<AlbumManageViewInterface, AlbumManageModel> {
 
-    private int mCurrentPage;
+    private int mCurrentItem;
 
     public int getCurrentPage() {
-        return mCurrentPage;
+        return mCurrentItem;
     }
 
     public void setCurrentPage(int currentPage) {
-        this.mCurrentPage = currentPage;
+        this.mCurrentItem = currentPage;
     }
 
     private boolean mShouldUpdateState;
@@ -51,7 +51,6 @@ public class AlbumManagePresenter extends BasePresenter<AlbumManageViewInterface
         AlbumManageViewInterface mView = getView();
         mView.showError((String) msg.obj);
     }
-
 
 
     public void getRandom() {
@@ -98,7 +97,7 @@ public class AlbumManagePresenter extends BasePresenter<AlbumManageViewInterface
                 albumAdapter.addAlbumToLocal(album);
                 mModel.addAlbumToDB(album);
                 pagerAdapter.notifyDataSetChanged();
-            }else{
+            } else {
                 //如果相册权限发生改变，更新本地相册
                 Album origin = albumAdapter.getLocalAlbum(index);
                 if (origin.isAccessible() != album.isAccessible()) {
@@ -107,7 +106,7 @@ public class AlbumManagePresenter extends BasePresenter<AlbumManageViewInterface
                     pagerAdapter.notifyDataSetChanged();
                 }
             }
-            mCurrentPage = albumAdapter.getIndexOfLocalAlbum(album);
+            mCurrentItem = albumAdapter.getIndexOfLocalAlbum(album);
             notifyCurrentPageChanged();
         }
     }
@@ -125,24 +124,28 @@ public class AlbumManagePresenter extends BasePresenter<AlbumManageViewInterface
             AlbumManageViewInterface mView = getView();
             ManagedAlbumAdapter albumAdapter = mView.getAlbumAdapter();
             AlbumPagerAdapter pagerAdapter = mView.getPagerAdapter();
-            mModel.removeAlbumFromDB(albumAdapter.getAlbum(position));
-            albumAdapter.removeAlbum(position);
-            if (position == mCurrentPage) {
-                mCurrentPage = 0;
-                notifyCurrentPageChanged();
-            } else if (position < mCurrentPage) {
-                mCurrentPage--;
-                notifyCurrentPageChanged();
+            Album remove = albumAdapter.removeAlbum(position);
+            if (remove != null) {
+                mModel.removeAlbumFromDB(remove);
             }
-            pagerAdapter.notifyDataSetChanged();
+            if (position >= 0) {
+                if (position == mCurrentItem) {
+                    mCurrentItem = 0;
+                    notifyCurrentPageChanged();
+                } else if (position < mCurrentItem) {
+                    mCurrentItem--;
+                    notifyCurrentPageChanged();
+                }
+                pagerAdapter.notifyDataSetChanged();
+            }
         }
     }
 
     public void onAlbumMove(int from, int to) {
-        if (from == mCurrentPage) {
-            mCurrentPage = to;
-        } else if (to == mCurrentPage) {
-            mCurrentPage = from;
+        if (from == mCurrentItem) {
+            mCurrentItem = to;
+        } else if (to == mCurrentItem) {
+            mCurrentItem = from;
         }
         //onAlbumMove在item移动时调用，如果此时更新UI，会主线程阻塞并结束item的移动
         //所以等到edit结束后才更新UI

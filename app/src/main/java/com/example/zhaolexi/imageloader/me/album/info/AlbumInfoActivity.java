@@ -70,7 +70,7 @@ public class AlbumInfoActivity extends BaseActivity<AlbumInfoPresenter> implemen
         mRadioGroup.check(mAlbumInfo.isPublic() ? R.id.rb_public : R.id.rb_private);
         mRadioGroup.setOnCheckedChangeListener(this);
 
-        RelativeLayout titleLayout = (RelativeLayout) findViewById(R.id.rl_title);
+        RelativeLayout titleLayout = (RelativeLayout) findViewById(R.id.ll_title);
         titleLayout.setOnClickListener(this);
         titleLayout.setClickable(mIsInModifyMode);
         RelativeLayout descriptionLayout = (RelativeLayout) findViewById(R.id.rl_description);
@@ -182,7 +182,7 @@ public class AlbumInfoActivity extends BaseActivity<AlbumInfoPresenter> implemen
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.rl_title:
+            case R.id.ll_title:
                 mPresenter.openModifyInfo(mAlbumInfo, ModifyInfoActivity.TYPE_TITLE);
                 break;
             case R.id.rl_description:
@@ -202,6 +202,7 @@ public class AlbumInfoActivity extends BaseActivity<AlbumInfoPresenter> implemen
         Toast.makeText(AlbumInfoActivity.this, "修改成功", Toast.LENGTH_SHORT).show();
         mAlbumInfo.setPublic(true);
         invalidateAlbumInfo();
+        mHasModify = true;
     }
 
     @Override
@@ -214,6 +215,7 @@ public class AlbumInfoActivity extends BaseActivity<AlbumInfoPresenter> implemen
     public void onSuccess(Album data) {
         mAlbumInfo.setPublic(false);
         invalidateAlbumInfo();
+        mHasModify = true;
     }
 
     @Override

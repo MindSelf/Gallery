@@ -38,13 +38,13 @@ public class AlbumAdapter extends RecyclerView.Adapter {
 
     private boolean mIsIdle = true;
     private boolean mEditable;
-    private boolean mAddible;
+    private int mType;
     private int mEdge;
 
-    public AlbumAdapter(Context context, List<Album> albumList, boolean addible) {
+    public AlbumAdapter(Context context, List<Album> albumList, int type) {
         mCtx = context;
         mAlbumList = albumList;
-        mAddible = addible;
+        mType = type;
         mImageLoader = ImageLoader.getInstance(context);
         constructor = new AlbumConstructor();
         mEdge = DisplayUtils.getScreenMetrics(context).widthPixels - DisplayUtils.dp2px(context, 40);
@@ -81,6 +81,12 @@ public class AlbumAdapter extends RecyclerView.Adapter {
         this.mOnItemCloseListener = listener;
     }
 
+    public void addAlbum(Album album) {
+        int pos = mAlbumList.size();
+        mAlbumList.add(album);
+        notifyItemInserted(pos);
+    }
+
     public void addAlbums(List<Album> newDatas) {
         int firstPos = mAlbumList.size();
         mAlbumList.addAll(newDatas);
@@ -94,7 +100,12 @@ public class AlbumAdapter extends RecyclerView.Adapter {
 
     public void removeAlbum(int pos) {
         mAlbumList.remove(pos);
-        notifyItemRemoved(pos);
+        if (mAlbumList.isEmpty()) {
+            mEditable = false;
+            notifyDataSetChanged();
+        } else {
+            notifyItemRemoved(pos);
+        }
     }
 
     public void clearAlbums() {
@@ -123,6 +134,7 @@ public class AlbumAdapter extends RecyclerView.Adapter {
             viewHolder.title.setText(mAlbumList.get(position).getTitle());
             viewHolder.total.setText(constructTotal(position));
             viewHolder.close.setVisibility(mEditable ? View.VISIBLE : View.GONE);
+            viewHolder.lock.setVisibility(mType == AlbumListActivity.TYPE_MY && !mAlbumList.get(position).isPublic() ? View.VISIBLE : View.GONE);
             ImageView image = viewHolder.image;
 
             if (mAlbumList.get(position).getCover() != null) {
@@ -173,7 +185,7 @@ public class AlbumAdapter extends RecyclerView.Adapter {
 
     @Override
     public int getItemCount() {
-        if (mAddible) {
+        if (mType == AlbumListActivity.TYPE_MY) {
             return mAlbumList.size() + 1;
         } else {
             return mAlbumList.size();
@@ -195,7 +207,7 @@ public class AlbumAdapter extends RecyclerView.Adapter {
 
     class AlbumViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
 
-        ImageView image, close;
+        ImageView image, close, lock;
         TextView total, title;
 
         AlbumViewHolder(View itemView) {
@@ -204,6 +216,7 @@ public class AlbumAdapter extends RecyclerView.Adapter {
             close = (ImageView) itemView.findViewById(R.id.iv_close);
             total = (TextView) itemView.findViewById(R.id.tv_total);
             title = (TextView) itemView.findViewById(R.id.tv_title);
+            lock = (ImageView) itemView.findViewById(R.id.iv_lock);
             itemView.setOnClickListener(this);
             itemView.setOnLongClickListener(this);
             close.setOnClickListener(this);
