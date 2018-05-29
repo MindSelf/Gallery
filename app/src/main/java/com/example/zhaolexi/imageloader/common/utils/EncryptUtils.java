@@ -7,7 +7,7 @@ import java.security.NoSuchAlgorithmException;
  * Created by ZHAOLEXI on 2017/11/22.
  */
 
-public class EncryptUtil {
+public class EncryptUtils {
 
     public static String digest(String string) {
         String cacheKey;

@@ -71,7 +71,7 @@ public class AlbumModelImpl implements AlbumModel {
                         //gallery album
                         JSONObject data = jsonObject.optJSONObject("data");
                         if (data != null) {
-                            jsonArray = jsonObject.getJSONObject("data").getJSONArray("results");
+                            jsonArray = data.getJSONArray("results");
                         }
                         result.setCode(jsonObject.getInt("code"));
                         result.setMsg(jsonObject.getString("msg"));

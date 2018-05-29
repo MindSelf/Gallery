@@ -87,6 +87,7 @@ public class Router {
                         public void onClick(DialogInterface dialog, int which) {
                             Intent intent = new Intent(mContext, GalleryActivity.class);
                             intent.putExtra(GalleryActivity.ORIGIN_ALBUM, origin);
+                            intent.putExtra(GalleryActivity.ACTION, GalleryActivity.ACTION_REACCESS);
                             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                             if (mContext instanceof Application) {
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

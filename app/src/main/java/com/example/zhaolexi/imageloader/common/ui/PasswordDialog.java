@@ -13,10 +13,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.zhaolexi.imageloader.R;
-import com.example.zhaolexi.imageloader.redirect.router.Result;
-import com.example.zhaolexi.imageloader.redirect.login.DefaultCookieJar;
 import com.example.zhaolexi.imageloader.common.net.OnRequestFinishListener;
-import com.example.zhaolexi.imageloader.common.utils.EncryptUtil;
+import com.example.zhaolexi.imageloader.common.utils.EncryptUtils;
+import com.example.zhaolexi.imageloader.redirect.login.DefaultCookieJar;
+import com.example.zhaolexi.imageloader.redirect.router.Result;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
@@ -44,7 +44,7 @@ public class PasswordDialog<T> extends Dialog implements View.OnClickListener {
             tv_negative, tv_positive;
     protected EditText et_account, et_password;
     protected OnRequestFinishListener<T> mCallback;
-    protected PasswordDialogHandler<T> mHandler;
+    protected Handler mHandler;
     private OkHttpClient mClient;
 
     public PasswordDialog(@NonNull Context context) {
@@ -67,21 +67,21 @@ public class PasswordDialog<T> extends Dialog implements View.OnClickListener {
         tv_positive.setOnClickListener(this);
 
         mClient = new OkHttpClient.Builder().cookieJar(new DefaultCookieJar()).build();
-        mHandler = new PasswordDialogHandler<>(this);
+        mHandler = new PasswordDialogHandler<T>(this);
     }
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.tv_negative:
-                dismiss();
+                cancel();
                 break;
             case R.id.tv_positive:
                 if (checkBeforeRequest()) {
                     String account = et_account.getText().toString();
                     account = onHandleAccount(account);
                     String password = et_password.getText().toString();
-                    String url = String.format(mVerifyUrl, account, EncryptUtil.digest(password));
+                    String url = String.format(mVerifyUrl, account, EncryptUtils.digest(password));
                     verify(url);
                 }
                 break;
@@ -110,11 +110,11 @@ public class PasswordDialog<T> extends Dialog implements View.OnClickListener {
         mClient.newCall(request).enqueue(newCallback(url));
     }
 
-    private static class PasswordDialogHandler<T> extends Handler {
+    protected static class PasswordDialogHandler<T> extends Handler {
 
         private SoftReference<PasswordDialog<T>> mReference;
 
-        PasswordDialogHandler(PasswordDialog<T> dialog) {
+        protected PasswordDialogHandler(PasswordDialog<T> dialog) {
             mReference = new SoftReference<>(dialog);
         }
 
@@ -122,16 +122,18 @@ public class PasswordDialog<T> extends Dialog implements View.OnClickListener {
         public void handleMessage(Message msg) {
             if (mReference.get() != null) {
                 PasswordDialog dialog = mReference.get();
+                OnRequestFinishListener callback = dialog.mCallback;
 
                 switch (msg.what) {
                     case SUCCESS:
                         T data = (T) msg.obj;
                         dialog.onHandleData(data);
-                        dialog.mCallback.onSuccess(data);
+                        callback.onSuccess(data);
                         dialog.dismiss();
                         break;
                     case FAIL:
                         String hint = (String) msg.obj;
+                        callback.onFail(hint, null);
                         Toast.makeText(dialog.getContext(), hint, Toast.LENGTH_SHORT).show();
                         break;
                     default:

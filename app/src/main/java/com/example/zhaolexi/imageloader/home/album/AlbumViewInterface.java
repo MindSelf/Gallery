@@ -25,7 +25,7 @@ public interface AlbumViewInterface extends BaseViewInterface{
 
     void setRefreshing(boolean isRefreshing);
 
-    PhotoAdapter getAdapter();
+    void onRefreshFinish();
 
     Album getAlbumInfo();
 }

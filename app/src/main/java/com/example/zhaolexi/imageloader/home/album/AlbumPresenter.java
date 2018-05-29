@@ -69,24 +69,27 @@ public class AlbumPresenter extends BasePresenter<AlbumViewInterface, AlbumModel
 
     @Override
     protected void onMessageSuccess(Message msg) {
-        AlbumViewInterface mView = getView();
-        mView.setRefreshing(false);
-        //刷新成功，更新适配器中的数据
-        if (msg.arg1 == REFRESH_FINISH) {
-            currentPage = 1;
-            mView.getAdapter().cleanImages();
+        if(isViewAttached()) {
+            AlbumViewInterface mView = getView();
+            mView.setRefreshing(false);
+            //刷新成功，更新适配器中的数据
+            if (msg.arg1 == REFRESH_FINISH) {
+                mView.onRefreshFinish();
+            }
+            List<Photo> newData = (List<Photo>) msg.obj;
+            mView.showNewData(hasMoreData, newData);
+            currentPage++;
         }
-        List<Photo> newData = (List<Photo>) msg.obj;
-        mView.showNewData(hasMoreData, newData);
-        currentPage++;
     }
 
     @Override
     protected void onMessageFail(Message msg) {
-        AlbumViewInterface mView = getView();
-        mView.setRefreshing(false);
-        //刷新失败，保留原始数据，并显示错误信息
-        mView.showError();
+        if(isViewAttached()) {
+            AlbumViewInterface mView = getView();
+            mView.setRefreshing(false);
+            //刷新失败，保留原始数据，并显示错误信息
+            mView.showError();
+        }
     }
 
     public void setUrl(String url) {
@@ -101,10 +104,12 @@ public class AlbumPresenter extends BasePresenter<AlbumViewInterface, AlbumModel
         if (isViewAttached()) {
             AlbumViewInterface albumView = getView();
             if (hasMoreData) {
-                if (currentPage == 0)
+                if (currentPage == 0) {
+                    //加载失败的情况
                     albumView.setRefreshing(true);
-                else
+                } else {
                     albumView.showLoading();
+                }
                 mModel.loadImage(currentPage + 1, new OnRequestFinishListener<List<Photo>>() {
                     @Override
                     public void onSuccess(List<Photo> newData) {
@@ -143,8 +148,9 @@ public class AlbumPresenter extends BasePresenter<AlbumViewInterface, AlbumModel
 
             getView().setRefreshing(true);
             hasMoreData = true;
+            currentPage = 0;
 
-            mModel.loadImage(1, new OnRequestFinishListener<List<Photo>>() {
+            mModel.loadImage(currentPage + 1, new OnRequestFinishListener<List<Photo>>() {
                 @Override
                 public void onSuccess(List<Photo> newData) {
                     hasMoreData = newData.size() >= 10;
@@ -179,7 +185,7 @@ public class AlbumPresenter extends BasePresenter<AlbumViewInterface, AlbumModel
         }
     }
 
-    public void collectionAlbum(final Album album) {
+    public void collectAlbum(final Album album) {
         mModel.collectAlbum(album.getAid(), new OnRequestFinishListener() {
             @Override
             public void onSuccess(Object data) {
@@ -200,7 +206,7 @@ public class AlbumPresenter extends BasePresenter<AlbumViewInterface, AlbumModel
                                 @Override
                                 protected void onCallback(boolean success) {
                                     if (success) {
-                                        collectionAlbum(album);
+                                        collectAlbum(album);
                                     }
                                 }
                             })

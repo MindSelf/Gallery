@@ -37,5 +37,15 @@
     <string name="my_album">我的相册</string>
     <string name="my_favorite">我的收藏</string>
     <string name="log_out">退出登录</string>
+    <string name="album_hint_public">该相册可以被其他用户访问</string>
+    <string name="album_hint_private">该相册需要分享码才能访问</string>
+    <string name="album_permission_guide">是否公开？</string>
+    <string name="read_password_hint">可访问私有相册</string>
+    <string name="mod_password_hint">可管理相册图片</string>
+    <string name="read_password">访问密码</string>
+    <string name="mod_password">权限密码</string>
+    <string name="visit_album">进入相册</string>
+    <string name="modify_title">设置标题</string>
+    <string name="modify_description">设置相册描述</string>
 
 </resources>

@@ -2,6 +2,7 @@ package com.example.zhaolexi.imageloader.home.manager;
 
 import com.google.gson.annotations.SerializedName;
 
+import org.litepal.annotation.Column;
 import org.litepal.crud.DataSupport;
 
 import java.io.Serializable;
@@ -32,8 +33,15 @@ public class Album extends DataSupport implements Serializable{
     private String share;	//分享url
     private int total;	//相片总数
     private String coverUrl;	//封面url
+
+    //不在数据库中创建该字段
+    @Column(ignore = true)
+    private byte[] cover;   //相册封面
+
     @SerializedName("number")
     private int account;  //相册号
+    @SerializedName("open")
+    private boolean isPublic;
 
     public String getUrl() {
         return url;
@@ -123,12 +131,28 @@ public class Album extends DataSupport implements Serializable{
         this.coverUrl = coverUrl;
     }
 
+    public byte[] getCover() {
+        return cover;
+    }
+
+    public void setCover(byte[] cover) {
+        this.cover = cover;
+    }
+
     public int getAccount() {
         return account;
     }
 
     public void setAccount(int account) {
         this.account = account;
+    }
+
+    public boolean isPublic() {
+        return isPublic;
+    }
+
+    public void setPublic(boolean aPublic) {
+        isPublic = aPublic;
     }
 
     @Override

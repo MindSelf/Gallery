@@ -39,7 +39,7 @@
         android:layout_alignParentTop="true"
         android:padding="5dp"
         android:src="@mipmap/ic_close_white"
-        android:background="@drawable/bg_close_icon"
+        android:background="@drawable/bg_close"
         android:visibility="gone"/>
 </RelativeLayout>
 

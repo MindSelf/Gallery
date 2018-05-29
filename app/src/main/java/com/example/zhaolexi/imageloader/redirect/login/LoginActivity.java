@@ -262,8 +262,8 @@ public class LoginActivity extends BaseActivity<LoginPresenter> implements Login
     }
 
     private void showPhotoClear() {
-        //这一步必须要做,否则不会显示.
         Drawable clear = getResources().getDrawable(R.mipmap.ic_close_white);
+        //这一步必须要做,否则不会显示.
         clear.setBounds(0, 0, clear.getIntrinsicWidth(), clear.getIntrinsicHeight());
         mMobile.setCompoundDrawables(null, null, clear, null);
         mHasPhotoClearShown = true;

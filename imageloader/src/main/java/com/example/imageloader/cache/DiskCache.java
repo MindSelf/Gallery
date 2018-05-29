@@ -123,6 +123,9 @@ public class DiskCache implements ImageCache {
             } else {
                 Log.d(TAG, "put: cache fail");
             }
+
+            //java.lang.IllegalStateException: edit didn't create file 0
+            mDiskLruCache.flush();
         }
     }
 

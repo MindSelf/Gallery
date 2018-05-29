@@ -30,7 +30,7 @@ public class UserInfoActivity extends AppCompatActivity implements View.OnClickL
     }
 
     private void initView() {
-        setContentView(R.layout.activity_userinfo);
+        setContentView(R.layout.activity_user_info);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setTitle("");
         setSupportActionBar(toolbar);

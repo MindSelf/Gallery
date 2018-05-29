@@ -12,6 +12,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.example.zhaolexi.imageloader.R;
+import com.example.zhaolexi.imageloader.common.ui.OnItemAddListener;
 
 import java.util.Collections;
 import java.util.List;
@@ -288,7 +289,4 @@ public class ManagedAlbumAdapter extends RecyclerView.Adapter implements AlbumIt
         void onItemClick(boolean isFromRandom, int position, boolean editable);
     }
 
-    public interface OnItemAddListener {
-        void onClickItemAdd();
-    }
 }

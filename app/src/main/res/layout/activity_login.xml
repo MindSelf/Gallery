@@ -119,7 +119,7 @@
         </RelativeLayout>
 
         <RelativeLayout
-            android:id="@+id/rl_password"
+            android:id="@+id/rl_permission"
             android:layout_width="@dimen/login_item_width"
             android:layout_height="@dimen/login_item_height"
             android:layout_gravity="center_horizontal"

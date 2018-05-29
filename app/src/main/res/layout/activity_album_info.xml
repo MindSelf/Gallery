@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/info_page">
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/colorPrimary">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="相册信息"
+            android:textColor="@android:color/white"
+            android:textSize="18sp"/>
+    </android.support.v7.widget.Toolbar>
+
+    <RelativeLayout
+        android:id="@+id/rl_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/toolbar"
+        android:layout_marginTop="10dp"
+        android:background="@android:color/white">
+
+        <RelativeLayout
+            android:id="@+id/rl_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            android:background="@drawable/bg_me_button"
+            android:clickable="true">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="start"
+                android:textSize="16sp"
+                android:textColor="@android:color/black"
+                android:text="相册名："/>
+
+            <TextView
+                android:id="@+id/tv_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="40dp"
+                android:gravity="end"
+                android:textSize="16sp"
+                android:textColor="@android:color/black"
+                tools:text="安卓"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_title"
+                android:layout_marginTop="5dp"
+                android:gravity="start"
+                android:textSize="15sp"
+                android:textColor="@android:color/black"
+                android:text="相册号：   "/>
+
+            <TextView
+                android:id="@+id/tv_account"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_title"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="40dp"
+                android:layout_marginTop="5dp"
+                android:gravity="end"
+                android:textSize="14sp"
+                tools:text="123456"/>
+
+            <ImageView
+                android:id="@+id/iv_navigate_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_alignParentEnd="true"
+                android:src="@mipmap/ic_navigation"/>
+
+        </RelativeLayout>
+
+        <View
+            android:id="@+id/line_title"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/rl_title"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:background="@color/line"/>
+
+        <RelativeLayout
+            android:id="@+id/rl_create_time"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/line_title"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="start"
+                android:textSize="16sp"
+                android:textColor="@android:color/black"
+                android:text="创建时间："/>
+
+            <TextView
+                android:id="@+id/tv_create_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="42dp"
+                android:gravity="end"
+                android:textSize="14sp"
+                tools:text="2018-5-28"/>
+        </RelativeLayout>
+
+        <View
+            android:id="@+id/line_create_time"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/rl_create_time"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:background="@color/line"/>
+
+        <RelativeLayout
+            android:id="@+id/rl_who"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/line_create_time"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="start"
+                android:textSize="16sp"
+                android:textColor="@android:color/black"
+                android:text="创建者："/>
+
+            <TextView
+                android:id="@+id/tv_who"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="42dp"
+                android:gravity="end"
+                android:textSize="14sp"
+                tools:text="赵乐熹"/>
+        </RelativeLayout>
+
+        <View
+            android:id="@+id/line_who"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_below="@id/rl_who"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:background="@color/line"/>
+
+        <RelativeLayout
+            android:id="@+id/rl_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/line_who"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            android:background="@drawable/bg_me_button"
+            android:clickable="true">
+
+            <TextView
+                android:id="@+id/tv_description_hint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="start"
+                android:textSize="16sp"
+                android:textColor="@android:color/black"
+                android:text="相册描述："/>
+
+            <ImageView
+                android:id="@+id/iv_navigate_description"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:src="@mipmap/ic_navigation"/>
+
+            <TextView
+                android:id="@+id/tv_description"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_description_hint"
+                android:layout_marginTop="5dp"
+                android:layout_marginStart="2dp"
+                android:maxLines="4"
+                android:gravity="start"
+                android:textSize="14sp"
+                tools:text="经分析我们发现这个列表项都是相同的重复布局，只是前面的图标和中间的文字是不同，那么我们可以考虑自定义一个布局，通过自定义属性设置它的图标和文字。然后放到一个LinearLayout布局中就可以实现这个列表界面。"/>
+        </RelativeLayout>
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rl_permission"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/rl_info"
+        android:layout_marginTop="20dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:background="@drawable/bg_me_button"
+        android:clickable="true">
+
+        <TextView
+            android:id="@+id/permission_hint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="3dp"
+            android:text="@string/album_hint_public"
+            android:textSize="14sp"/>
+
+        <TextView
+            android:id="@+id/permission_guide"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/permission_hint"
+            android:layout_marginTop="7dp"
+            android:text="@string/album_permission_guide"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"/>
+
+        <RadioGroup
+            android:id="@+id/rg_permission"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/permission_hint"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="80dp"
+            android:layout_marginTop="2dp"
+            android:orientation="horizontal">
+            
+            <RadioButton
+                android:id="@+id/rb_public"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="公开"/>
+
+            <RadioButton
+                android:id="@+id/rb_private"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="私密"/>
+        </RadioGroup>
+
+        <ImageView
+            android:id="@+id/iv_navigate_password"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/permission_hint"
+            android:layout_alignParentEnd="true"
+            android:src="@mipmap/ic_navigation"/>
+
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/tv_visit"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentBottom="true"
+        android:gravity="center"
+        android:text="@string/visit_album"
+        android:textSize="20sp"
+        android:textColor="@android:color/black"
+        android:clickable="true"
+        android:background="@drawable/bg_me_button"/>
+
+</RelativeLayout>

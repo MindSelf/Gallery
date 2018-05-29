@@ -27,12 +27,15 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.imageloader.imageloader.ImageLoader;
+import com.example.imageloader.imageloader.ImageLoaderConfig;
 import com.example.zhaolexi.imageloader.R;
+import com.example.zhaolexi.imageloader.common.base.BaseApplication;
 import com.example.zhaolexi.imageloader.common.ui.OnItemClickListener;
+import com.example.zhaolexi.imageloader.common.ui.SpacesItemDecoration;
+import com.example.zhaolexi.imageloader.common.utils.DisplayUtils;
 import com.example.zhaolexi.imageloader.detail.DetailActivity;
 import com.example.zhaolexi.imageloader.detail.LocalDetailActivity;
-import com.example.zhaolexi.imageloader.home.album.SpacesItemDecoration;
-import com.example.zhaolexi.imageloader.common.utils.DisplayUtils;
 import com.example.zhaolexi.imageloader.home.manager.Album;
 
 import java.util.ArrayList;
@@ -73,6 +76,13 @@ public class UpLoadPhotoActivity extends com.example.zhaolexi.imageloader.common
         } else {
             mPresenter.displayAllPhotos();
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        ImageLoaderConfig config = new ImageLoaderConfig.Builder(this).setDefaultImage(R.color.windowBackground).build();
+        ImageLoader.getInstance(BaseApplication.getContext()).init(config);
+        super.onDestroy();
     }
 
     @Override

@@ -13,12 +13,10 @@ import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.view.View;
 import android.widget.Toast;
 
-import com.example.imageloader.imageloader.ImageLoader;
-import com.example.imageloader.imageloader.ImageLoaderConfig;
 import com.example.zhaolexi.imageloader.R;
-import com.example.zhaolexi.imageloader.common.base.BaseApplication;
 import com.example.zhaolexi.imageloader.common.base.BaseFragment;
 import com.example.zhaolexi.imageloader.common.ui.OnItemClickListener;
+import com.example.zhaolexi.imageloader.common.ui.SpacesItemDecoration;
 import com.example.zhaolexi.imageloader.common.utils.DisplayUtils;
 import com.example.zhaolexi.imageloader.detail.DetailActivity;
 import com.example.zhaolexi.imageloader.home.InteractInterface;
@@ -187,8 +185,8 @@ public class AlbumFragment extends BaseFragment<AlbumPresenter> implements Album
     }
 
     @Override
-    public PhotoAdapter getAdapter() {
-        return mAdapter;
+    public void onRefreshFinish() {
+        mAdapter.cleanImages();
     }
 
     @Override
@@ -203,15 +201,12 @@ public class AlbumFragment extends BaseFragment<AlbumPresenter> implements Album
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        ImageLoaderConfig config;
         switch (requestCode) {
             case AlbumPresenter.SELECT_PHOTO:
                 //上传照片成功，刷新相册
                 if (resultCode == Activity.RESULT_OK) {
                     mPresenter.refresh();
                 }
-                config = new ImageLoaderConfig.Builder(getContext()).setDefaultImage(R.color.windowBackground).build();
-                ImageLoader.getInstance(BaseApplication.getContext()).init(config);
                 break;
             case AlbumPresenter.OPEN_PHOTO_DETAIL:
                 if (resultCode == Activity.RESULT_OK) {
@@ -220,10 +215,6 @@ public class AlbumFragment extends BaseFragment<AlbumPresenter> implements Album
                     ArrayList list = (ArrayList) data.getSerializableExtra(DetailActivity.DETAILS_KEY);
                     refreshFromDetail(list, index, currentPage);
                 }
-                config = new ImageLoaderConfig.Builder(getContext())
-                        .setDefaultImage(R.color.windowBackground)
-                        .setFailImage(R.mipmap.image_fail).build();
-                ImageLoader.getInstance(BaseApplication.getContext()).init(config);
                 break;
             default:
         }

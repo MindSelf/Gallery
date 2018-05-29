@@ -57,7 +57,7 @@ public class AlbumPasswordDialog extends PasswordDialog<Album> {
         return new AlbumCallback(url);
     }
 
-    private final class AlbumCallback extends DefaultCallback{
+    private final class AlbumCallback extends DefaultCallback {
 
         private String url;
 

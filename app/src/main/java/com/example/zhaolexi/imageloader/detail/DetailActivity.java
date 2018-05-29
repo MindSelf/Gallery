@@ -7,8 +7,11 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Toast;
 
+import com.example.imageloader.imageloader.ImageLoader;
+import com.example.imageloader.imageloader.ImageLoaderConfig;
 import com.example.zhaolexi.imageloader.R;
 import com.example.zhaolexi.imageloader.common.base.BaseActivity;
+import com.example.zhaolexi.imageloader.common.base.BaseApplication;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +34,14 @@ public abstract class DetailActivity<T extends DetailPresenter, V extends Detail
     private int mLastX;
     private int mDirection;
 
+    @Override
+    protected void onDestroy() {
+        ImageLoaderConfig config = new ImageLoaderConfig.Builder(this)
+                .setDefaultImage(R.color.windowBackground)
+                .setFailImage(R.mipmap.image_fail).build();
+        ImageLoader.getInstance(BaseApplication.getContext()).init(config);
+        super.onDestroy();
+    }
 
     @Override
     public void finish() {

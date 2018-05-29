@@ -147,6 +147,7 @@ public class PhotoAdapter extends RecyclerView.Adapter implements PhotoItemTouch
             final String uri = mPhotoList.get(position).getThumbUrl();
 
             TaskOption option = new TaskOption(new DecodeOption(mImageWidth, mImageWidth));
+            //NOTE: 由于RecyclerView的复用机制，即使同个position的viewHolder也是不断变化的，所以导致isNeedLoad始终为true
             boolean isNeedLoad = uri != null && !uri.equals(tag);
             if (isNeedLoad) {
                 //为了避免View复用导致显示旧的bitmap，这里会先显示内存中缓存的图片，没有再显示占位图

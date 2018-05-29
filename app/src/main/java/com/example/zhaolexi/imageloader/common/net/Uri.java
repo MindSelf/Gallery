@@ -12,7 +12,7 @@ public class Uri {
     /*
     服务器地址
      */
-    public static final String SERVER = "http://119.29.39.173/gallery/";
+    private static final String SERVER = "http://119.29.39.173/gallery/";
 
     /*
     Photo
@@ -32,13 +32,19 @@ public class Uri {
     Album
      */
     //创建相册
-
+    public static final String CREATE_ALBUM = SERVER + "Album!create.action?title=%s&adesc=%s&who=%s&readPassword=%s&modPassword=%s";
+    //修改相册
+    public static final String MODIFY_ALBUM = SERVER + "Album!update.action";
+    //删除相册
+    public static final String DELETE_ALBUM = SERVER + "Album!delete.action?aid=";
     //添加相册
     public static final String ADD_ALBUM = SERVER + "Album!access.action?number=%s&readPassword=%s";
+    //我的相册
+    public static final String MY_ALBUM = SERVER + "Album!data.action?pageSize=12";
     //收藏相册
     public static final String COLLECT_ALBUM = SERVER + "Album!favorite.action?aid=";
     //获取收藏
-    public static final String GET_COLLECT = SERVER + "Album!favoriteData.action?pageSize=10";
+    public static final String FAVORITE_ALBUM = SERVER + "Album!favoriteData.action?pageSize=12";
     //随便看看
     public static final String GET_RANDOM = SERVER + "Album!randomData.action";
 

@@ -21,16 +21,19 @@ import android.widget.Toast;
 
 import com.example.zhaolexi.imageloader.R;
 import com.example.zhaolexi.imageloader.common.net.OnRequestFinishListener;
+import com.example.zhaolexi.imageloader.common.ui.OnItemAddListener;
 import com.example.zhaolexi.imageloader.home.InteractInterface;
 import com.example.zhaolexi.imageloader.home.gallery.AlbumPagerAdapter;
 import com.example.zhaolexi.imageloader.home.gallery.GalleryActivity;
+import com.example.zhaolexi.imageloader.me.album.list.favorite.CollectionListener;
+import com.example.zhaolexi.imageloader.me.album.list.favorite.FavoriteManager;
 import com.example.zhaolexi.imageloader.redirect.access.AlbumPasswordDialog;
 import com.example.zhaolexi.imageloader.redirect.router.Result;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class AlbumManager implements AlbumManageViewInterface, ManagedAlbumAdapter.OnItemClickListener, ManagedAlbumAdapter.OnItemAddListener, View.OnClickListener {
+public class AlbumManager implements AlbumManageViewInterface, ManagedAlbumAdapter.OnItemClickListener, OnItemAddListener, View.OnClickListener, CollectionListener {
 
     private GalleryActivity mActivity;
     private InteractInterface mInteract;
@@ -66,6 +69,7 @@ public class AlbumManager implements AlbumManageViewInterface, ManagedAlbumAdapt
     private void initData(List<Album> albumList) {
         mAlbumList = albumList;
         mRandomList = new ArrayList<>();
+        FavoriteManager.addCollectionListener(this);
         preLoad();
     }
 
@@ -419,6 +423,25 @@ public class AlbumManager implements AlbumManageViewInterface, ManagedAlbumAdapt
                     mPresenter.clearUpdateState();
                 }
                 break;
+        }
+    }
+
+    @Override
+    public void onCancel(String aid) {
+        if (mAlbumList.get(mPresenter.getCurrentPage()).getAid().equals(aid)) {
+            mInteract.changeCollectState(false);
+        }
+
+        for (Album album : mAlbumList) {
+            if (album.getAid().equals(aid)) {
+                album.setFavorite(false);
+            }
+        }
+
+        for (Album album : mRandomList) {
+            if (album.getAid().equals(aid)) {
+                album.setFavorite(false);
+            }
         }
     }
 }

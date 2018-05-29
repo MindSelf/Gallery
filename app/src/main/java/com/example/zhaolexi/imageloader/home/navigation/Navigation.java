@@ -38,6 +38,7 @@ public class Navigation implements NavigationViewInterface, NavigationView.OnNav
         mDrawerLayout = drawerLayout;
         mNavigation = navigationView;
         mNavigation.setNavigationItemSelectedListener(this);
+        mNavigation.getMenu().setGroupVisible(R.id.group_navigation, TokenManager.isLogin());
 
         ViewGroup header = (ViewGroup) mNavigation.getHeaderView(0);
         mFigure = (CircleImageView) header.findViewById(R.id.iv_figure);
@@ -70,6 +71,7 @@ public class Navigation implements NavigationViewInterface, NavigationView.OnNav
 
     @Override
     public void onLoginStateChange() {
+        mNavigation.getMenu().setGroupVisible(R.id.group_navigation, TokenManager.isLogin());
         mFigure.setImageResource(TokenManager.isLogin() ? R.mipmap.ic_user_login : R.mipmap.ic_user_unlogin);
         mName.setText(SharePreferencesUtils.getString(SharePreferencesUtils.USER_NAME, ""));
     }
@@ -88,8 +90,10 @@ public class Navigation implements NavigationViewInterface, NavigationView.OnNav
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
             case R.id.my_album:
+                mPresenter.openMyAlbum();
                 break;
             case R.id.my_collection:
+                mPresenter.openFavoriteAlbum();
                 break;
         }
         mDrawerLayout.closeDrawers();

@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <group android:checkableBehavior="none">
+    <group
+        android:id="@+id/group_navigation"
+        android:checkableBehavior="none">
         <item
             android:id="@+id/my_album"
             android:icon="@mipmap/ic_photo_album"

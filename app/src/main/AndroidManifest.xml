@@ -34,9 +34,12 @@
         <activity android:name=".detail.LocalDetailActivity" />
         <activity
             android:name=".redirect.login.LoginActivity"
-            android:screenOrientation="portrait"/>
-        <activity android:name=".redirect.router.RouterActivity"/>
+            android:screenOrientation="portrait" />
+        <activity android:name=".redirect.router.RouterActivity" />
         <activity android:name=".me.info.UserInfoActivity" />
+        <activity android:name=".me.album.info.AlbumInfoActivity" />
+        <activity android:name=".me.album.info.modify.ModifyInfoActivity"/>
+        <activity android:name=".me.album.list.AlbumListActivity" />
     </application>
 
 </manifest>

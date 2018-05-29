@@ -7,7 +7,7 @@ import android.widget.Toast;
 
 import com.example.zhaolexi.imageloader.common.base.BasePresenter;
 import com.example.zhaolexi.imageloader.common.net.OnRequestFinishListener;
-import com.example.zhaolexi.imageloader.common.utils.EncryptUtil;
+import com.example.zhaolexi.imageloader.common.utils.EncryptUtils;
 import com.example.zhaolexi.imageloader.redirect.router.Result;
 
 public class LoginPresenter extends BasePresenter<LoginViewInterface, LoginModel> {
@@ -129,7 +129,7 @@ public class LoginPresenter extends BasePresenter<LoginViewInterface, LoginModel
     }
 
     public void login(String mobile, String password) {
-        mModel.login(mobile, EncryptUtil.digest(password), new OnRequestFinishListener<User>() {
+        mModel.login(mobile, EncryptUtils.digest(password), new OnRequestFinishListener<User>() {
             @Override
             public void onSuccess(User data) {
                 Message.obtain(mHandler, MSG_SUCCESS, "登录成功！").sendToTarget();
@@ -143,7 +143,7 @@ public class LoginPresenter extends BasePresenter<LoginViewInterface, LoginModel
     }
 
     public void register(String mobile, String name, String password) {
-        mModel.register(mobile, name, EncryptUtil.digest(password), new OnRequestFinishListener<User>() {
+        mModel.register(mobile, name, EncryptUtils.digest(password), new OnRequestFinishListener<User>() {
             @Override
             public void onSuccess(User data) {
                 Message.obtain(mHandler, MSG_SUCCESS, "注册成功！").sendToTarget();

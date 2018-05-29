@@ -45,6 +45,9 @@ import java.util.Objects;
 public class GalleryActivity extends AppCompatActivity implements InteractInterface, View.OnClickListener {
 
     public static final String ORIGIN_ALBUM = "album";
+    public static final String ACTION = "action";
+    public static final int ACTION_REACCESS = 0;
+    public static final int ACTION_NEW_ALBUM = 1;
 
     private AlbumManageViewInterface mAlbumManager;
     private NavigationViewInterface mNavigation;
@@ -87,27 +90,48 @@ public class GalleryActivity extends AppCompatActivity implements InteractInterf
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        Album origin = (Album) intent.getSerializableExtra(ORIGIN_ALBUM);
-        if (origin != null) {
-            mAlbumManager.showManagePage(false);
-            mAlbumManager.getPresenter().removeAlbum(origin);
-            new AlbumPasswordDialog.Builder(this)
-                    .setTitle(getString(R.string.add_album))
-                    .setAccountDef(String.valueOf(origin.getAccount()))
-                    .setCallback(new OnRequestFinishListener<Album>() {
-                        @Override
-                        public void onSuccess(Album album) {
-                            if (album != null) {
-                                mAlbumManager.getPresenter().addAlbum(album);
-                            }
-                        }
+        Album album = (Album) intent.getSerializableExtra(ORIGIN_ALBUM);
+        if (album != null) {
+            int action = intent.getIntExtra(ACTION, -1);
+            switch (action) {
+                case ACTION_REACCESS:
+                    mAlbumManager.showManagePage(false);
+                    mAlbumManager.getPresenter().removeAlbum(album);
+                    new AlbumPasswordDialog.Builder(this)
+                            .setTitle(getString(R.string.add_album))
+                            .setAccountDef(String.valueOf(album.getAccount()))
+                            .setCallback(new OnRequestFinishListener<Album>() {
+                                @Override
+                                public void onSuccess(Album album) {
+                                    if (album != null) {
+                                        mAlbumManager.getPresenter().addAlbum(album);
+                                    }
+                                }
 
-                        @Override
-                        public void onFail(String reason, Result result) {
-                        }
-                    })
-                    .build().show();
-        } else if (mAlbumList.isEmpty()) {
+                                @Override
+                                public void onFail(String reason, Result result) {
+                                }
+                            })
+                            .build().show();
+                    break;
+                case ACTION_NEW_ALBUM:
+                    int currentItem = 0;
+                    if (mAlbumList.contains(album)) {
+                        int pos = mAlbumList.indexOf(album);
+                        mAlbumList.set(pos, album);
+                        currentItem = pos;
+                    } else {
+                        mAlbumList.add(album);
+                        currentItem = mAlbumList.size() - 1;
+                    }
+                    mPageAdapter.notifyDataSetChanged();
+                    mViewPager.setCurrentItem(currentItem, false);
+                    break;
+            }
+            return;
+        }
+
+        if (mAlbumList.isEmpty()) {
             mAlbumManager.showManagePage(false);
         }
     }
@@ -144,6 +168,17 @@ public class GalleryActivity extends AppCompatActivity implements InteractInterf
         toggle.syncState();
         //添加菜单拖动监听事件  根据菜单的拖动距离 将距离折算成旋转角度
         mDrawerLayout.addDrawerListener(toggle);
+        mDrawerLayout.addDrawerListener(new DrawerLayout.SimpleDrawerListener() {
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                mNavigation.onNavigationShown();
+            }
+
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                mNavigation.onNavigationDismiss();
+            }
+        });
 
         mNavigationView = (NavigationView) findViewById(R.id.navigation_view);
         mNavigation = new Navigation(mDrawerLayout, mNavigationView);
@@ -234,7 +269,7 @@ public class GalleryActivity extends AppCompatActivity implements InteractInterf
             case R.id.collect_album:
                 int pos = mViewPager.getCurrentItem();
                 Album album = mAlbumList.get(pos);
-                mPageAdapter.getAlbumFragmentAt(pos).getPresenter().collectionAlbum(album);
+                mPageAdapter.getAlbumFragmentAt(pos).getPresenter().collectAlbum(album);
                 break;
         }
         return true;

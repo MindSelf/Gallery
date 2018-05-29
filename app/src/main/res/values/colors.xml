@@ -16,4 +16,5 @@
     <color name="detail_description">#e2e2e2</color>
     <color name="communication_count">#e69600</color>
     <color name="logo">#03c8fb</color>
+    <color name="info_page">#cfcfcf</color>
 </resources>
